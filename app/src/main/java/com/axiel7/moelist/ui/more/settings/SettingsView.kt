@@ -21,7 +21,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.media.TitleLanguage
-import com.axiel7.moelist.ui.base.AppLanguage
 import com.axiel7.moelist.ui.base.ItemsPerRow
 import com.axiel7.moelist.ui.base.ListStyle
 import com.axiel7.moelist.ui.base.StartTab
@@ -81,14 +80,6 @@ private fun SettingsViewContent(
                 title = stringResource(R.string.black_theme_variant),
                 value = uiState.useBlackColors,
                 onValueChange = { event?.setUseBlackColors(it) }
-            )
-
-            ListPreferenceView(
-                title = stringResource(R.string.language),
-                entriesValues = AppLanguage.entriesLocalized,
-                value = uiState.language,
-                icon = R.drawable.ic_round_language_24,
-                onValueChange = { event?.setLanguage(it) }
             )
 
             ListPreferenceView(

@@ -13,11 +13,9 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.browser.customtabs.CustomTabColorSchemeParams
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.ContextCompat
-import androidx.core.os.LocaleListCompat
 import com.axiel7.moelist.BuildConfig
 import com.axiel7.moelist.R
 
@@ -49,12 +47,6 @@ object ContextExtensions {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
         clipboard?.setPrimaryClip(ClipData.newPlainText("title", text))
         showToast(getString(R.string.copied))
-    }
-
-    fun changeLocale(language: String) {
-        val appLocale = if (language == "follow_system") LocaleListCompat.getEmptyLocaleList()
-        else LocaleListCompat.forLanguageTags(language)
-        AppCompatDelegate.setApplicationLocales(appLocale)
     }
 
     /** Open link in Chrome Custom Tabs */
@@ -143,6 +135,4 @@ object ContextExtensions {
             showToast(e.message ?: "Error")
         }
     }
-
-    fun getCurrentLanguageTag() = LocaleListCompat.getAdjustedDefault()[0]?.toLanguageTag()
 }

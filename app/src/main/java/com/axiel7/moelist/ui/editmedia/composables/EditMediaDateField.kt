@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,31 +54,39 @@ fun EditMediaDateField(
                 Icon(
                     painter = painterResource(icon),
                     contentDescription = label,
-                    modifier = Modifier.padding(start = 16.dp),
+                    modifier = Modifier.padding(start = 12.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
                 Spacer(
                     modifier = Modifier
-                        .padding(start = 16.dp)
+                        .padding(start = 12.dp)
                         .size(24.dp)
                 )
             }
             Column(
                 modifier = Modifier.padding(
-                    horizontal = 16.dp,
-                    vertical = if (dateLocalized != null) 8.dp else 16.dp
+                    start = 12.dp,
+                    end = 4.dp,
+                    top = if (dateLocalized != null) 8.dp else 16.dp,
+                    bottom = if (dateLocalized != null) 8.dp else 16.dp
                 )
             ) {
                 Text(
                     text = label,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
 
                 if (dateLocalized != null) {
                     Text(
                         text = dateLocalized,
                         color = MaterialTheme.colorScheme.primary,
-                        fontSize = 13.sp
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }//: Column
@@ -85,11 +94,12 @@ fun EditMediaDateField(
         if (date != null) {
             IconButton(
                 onClick = removeDate,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.size(32.dp).padding(end = 8.dp)
             ) {
                 Icon(
                     painter = painterResource(R.drawable.round_close_24),
-                    contentDescription = stringResource(R.string.delete)
+                    contentDescription = stringResource(R.string.delete),
+                    modifier = Modifier.size(16.dp)
                 )
             }
         }

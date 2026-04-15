@@ -40,13 +40,15 @@ class Api(private val client: HttpClient) {
         clientId: String,
         code: String,
         codeVerifier: String,
-        grantType: String
+        grantType: String,
+        redirectUri: String,
     ): AccessToken = client.post("${MAL_OAUTH2_URL}token") {
         setBody(FormDataContent(Parameters.build {
             append("client_id", clientId)
             append("code", code)
             append("code_verifier", codeVerifier)
             append("grant_type", grantType)
+            append("redirect_uri", redirectUri)
         }))
     }.body()
 
@@ -104,6 +106,7 @@ class Api(private val client: HttpClient) {
     ): Response<List<AnimeRanking>> = client.get("${MAL_API_URL}anime/ranking") {
         parameter("ranking_type", rankingType)
         parameter("limit", limit)
+        parameter("offset", 0)
         parameter("nsfw", nsfw)
         parameter("fields", fields)
     }.body()

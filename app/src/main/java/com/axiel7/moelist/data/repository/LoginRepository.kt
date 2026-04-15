@@ -6,6 +6,7 @@ import com.axiel7.moelist.data.model.AccessToken
 import com.axiel7.moelist.data.model.Response
 import com.axiel7.moelist.data.network.Api
 import com.axiel7.moelist.utils.MAL_OAUTH2_URL
+import com.axiel7.moelist.utils.MOELIST_PAGELINK
 import com.axiel7.moelist.utils.PkceGenerator
 
 class LoginRepository(
@@ -16,18 +17,25 @@ class LoginRepository(
     companion object {
         const val STATE = "MoeList123"
         private const val GRANT_TYPE = "authorization_code"
-        private val codeVerifier = PkceGenerator.generateVerifier(length = 128)
-        val loginUrl =
-            "${MAL_OAUTH2_URL}authorize?response_type=code&client_id=${BuildConfig.CLIENT_ID}&code_challenge=${codeVerifier}&state=${STATE}"
+    }
+
+    suspend fun generateLoginUrl(): String {
+        val codeVerifier = PkceGenerator.generateVerifier(length = 128)
+        defaultPreferencesRepository.saveCodeVerifier(codeVerifier)
+        return "${MAL_OAUTH2_URL}authorize?response_type=code&client_id=${BuildConfig.CLIENT_ID}&code_challenge=${codeVerifier}&code_challenge_method=plain&state=${STATE}&redirect_uri=${MOELIST_PAGELINK}"
     }
 
     suspend fun getAccessToken(code: String): Response<AccessToken> {
+        val codeVerifier = defaultPreferencesRepository.getCodeVerifier()
+            ?: return Response(message = "Code verifier not found")
+
         val accessToken = try {
             api.getAccessToken(
                 clientId = BuildConfig.CLIENT_ID,
                 code = code,
                 codeVerifier = codeVerifier,
-                grantType = GRANT_TYPE
+                grantType = GRANT_TYPE,
+                redirectUri = MOELIST_PAGELINK
             )
         } catch (e: Exception) {
             null
@@ -37,6 +45,7 @@ class LoginRepository(
             Response(message = "Token was null: ${accessToken?.error}: ${accessToken?.message}")
         else {
             defaultPreferencesRepository.saveTokens(accessToken)
+            defaultPreferencesRepository.removeCodeVerifier()
             App.accessToken = accessToken.accessToken
             Response(data = accessToken)
         }

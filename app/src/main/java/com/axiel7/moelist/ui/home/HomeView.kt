@@ -3,15 +3,14 @@ package com.axiel7.moelist.ui.home
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -20,7 +19,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,13 +30,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
 import com.axiel7.moelist.R
+import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.HeaderHorizontalList
@@ -55,7 +53,6 @@ import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.utils.ContextExtensions.showToast
 import com.axiel7.moelist.utils.SeasonCalendar
 import org.koin.androidx.compose.koinViewModel
-import kotlin.random.Random
 
 @Composable
 fun HomeView(
@@ -92,8 +89,7 @@ private fun HomeViewContent(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     val airingListState = rememberLazyListState()
-    val seasonListState = rememberLazyListState()
-    val recommendListState = rememberLazyListState()
+    val watchingListState = rememberLazyListState()
 
     LaunchedEffect(uiState.message) {
         if (uiState.message != null) {
@@ -116,9 +112,9 @@ private fun HomeViewContent(
             .verticalScroll(scrollState)
             .padding(padding)
     ) {
-        // Chips
+        // Main Shortcuts
         Row(
-            modifier = Modifier.padding(top = 10.dp, start = 8.dp, end = 16.dp)
+            modifier = Modifier.padding(top = 16.dp, start = 16.dp, end = 16.dp)
         ) {
             HomeCard(
                 text = stringResource(R.string.anime_ranking),
@@ -128,6 +124,8 @@ private fun HomeViewContent(
                     navActionManager.toMediaRanking(MediaType.ANIME)
                 },
             )
+
+            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
 
             HomeCard(
                 text = stringResource(R.string.manga_ranking),
@@ -140,7 +138,7 @@ private fun HomeViewContent(
         }
 
         Row(
-            modifier = Modifier.padding(top = 10.dp, start = 8.dp, end = 16.dp)
+            modifier = Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp)
         ) {
             HomeCard(
                 text = stringResource(R.string.seasonal_chart),
@@ -150,6 +148,8 @@ private fun HomeViewContent(
                     navActionManager.toSeasonChart()
                 },
             )
+
+            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
 
             HomeCard(
                 text = stringResource(R.string.calendar),
@@ -161,7 +161,9 @@ private fun HomeViewContent(
             )
         }
 
-        // Airing
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Airing Today
         HeaderHorizontalList(
             text = stringResource(R.string.today),
             onClick = dropUnlessResumed { navActionManager.toCalendar() }
@@ -175,7 +177,9 @@ private fun HomeViewContent(
             ) {
                 Text(
                     text = stringResource(R.string.nothing_today),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline
                 )
             }
         } else LazyRow(
@@ -183,7 +187,7 @@ private fun HomeViewContent(
                 .padding(top = 8.dp)
                 .sizeIn(minHeight = MEDIA_POSTER_SMALL_HEIGHT.dp),
             state = airingListState,
-            contentPadding = PaddingValues(horizontal = 8.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp),
             flingBehavior = rememberSnapFlingBehavior(lazyListState = airingListState)
         ) {
             items(
@@ -206,164 +210,75 @@ private fun HomeViewContent(
             }
         }
 
-        // This Season
-        HeaderHorizontalList(
-            text = stringResource(R.string.this_season),
-            onClick = dropUnlessResumed { navActionManager.toSeasonChart() }
-        )
-        if (!uiState.isLoading && uiState.seasonAnimes.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(MEDIA_POSTER_SMALL_HEIGHT.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = stringResource(R.string.error_server),
-                    textAlign = TextAlign.Center
-                )
-            }
-        } else LazyRow(
-            modifier = Modifier
-                .padding(top = 8.dp)
-                .sizeIn(minHeight = MEDIA_ITEM_VERTICAL_HEIGHT.dp),
-            state = seasonListState,
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            flingBehavior = rememberSnapFlingBehavior(lazyListState = seasonListState)
-        ) {
-            items(
-                items = uiState.seasonAnimes,
-                key = { it.node.id },
-                contentType = { it.node }
-            ) {
-                MediaItemVertical(
-                    imageUrl = it.node.mainPicture?.large,
-                    title = it.node.userPreferredTitle(),
-                    modifier = Modifier.padding(end = 8.dp),
-                    badgeContent = it.node.myListStatus?.status?.let { status ->
-                        {
-                            Icon(
-                                painter = painterResource(status.icon),
-                                contentDescription = status.localized(),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                    },
-                    subtitle = if (!uiState.hideScore) {
-                        {
-                            SmallScoreIndicator(
-                                score = it.node.mean,
-                                fontSize = 13.sp
-                            )
-                        }
-                    } else null,
-                    minLines = 2,
-                    onClick = dropUnlessResumed {
-                        navActionManager.toMediaDetails(MediaType.ANIME, it.node.id)
-                    }
-                )
-            }
-            if (uiState.isLoading) {
-                items(10) {
-                    MediaItemVerticalPlaceholder()
-                }
-            }
-        }
+        Spacer(modifier = Modifier.height(16.dp))
 
-        //Recommended
-        HeaderHorizontalList(
-            text = stringResource(R.string.recommendations),
-            onClick = dropUnlessResumed { navActionManager.toRecommendations() }
-        )
-        if (!isLoggedIn) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(MEDIA_POSTER_SMALL_HEIGHT.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = stringResource(R.string.please_login_to_use_this_feature),
-                    textAlign = TextAlign.Center
-                )
-            }
-        } else if (!uiState.isLoading && uiState.recommendedAnimes.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(MEDIA_POSTER_SMALL_HEIGHT.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = stringResource(R.string.no_recommendations),
-                    textAlign = TextAlign.Center
-                )
-            }
-        } else LazyRow(
-            modifier = Modifier
-                .padding(vertical = 8.dp)
-                .sizeIn(minHeight = MEDIA_ITEM_VERTICAL_HEIGHT.dp),
-            state = recommendListState,
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            flingBehavior = rememberSnapFlingBehavior(lazyListState = recommendListState)
-        ) {
-            items(
-                items = uiState.recommendedAnimes,
-                key = { it.node.id },
-                contentType = { it.node }
-            ) {
-                MediaItemVertical(
-                    imageUrl = it.node.mainPicture?.large,
-                    title = it.node.userPreferredTitle(),
-                    modifier = Modifier.padding(end = 8.dp),
-                    subtitle = if (!uiState.hideScore) {
-                        {
-                            SmallScoreIndicator(
-                                score = it.node.mean,
-                                fontSize = 13.sp
-                            )
-                        }
-                    } else null,
-                    minLines = 2,
-                    onClick = dropUnlessResumed {
-                        navActionManager.toMediaDetails(MediaType.ANIME, it.node.id)
-                    }
-                )
-            }
-            if (uiState.isLoading) {
-                items(10) {
-                    MediaItemVerticalPlaceholder()
-                }
-            }
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            //Random
-            OutlinedButton(
-                onClick = dropUnlessResumed {
-                    val type = if (Random.nextBoolean()) MediaType.ANIME else MediaType.MANGA
-                    val id = Random.nextInt(from = 0, until = 6000)
-                    navActionManager.toMediaDetails(type, id)
-                }
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_round_casino_24),
-                    contentDescription = stringResource(R.string.random),
+        // Currently Watching
+        if (isLoggedIn) {
+            HeaderHorizontalList(
+                text = stringResource(R.string.watching),
+                onClick = dropUnlessResumed { navActionManager.toUserList(MediaType.ANIME, ListStatus.WATCHING) }
+            )
+            if (!uiState.isLoading && uiState.watchingAnimes.isEmpty()) {
+                Box(
                     modifier = Modifier
-                        .padding(end = 8.dp)
-                        .size(18.dp)
-                )
-                Text(
-                    text = stringResource(R.string.random),
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1
-                )
+                        .fillMaxWidth()
+                        .height(MEDIA_POSTER_SMALL_HEIGHT.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.no_anime_on_list),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
+            } else LazyRow(
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .sizeIn(minHeight = MEDIA_ITEM_VERTICAL_HEIGHT.dp),
+                state = watchingListState,
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                flingBehavior = rememberSnapFlingBehavior(lazyListState = watchingListState)
+            ) {
+                items(
+                    items = uiState.watchingAnimes,
+                    key = { it.node.id },
+                    contentType = { it.node }
+                ) {
+                    MediaItemVertical(
+                        imageUrl = it.node.mainPicture?.large,
+                        title = it.node.userPreferredTitle(),
+                        modifier = Modifier.padding(end = 12.dp),
+                        badgeContent = if (it.listStatus?.progress != null) {
+                            {
+                                Text(
+                                    text = it.listStatus.progress.toString(),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        } else null,
+                        subtitle = if (!uiState.hideScore) {
+                            {
+                                SmallScoreIndicator(
+                                    score = it.node.mean,
+                                    fontSize = 13.sp
+                                )
+                            }
+                        } else null,
+                        minLines = 2,
+                        onClick = dropUnlessResumed {
+                            navActionManager.toMediaDetails(MediaType.ANIME, it.node.id)
+                        }
+                    )
+                }
+                if (uiState.isLoading) {
+                    items(10) {
+                        MediaItemVerticalPlaceholder()
+                    }
+                }
             }
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

@@ -15,6 +15,7 @@ data class ProfileUiState(
     val mangaStats: List<Stat<ListStatus>> = emptyList(),
     val userMangaStats: UserStats.MangaStats? = null,
     val isLoadingManga: Boolean = true,
+    val isMangaError: Boolean = false,
     override val isLoading: Boolean = true,
     override val message: String? = null
 ) : UiState() {

@@ -2,21 +2,29 @@ package com.axiel7.moelist.ui.details.composables
 
 import android.Manifest
 import android.os.Build
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumTopAppBar
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.anime.AnimeDetails
 import com.axiel7.moelist.data.model.media.MediaStatus
-import com.axiel7.moelist.ui.composables.BackIconButton
-import com.axiel7.moelist.ui.composables.ShareButton
-import com.axiel7.moelist.ui.composables.ViewInBrowserButton
 import com.axiel7.moelist.ui.details.MediaDetailsEvent
 import com.axiel7.moelist.ui.details.MediaDetailsUiState
 import com.axiel7.moelist.utils.ContextExtensions.openLink
@@ -94,10 +102,39 @@ fun MediaDetailsTopAppBar(
         )
     } else null
 
-    TopAppBar(
-        title = { },
+    // Interpolate color based on scroll to ensure visibility
+    val collapsedFraction = scrollBehavior.state.collapsedFraction
+    val isScrolled = collapsedFraction > 0.5f
+    val contentColor by animateColorAsState(
+        targetValue = if (isScrolled) MaterialTheme.colorScheme.onSurface else Color.White,
+        label = "appBarContentColor"
+    )
+
+    MediumTopAppBar(
+        title = {
+            Text(
+                text = uiState.mediaDetails?.userPreferredTitle().orEmpty(),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                style = if (collapsedFraction > 0.8f) {
+                    MaterialTheme.typography.titleLarge
+                } else {
+                    MaterialTheme.typography.headlineSmall.copy(
+                        fontSize = (24 - (collapsedFraction * 4)).sp
+                    )
+                },
+                color = contentColor,
+                modifier = Modifier.padding(end = 16.dp)
+            )
+        },
         navigationIcon = {
-            BackIconButton(onClick = navigateBack)
+            IconButton(onClick = navigateBack) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_arrow_back),
+                    contentDescription = null,
+                    tint = contentColor
+                )
+            }
         },
         actions = {
             if (uiState.mediaDetails?.status == MediaStatus.AIRING
@@ -117,14 +154,30 @@ fun MediaDetailsTopAppBar(
                             if (savedForNotification != null) R.drawable.round_notifications_active_24
                             else R.drawable.round_notifications_off_24
                         ),
-                        contentDescription = "notification"
+                        contentDescription = "notification",
+                        tint = contentColor
                     )
                 }
             }
-            ViewInBrowserButton(onClick = { context.openLink(uiState.mediaDetails?.malUrl.orEmpty()) })
-
-            ShareButton(url = uiState.mediaDetails?.malUrl.orEmpty())
+            IconButton(onClick = { context.openLink(uiState.mediaDetails?.malUrl.orEmpty()) }) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_open_in_browser),
+                    contentDescription = null,
+                    tint = contentColor
+                )
+            }
+            IconButton(onClick = { /* Share action */ }) {
+                Icon(
+                    painter = painterResource(R.drawable.round_share_24),
+                    contentDescription = null,
+                    tint = contentColor
+                )
+            }
         },
+        colors = TopAppBarDefaults.mediumTopAppBarColors(
+            containerColor = Color.Transparent,
+            scrolledContainerColor = MaterialTheme.colorScheme.surface
+        ),
         scrollBehavior = scrollBehavior
     )
 }

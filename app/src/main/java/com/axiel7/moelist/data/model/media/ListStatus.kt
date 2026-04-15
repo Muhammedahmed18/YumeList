@@ -1,10 +1,12 @@
 package com.axiel7.moelist.data.model.media
 
+import android.os.Bundle
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavType
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.base.LocalizableAndColorable
 import com.axiel7.moelist.ui.theme.stat_completed_content_dark
@@ -111,5 +113,30 @@ enum class ListStatus(
 
         fun listStatusValues(mediaType: MediaType) =
             if (mediaType == MediaType.ANIME) listStatusAnimeValues else listStatusMangaValues
+
+        val navType = object : NavType<ListStatus?>(isNullableAllowed = true) {
+            override fun get(bundle: Bundle, key: String): ListStatus? {
+                return try {
+                    bundle.getString(key)?.let {
+                        ListStatus.valueOf(it)
+                    }
+                } catch (_: IllegalArgumentException) {
+                    null
+                }
+            }
+
+            override fun parseValue(value: String): ListStatus? {
+                if (value == "null") return null
+                return try {
+                    ListStatus.valueOf(value)
+                } catch (_: IllegalArgumentException) {
+                    null
+                }
+            }
+
+            override fun put(bundle: Bundle, key: String, value: ListStatus?) {
+                bundle.putString(key, value?.name)
+            }
+        }
     }
 }

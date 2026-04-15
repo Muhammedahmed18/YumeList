@@ -5,6 +5,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.MediaType
 
 @Immutable
@@ -38,6 +39,10 @@ class NavActionManager(
 
     fun toRecommendations() {
         navController.navigate(Route.Recommendations)
+    }
+
+    fun toUserList(mediaType: MediaType, status: ListStatus? = null) {
+        navController.navigate(Route.UserList(mediaType, status))
     }
 
     fun toFullPoster(pictures: List<String>) {

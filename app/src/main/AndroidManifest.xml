@@ -20,7 +20,6 @@
         android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:localeConfig="@xml/locales_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MySplash"
@@ -38,10 +37,8 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="moelist.page.link"
-                    android:pathPattern="/.*"
-                    android:pathPrefix="/.*"
-                    android:scheme="moelist" />
+                    android:host="callback"
+                    android:scheme="yume" />
 
             </intent-filter>
             <intent-filter>
@@ -75,15 +72,6 @@
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
         </activity>
-
-        <service
-            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
-            android:enabled="false"
-            android:exported="false">
-            <meta-data
-                android:name="autoStoreLocales"
-                android:value="true" />
-        </service>
 
         <receiver
             android:name=".ui.widget.AiringWidgetReceiver"

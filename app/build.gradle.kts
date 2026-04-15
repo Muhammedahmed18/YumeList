@@ -36,10 +36,7 @@ android {
     }
 
     androidResources {
-        localeFilters += listOf(
-            "en", "ar-rSA", "bg-rBG", "cs-rCZ", "de", "es", "fr", "in-rID", "it-rIT", "ja",
-            "pl-rPL", "pt-rBR", "pt-rPT", "ru-rRU", "sk-rSK", "tr", "uk-rUA", "zh", "zh-rTW"
-        )
+        localeFilters += listOf("en")
     }
 
     buildTypes {
@@ -53,7 +50,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "CLIENT_ID", privateProps.getProperty("CLIENT_ID"))
+            buildConfigField("String", "CLIENT_ID", "\"${privateProps.getProperty("CLIENT_ID")}\"")
             resValue("string", "app_name", "MoeList Debug")
         }
         release {
@@ -64,7 +61,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "CLIENT_ID", privateProps.getProperty("CLIENT_ID"))
+            buildConfigField("String", "CLIENT_ID", "\"${privateProps.getProperty("CLIENT_ID")}\"")
         }
     }
     splits {

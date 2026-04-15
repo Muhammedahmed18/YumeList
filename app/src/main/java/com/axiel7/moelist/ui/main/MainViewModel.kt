@@ -42,6 +42,10 @@ class MainViewModel(
     val profilePicture = defaultPreferencesRepository.profilePicture
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    suspend fun generateLoginUrl(): String {
+        return loginRepository.generateLoginUrl()
+    }
+
     fun parseIntentData(uri: Uri) = viewModelScope.launch {
         val code = uri.getQueryParameter("code")
         val receivedState = uri.getQueryParameter("state")

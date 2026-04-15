@@ -38,6 +38,8 @@ import com.axiel7.moelist.data.model.media.BaseMediaNode
 import com.axiel7.moelist.data.model.media.BaseUserMediaList
 import com.axiel7.moelist.ui.base.ListStyle
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
+import com.axiel7.moelist.ui.composables.EmptyState
+import com.axiel7.moelist.ui.composables.ErrorState
 import com.axiel7.moelist.ui.composables.OnBottomReached
 import com.axiel7.moelist.ui.composables.collapsable
 import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_MEDIUM_WIDTH
@@ -138,7 +140,7 @@ fun UserMediaListView(
     }
 
     PullToRefreshBox(
-        isRefreshing = uiState.isLoading,
+        isRefreshing = uiState.isLoading && uiState.mediaList.isNotEmpty(),
         onRefresh = { event?.refreshList() },
         modifier = modifier.fillMaxSize(),
         state = pullRefreshState,
@@ -152,235 +154,310 @@ fun UserMediaListView(
                 else Modifier
             )
 
-        if (uiState.listStyle == ListStyle.GRID) {
-            val listState = rememberLazyGridState()
-            LazyVerticalGrid(
-                columns = if (uiState.itemsPerRow.value > 0) GridCells.Fixed(uiState.itemsPerRow.value)
-                else GridCells.Adaptive(minSize = (MEDIA_POSTER_MEDIUM_WIDTH + 8).dp),
-                modifier = listModifier
-                    .collapsable(
+        when {
+            uiState.isLoading && uiState.mediaList.isEmpty() -> {
+                LoadingState(uiState, contentPadding)
+            }
+
+            uiState.message != null && uiState.mediaList.isEmpty() -> {
+                ErrorState(
+                    modifier = Modifier.padding(contentPadding),
+                    message = uiState.message,
+                    onRetry = { event?.refreshList() }
+                )
+            }
+
+            !uiState.isLoading && uiState.mediaList.isEmpty() && uiState.isStatusLoaded(uiState.listStatus) -> {
+                EmptyState(modifier = Modifier.padding(contentPadding))
+            }
+
+            uiState.mediaList.isNotEmpty() -> {
+                if (uiState.listStyle == ListStyle.GRID) {
+                    val listState = rememberLazyGridState()
+                    LazyVerticalGrid(
+                        columns = if (uiState.itemsPerRow.value > 0) GridCells.Fixed(uiState.itemsPerRow.value)
+                        else GridCells.Adaptive(minSize = (MEDIA_POSTER_MEDIUM_WIDTH + 8).dp),
+                        modifier = listModifier
+                            .collapsable(
+                                state = listState,
+                                topBarHeightPx = topBarHeightPx,
+                                topBarOffsetY = topBarOffsetY,
+                            ),
                         state = listState,
-                        topBarHeightPx = topBarHeightPx,
-                        topBarOffsetY = topBarOffsetY,
-                    ),
-                state = listState,
-                contentPadding = PaddingValues(
-                    start = contentPadding.calculateStartPadding(layoutDirection) + 8.dp,
-                    top = contentPadding.calculateTopPadding() + 8.dp,
-                    end = contentPadding.calculateEndPadding(layoutDirection) + 8.dp,
-                    bottom = contentPadding.calculateBottomPadding() + 8.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Bottom),
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
-            ) {
-                item(
-                    span = { GridItemSpan(maxCurrentLineSpan) }
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        contentPadding = PaddingValues(
+                            start = contentPadding.calculateStartPadding(layoutDirection) + 8.dp,
+                            top = contentPadding.calculateTopPadding() + 8.dp,
+                            end = contentPadding.calculateEndPadding(layoutDirection) + 8.dp,
+                            bottom = contentPadding.calculateBottomPadding() + 8.dp
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Bottom),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
                     ) {
-                        SortChip(uiState, event)
-                        if (uiState.showRandomButton) {
-                            RandomChip(
-                                onClick = { event?.getRandomIdOfList() }
-                            )
+                        item(
+                            span = { GridItemSpan(maxCurrentLineSpan) }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                SortChip(uiState, event)
+                                if (uiState.showRandomButton) {
+                                    RandomChip(
+                                        onClick = { event?.getRandomIdOfList() }
+                                    )
+                                }
+                            }
+                        }
+                        items(
+                            items = uiState.mediaList,
+                            key = { it.node.id },
+                            contentType = { it.node }
+                        ) { item ->
+                            GridItemView(item = item)
+                        }
+                        if (uiState.isLoadingMore) {
+                            items(9, contentType = { it }) {
+                                GridUserMediaListItemPlaceholder()
+                            }
+                        }
+                        item(contentType = { 0 }) {
+                            if (uiState.canLoadMore) {
+                                Box(modifier = Modifier.fillMaxWidth()) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier
+                                            .align(Alignment.Center)
+                                            .padding(16.dp)
+                                    )
+                                }
+                                LaunchedEffect(true) {
+                                    event?.loadMore()
+                                }
+                            }
                         }
                     }
-                }
-                items(
-                    items = uiState.mediaList,
-                    key = { it.node.id },
-                    contentType = { it.node }
-                ) { item ->
-                    GridItemView(item = item)
-                }
-                if (uiState.isLoadingMore) {
-                    items(9, contentType = { it }) {
-                        GridUserMediaListItemPlaceholder()
+                } else if (isCompactScreen) {
+                    val listState = rememberLazyListState()
+                    listState.OnBottomReached(buffer = 3) {
+                        event?.loadMore()
                     }
-                }
-                item(contentType = { 0 }) {
-                    if (uiState.canLoadMore) {
-                        Box(modifier = Modifier.align(Alignment.Center)) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.align(Alignment.Center)
-                            )
+                    LazyColumn(
+                        modifier = listModifier
+                            .collapsable(
+                                state = listState,
+                                topBarHeightPx = topBarHeightPx,
+                                topBarOffsetY = topBarOffsetY,
+                            ),
+                        state = listState,
+                        contentPadding = PaddingValues(
+                            start = contentPadding.calculateStartPadding(layoutDirection),
+                            top = contentPadding.calculateTopPadding() + 8.dp,
+                            end = contentPadding.calculateEndPadding(layoutDirection),
+                            bottom = contentPadding.calculateBottomPadding() + 8.dp
+                        ),
+                    ) {
+                        item {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                SortChip(uiState, event)
+                                if (uiState.showRandomButton) {
+                                    RandomChip(
+                                        onClick = { event?.getRandomIdOfList() }
+                                    )
+                                }
+                            }
                         }
-                        LaunchedEffect(true) {
-                            event?.loadMore()
+                        when (uiState.listStyle) {
+                            ListStyle.STANDARD -> {
+                                items(
+                                    items = uiState.mediaList,
+                                    key = { it.node.id },
+                                    contentType = { it.node }
+                                ) { item ->
+                                    StandardItemView(item = item)
+                                }
+                                if (uiState.isLoadingMore) {
+                                    items(5, contentType = { it }) {
+                                        StandardUserMediaListItemPlaceholder()
+                                    }
+                                }
+                            }
+
+                            ListStyle.COMPACT -> {
+                                items(
+                                    items = uiState.mediaList,
+                                    key = { it.node.id },
+                                    contentType = { it.node }
+                                ) { item ->
+                                    CompactItemView(item = item)
+                                }
+                                if (uiState.isLoadingMore) {
+                                    items(5, contentType = { it }) {
+                                        CompactUserMediaListItemPlaceholder()
+                                    }
+                                }
+                            }
+
+                            ListStyle.MINIMAL -> {
+                                items(
+                                    items = uiState.mediaList,
+                                    key = { it.node.id },
+                                    contentType = { it.node }
+                                ) { item ->
+                                    MinimalItemView(item = item)
+                                }
+                                if (uiState.isLoadingMore) {
+                                    items(5, contentType = { it }) {
+                                        MinimalUserMediaListItemPlaceholder()
+                                    }
+                                }
+                            }
+
+                            else -> {}
+                        }
+                    }//:LazyColumn
+                } else { // tablet ui
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        contentPadding = PaddingValues(
+                            start = contentPadding.calculateStartPadding(layoutDirection),
+                            top = contentPadding.calculateTopPadding() + 8.dp,
+                            end = contentPadding.calculateEndPadding(layoutDirection),
+                            bottom = contentPadding.calculateBottomPadding() + 8.dp
+                        ),
+                    ) {
+                        item(
+                            span = { GridItemSpan(maxLineSpan) }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                SortChip(uiState, event)
+                                if (uiState.showRandomButton) {
+                                    RandomChip(
+                                        onClick = { event?.getRandomIdOfList() }
+                                    )
+                                }
+                            }
+                        }
+                        when (uiState.listStyle) {
+                            ListStyle.STANDARD -> {
+                                items(
+                                    items = uiState.mediaList,
+                                    key = { it.node.id },
+                                    contentType = { it.node }
+                                ) { item ->
+                                    StandardItemView(item = item)
+                                }
+                                if (uiState.isLoadingMore) {
+                                    items(5, contentType = { it }) {
+                                        StandardUserMediaListItemPlaceholder()
+                                    }
+                                }
+                            }
+
+                            ListStyle.COMPACT -> {
+                                items(
+                                    items = uiState.mediaList,
+                                    key = { it.node.id },
+                                    contentType = { it.node }
+                                ) { item ->
+                                    CompactItemView(item = item)
+                                }
+                                if (uiState.isLoadingMore) {
+                                    items(5, contentType = { it }) {
+                                        CompactUserMediaListItemPlaceholder()
+                                    }
+                                }
+                            }
+
+                            ListStyle.MINIMAL -> {
+                                items(
+                                    items = uiState.mediaList,
+                                    key = { it.node.id },
+                                    contentType = { it.node }
+                                ) { item ->
+                                    MinimalItemView(item = item)
+                                }
+                                if (uiState.isLoadingMore) {
+                                    items(5, contentType = { it }) {
+                                        MinimalUserMediaListItemPlaceholder()
+                                    }
+                                }
+                            }
+
+                            else -> {}
+                        }
+                        item(contentType = { 0 }) {
+                            if (uiState.canLoadMore) {
+                                Box(modifier = Modifier.fillMaxWidth()) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier
+                                            .align(Alignment.Center)
+                                            .padding(16.dp)
+                                    )
+                                }
+                                LaunchedEffect(true) {
+                                    event?.loadMore()
+                                }
+                            }
                         }
                     }
                 }
             }
-        } else if (isCompactScreen) {
-            val listState = rememberLazyListState()
-            listState.OnBottomReached(buffer = 3) {
-                event?.loadMore()
-            }
-            LazyColumn(
-                modifier = listModifier
-                    .collapsable(
-                        state = listState,
-                        topBarHeightPx = topBarHeightPx,
-                        topBarOffsetY = topBarOffsetY,
-                    ),
-                state = listState,
-                contentPadding = PaddingValues(
-                    start = contentPadding.calculateStartPadding(layoutDirection),
-                    top = contentPadding.calculateTopPadding() + 8.dp,
-                    end = contentPadding.calculateEndPadding(layoutDirection),
-                    bottom = contentPadding.calculateBottomPadding() + 8.dp
-                ),
-            ) {
-                item {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        SortChip(uiState, event)
-                        if (uiState.showRandomButton) {
-                            RandomChip(
-                                onClick = { event?.getRandomIdOfList() }
-                            )
-                        }
-                    }
-                }
-                when (uiState.listStyle) {
-                    ListStyle.STANDARD -> {
-                        items(
-                            items = uiState.mediaList,
-                            key = { it.node.id },
-                            contentType = { it.node }
-                        ) { item ->
-                            StandardItemView(item = item)
-                        }
-                        if (uiState.isLoadingMore) {
-                            items(5, contentType = { it }) {
-                                StandardUserMediaListItemPlaceholder()
-                            }
-                        }
-                    }
-
-                    ListStyle.COMPACT -> {
-                        items(
-                            items = uiState.mediaList,
-                            key = { it.node.id },
-                            contentType = { it.node }
-                        ) { item ->
-                            CompactItemView(item = item)
-                        }
-                        if (uiState.isLoadingMore) {
-                            items(5, contentType = { it }) {
-                                CompactUserMediaListItemPlaceholder()
-                            }
-                        }
-                    }
-
-                    ListStyle.MINIMAL -> {
-                        items(
-                            items = uiState.mediaList,
-                            key = { it.node.id },
-                            contentType = { it.node }
-                        ) { item ->
-                            MinimalItemView(item = item)
-                        }
-                        if (uiState.isLoadingMore) {
-                            items(5, contentType = { it }) {
-                                MinimalUserMediaListItemPlaceholder()
-                            }
-                        }
-                    }
-
-                    else -> {}
-                }
-            }//:LazyColumn
-        } else { // tablet ui
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                contentPadding = PaddingValues(
-                    start = contentPadding.calculateStartPadding(layoutDirection),
-                    top = contentPadding.calculateTopPadding() + 8.dp,
-                    end = contentPadding.calculateEndPadding(layoutDirection),
-                    bottom = contentPadding.calculateBottomPadding() + 8.dp
-                ),
-            ) {
-                item(
-                    span = { GridItemSpan(maxLineSpan) }
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        SortChip(uiState, event)
-                        if (uiState.showRandomButton) {
-                            RandomChip(
-                                onClick = { event?.getRandomIdOfList() }
-                            )
-                        }
-                    }
-                }
-                when (uiState.listStyle) {
-                    ListStyle.STANDARD -> {
-                        items(
-                            items = uiState.mediaList,
-                            key = { it.node.id },
-                            contentType = { it.node }
-                        ) { item ->
-                            StandardItemView(item = item)
-                        }
-                        if (uiState.isLoadingMore) {
-                            items(5, contentType = { it }) {
-                                StandardUserMediaListItemPlaceholder()
-                            }
-                        }
-                    }
-
-                    ListStyle.COMPACT -> {
-                        items(
-                            items = uiState.mediaList,
-                            key = { it.node.id },
-                            contentType = { it.node }
-                        ) { item ->
-                            CompactItemView(item = item)
-                        }
-                        if (uiState.isLoadingMore) {
-                            items(5, contentType = { it }) {
-                                CompactUserMediaListItemPlaceholder()
-                            }
-                        }
-                    }
-
-                    ListStyle.MINIMAL -> {
-                        items(
-                            items = uiState.mediaList,
-                            key = { it.node.id },
-                            contentType = { it.node }
-                        ) { item ->
-                            MinimalItemView(item = item)
-                        }
-                        if (uiState.isLoadingMore) {
-                            items(5, contentType = { it }) {
-                                MinimalUserMediaListItemPlaceholder()
-                            }
-                        }
-                    }
-
-                    else -> {}
-                }
-                item(contentType = { 0 }) {
-                    if (uiState.canLoadMore) {
-                        Box(modifier = Modifier.align(Alignment.Center)) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.align(Alignment.Center)
-                            )
-                        }
-                        LaunchedEffect(true) {
-                            event?.loadMore()
-                        }
-                    }
-                }
+            
+            else -> {
+                // Fallback to loading state instead of empty while state is uncertain
+                LoadingState(uiState, contentPadding)
             }
         }
     }//:Box
+}
+
+@Composable
+fun LoadingState(
+    uiState: UserMediaListUiState,
+    contentPadding: PaddingValues
+) {
+    val layoutDirection = LocalLayoutDirection.current
+    if (uiState.listStyle == ListStyle.GRID) {
+        LazyVerticalGrid(
+            columns = if (uiState.itemsPerRow.value > 0) GridCells.Fixed(uiState.itemsPerRow.value)
+            else GridCells.Adaptive(minSize = (MEDIA_POSTER_MEDIUM_WIDTH + 8).dp),
+            contentPadding = PaddingValues(
+                start = contentPadding.calculateStartPadding(layoutDirection) + 8.dp,
+                top = contentPadding.calculateTopPadding() + 8.dp,
+                end = contentPadding.calculateEndPadding(layoutDirection) + 8.dp,
+                bottom = contentPadding.calculateBottomPadding() + 8.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Bottom),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+            userScrollEnabled = false
+        ) {
+            items(12) {
+                GridUserMediaListItemPlaceholder()
+            }
+        }
+    } else {
+        LazyColumn(
+            contentPadding = PaddingValues(
+                start = contentPadding.calculateStartPadding(layoutDirection),
+                top = contentPadding.calculateTopPadding() + 8.dp,
+                end = contentPadding.calculateEndPadding(layoutDirection),
+                bottom = contentPadding.calculateBottomPadding() + 8.dp
+            ),
+            userScrollEnabled = false
+        ) {
+            items(8) {
+                when (uiState.listStyle) {
+                    ListStyle.STANDARD -> StandardUserMediaListItemPlaceholder()
+                    ListStyle.COMPACT -> CompactUserMediaListItemPlaceholder()
+                    ListStyle.MINIMAL -> MinimalUserMediaListItemPlaceholder()
+                    else -> {}
+                }
+            }
+        }
+    }
 }

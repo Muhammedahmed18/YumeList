@@ -26,10 +26,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.anime.AnimeNode
 import com.axiel7.moelist.data.model.anime.exampleUserAnimeList
@@ -54,16 +54,26 @@ fun CompactUserMediaListItem(
     onLongClick: () -> Unit,
     onClickPlus: () -> Unit,
 ) {
+    val totalProgress = remember { item.totalProgress() }
+    val userProgress = item.userProgress()
     val broadcast = remember { (item.node as? AnimeNode)?.broadcast }
     val isAiring = remember { item.isAiring }
+    val currentStatus = item.listStatus?.status
+    val progressTextColor = if (currentStatus == ListStatus.DROPPED) {
+        currentStatus.primaryColor()
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp)
             .combinedClickable(onLongClick = onLongClick, onClick = onClick),
     ) {
         Row(
-            modifier = Modifier.height(MEDIA_POSTER_COMPACT_HEIGHT.dp)
+            modifier = Modifier.height(MEDIA_POSTER_COMPACT_HEIGHT.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 contentAlignment = Alignment.BottomStart
@@ -71,11 +81,11 @@ fun CompactUserMediaListItem(
                 MediaPoster(
                     url = item.node.mainPicture?.large,
                     showShadow = false,
-                    contentScale = ContentScale.FillWidth,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .size(
                             width = MEDIA_POSTER_SMALL_WIDTH.dp,
-                            height = MEDIA_POSTER_SMALL_WIDTH.dp
+                            height = MEDIA_POSTER_COMPACT_HEIGHT.dp
                         )
                 )
 
@@ -88,64 +98,70 @@ fun CompactUserMediaListItem(
                     Text(
                         text = if ((item.listStatus?.score ?: 0) == 0) UNKNOWN_CHAR
                         else "${item.listStatus?.score}",
+                        style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.padding(
-                            start = 8.dp,
-                            top = 4.dp,
+                            start = 6.dp,
+                            top = 2.dp,
                             end = 2.dp,
-                            bottom = 4.dp
+                            bottom = 2.dp
                         ),
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Icon(
                         painter = painterResource(R.drawable.ic_round_star_16),
                         contentDescription = "star",
-                        modifier = Modifier.padding(end = 4.dp),
+                        modifier = Modifier
+                            .padding(end = 4.dp)
+                            .size(10.dp),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
             }//:Box
 
             Column(
-                modifier = Modifier.fillMaxHeight(),
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .padding(horizontal = 12.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = item.node.userPreferredTitle(),
-                    modifier = Modifier
-                        .padding(start = 16.dp, end = 16.dp, top = 8.dp),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 16.sp,
-                    lineHeight = 19.sp,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = if (isAiring) 1 else 2
-                )
-
-                if (isAiring) {
+                Column {
                     Text(
-                        text = broadcast?.airingInString() ?: stringResource(R.string.airing),
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = 16.sp,
-                        lineHeight = 19.sp,
+                        text = item.node.userPreferredTitle(),
+                        modifier = Modifier
+                            .padding(top = 8.dp),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 2
+                    )
+
+                    Text(
+                        text = if (isAiring && broadcast != null) broadcast.airingInString()
+                        else if (isAiring) stringResource(R.string.airing)
+                        else item.node.mediaFormat?.localized().orEmpty(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (isAiring) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
+                        .padding(bottom = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Bottom
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "${item.userProgress() ?: 0}/${
-                                item.totalProgress().toStringPositiveValueOrUnknown()
-                            }",
-                            fontSize = 16.sp,
-                            lineHeight = 19.sp,
+                            text = "${userProgress ?: 0}/${totalProgress.toStringPositiveValueOrUnknown()}",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = progressTextColor
                         )
                         if ((item as? UserMangaList)?.listStatus?.isUsingVolumeProgress() == true) {
                             Icon(
@@ -153,20 +169,22 @@ fun CompactUserMediaListItem(
                                 contentDescription = stringResource(R.string.volumes),
                                 modifier = Modifier
                                     .padding(start = 4.dp)
-                                    .size(16.dp)
+                                    .size(12.dp),
+                                tint = if (currentStatus == ListStatus.DROPPED) progressTextColor else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
 
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.Bottom
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         if (item.listStatus?.hasRepeated() == true) {
                             Icon(
                                 painter = painterResource(R.drawable.round_repeat_24),
                                 contentDescription = stringResource(R.string.rewatching),
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
 
@@ -174,13 +192,22 @@ fun CompactUserMediaListItem(
                             Icon(
                                 painter = painterResource(R.drawable.round_notes_24),
                                 contentDescription = stringResource(R.string.notes),
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
 
                         if (listStatus?.isCurrent() == true) {
-                            OutlinedButton(onClick = onClickPlus) {
-                                Text(text = stringResource(R.string.plus_one))
+                            OutlinedButton(
+                                onClick = onClickPlus,
+                                modifier = Modifier.height(28.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.plus_one),
+                                    style = MaterialTheme.typography.labelMedium
+                                )
                             }
                         }
                     }
@@ -195,16 +222,16 @@ fun CompactUserMediaListItemPlaceholder() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 4.dp),
     ) {
         Row(
-            modifier = Modifier.height(MEDIA_POSTER_SMALL_WIDTH.dp)
+            modifier = Modifier.height(MEDIA_POSTER_COMPACT_HEIGHT.dp)
         ) {
             Box(
                 modifier = Modifier
                     .size(
                         width = MEDIA_POSTER_SMALL_WIDTH.dp,
-                        height = MEDIA_POSTER_SMALL_WIDTH.dp
+                        height = MEDIA_POSTER_COMPACT_HEIGHT.dp
                     )
                     .clip(RoundedCornerShape(8.dp))
                     .defaultPlaceholder(visible = true)
@@ -213,26 +240,33 @@ fun CompactUserMediaListItemPlaceholder() {
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 12.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = "This is a loading placeholder",
-                    modifier = Modifier.defaultPlaceholder(visible = true),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 17.sp,
-                    lineHeight = 22.sp,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 2
-                )
-                Text(
-                    text = "Placeholder",
-                    modifier = Modifier.defaultPlaceholder(visible = true),
-                )
+                Column {
+                    Text(
+                        text = "This is a loading placeholder for long titles",
+                        modifier = Modifier
+                            .padding(top = 8.dp)
+                            .defaultPlaceholder(visible = true),
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 2
+                    )
+                    Text(
+                        text = "Placeholder Format",
+                        modifier = Modifier
+                            .padding(top = 4.dp)
+                            .defaultPlaceholder(visible = true),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
 
                 Text(
                     text = "??/??",
-                    modifier = Modifier.defaultPlaceholder(visible = true)
+                    modifier = Modifier
+                        .padding(bottom = 8.dp)
+                        .defaultPlaceholder(visible = true),
+                    style = MaterialTheme.typography.labelLarge
                 )
             }//:Column
         }//:Row

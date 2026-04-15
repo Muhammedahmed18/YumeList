@@ -41,7 +41,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -66,11 +65,9 @@ import com.axiel7.moelist.utils.ContextExtensions.openLink
 import com.axiel7.moelist.utils.MOELIST_PAGELINK
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import org.koin.androidx.compose.KoinAndroidContext
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.annotation.KoinExperimentalAPI
 
-@OptIn(ExperimentalMaterial3WindowSizeClassApi::class, KoinExperimentalAPI::class)
+@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 class MainActivity : AppCompatActivity() {
 
     val viewModel by viewModel<MainViewModel>()
@@ -98,86 +95,84 @@ class MainActivity : AppCompatActivity() {
         val initialTabletMode = runBlocking { viewModel.tabletMode.first() }
 
         setContent {
-            KoinAndroidContext {
-                val theme by viewModel.theme.collectAsStateWithLifecycle(initialValue = initialTheme)
-                val useBlackColors by viewModel.useBlackColors.collectAsStateWithLifecycle(
-                    initialValue = initialUseBlackColors
-                )
-                val isDark = if (theme == ThemeStyle.FOLLOW_SYSTEM) isSystemInDarkTheme()
-                else theme == ThemeStyle.DARK
+            val theme by viewModel.theme.collectAsStateWithLifecycle(initialValue = initialTheme)
+            val useBlackColors by viewModel.useBlackColors.collectAsStateWithLifecycle(
+                initialValue = initialUseBlackColors
+            )
+            val isDark = if (theme == ThemeStyle.FOLLOW_SYSTEM) isSystemInDarkTheme()
+            else theme == ThemeStyle.DARK
 
-                val navController = rememberNavController()
-                val navActionManager = rememberNavActionManager(navController)
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val navController = rememberNavController()
+            val navActionManager = rememberNavActionManager(navController)
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
 
-                val tabletMode by viewModel.tabletMode.collectAsStateWithLifecycle(initialTabletMode)
-                val windowSizeClass = calculateWindowSizeClass(this)
-                val isCompactScreen = when (tabletMode) {
-                    TabletMode.AUTO -> windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact
-                    TabletMode.ALWAYS -> false
-                    TabletMode.LANDSCAPE -> LocalConfiguration.current.orientation != Configuration.ORIENTATION_LANDSCAPE
-                    TabletMode.NEVER -> true
-                }
+            val tabletMode by viewModel.tabletMode.collectAsStateWithLifecycle(initialTabletMode)
+            val windowSizeClass = calculateWindowSizeClass(this)
+            val isCompactScreen = when (tabletMode) {
+                TabletMode.AUTO -> windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact
+                TabletMode.ALWAYS -> false
+                TabletMode.LANDSCAPE -> LocalConfiguration.current.orientation != Configuration.ORIENTATION_LANDSCAPE
+                TabletMode.NEVER -> true
+            }
 
-                val accessToken by viewModel.accessToken.collectAsStateWithLifecycle(App.accessToken)
-                val useListTabs by viewModel.useListTabs.collectAsStateWithLifecycle()
-                val profilePicture by viewModel.profilePicture.collectAsStateWithLifecycle()
-                val pinnedNavBar by viewModel.pinnedNavBar.collectAsStateWithLifecycle(false)
+            val accessToken by viewModel.accessToken.collectAsStateWithLifecycle(App.accessToken)
+            val useListTabs by viewModel.useListTabs.collectAsStateWithLifecycle()
+            val profilePicture by viewModel.profilePicture.collectAsStateWithLifecycle()
+            val pinnedNavBar by viewModel.pinnedNavBar.collectAsStateWithLifecycle(false)
 
-                MoeListTheme(
-                    darkTheme = isDark,
-                    useBlackColors = useBlackColors
+            MoeListTheme(
+                darkTheme = isDark,
+                useBlackColors = useBlackColors
+            ) {
+                val backgroundColor = MaterialTheme.colorScheme.background
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = backgroundColor
                 ) {
-                    val backgroundColor = MaterialTheme.colorScheme.background
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = backgroundColor
-                    ) {
-                        MainView(
-                            isCompactScreen = isCompactScreen,
-                            isLoggedIn = !accessToken.isNullOrEmpty(),
-                            useListTabs = useListTabs,
-                            navController = navController,
-                            navActionManager = navActionManager,
-                            lastTabOpened = lastTabOpened,
-                            saveLastTab = viewModel::saveLastTab,
-                            pinnedNavBar = pinnedNavBar,
-                            profilePicture = profilePicture,
-                        )
+                    MainView(
+                        isCompactScreen = isCompactScreen,
+                        isLoggedIn = !accessToken.isNullOrEmpty(),
+                        useListTabs = useListTabs,
+                        navController = navController,
+                        navActionManager = navActionManager,
+                        lastTabOpened = lastTabOpened,
+                        saveLastTab = viewModel::saveLastTab,
+                        pinnedNavBar = pinnedNavBar,
+                        profilePicture = profilePicture,
+                    )
 
-                        DisposableEffect(isDark, navBackStackEntry) {
-                            var statusBarStyle = SystemBarStyle.auto(
-                                android.graphics.Color.TRANSPARENT,
-                                android.graphics.Color.TRANSPARENT
-                            ) { isDark }
+                    DisposableEffect(isDark, navBackStackEntry) {
+                        var statusBarStyle = SystemBarStyle.auto(
+                            android.graphics.Color.TRANSPARENT,
+                            android.graphics.Color.TRANSPARENT
+                        ) { isDark }
 
-                            if (isCompactScreen
-                                && navBackStackEntry?.isBottomDestination() == true
-                            ) {
-                                statusBarStyle =
-                                    if (isDark) SystemBarStyle.dark(backgroundColor.toArgb())
-                                    else SystemBarStyle.light(
-                                        backgroundColor.toArgb(),
-                                        dark_scrim.toArgb()
-                                    )
-                            }
-                            enableEdgeToEdge(
-                                statusBarStyle = statusBarStyle,
-                                navigationBarStyle = SystemBarStyle.auto(
-                                    light_scrim.toArgb(),
-                                    dark_scrim.toArgb(),
-                                ) { isDark },
-                            )
-                            onDispose {}
+                        if (isCompactScreen
+                            && navBackStackEntry?.isBottomDestination() == true
+                        ) {
+                            statusBarStyle =
+                                if (isDark) SystemBarStyle.dark(backgroundColor.toArgb())
+                                else SystemBarStyle.light(
+                                    backgroundColor.toArgb(),
+                                    dark_scrim.toArgb()
+                                )
                         }
+                        enableEdgeToEdge(
+                            statusBarStyle = statusBarStyle,
+                            navigationBarStyle = SystemBarStyle.auto(
+                                light_scrim.toArgb(),
+                                dark_scrim.toArgb(),
+                            ) { isDark },
+                        )
+                        onDispose {}
                     }
                 }
+            }
 
-                LaunchedEffect(mediaId) {
-                    if (mediaId != null && mediaTypeArg != null) {
-                        val mediaType = MediaType.valueOf(mediaTypeArg)
-                        navActionManager.toMediaDetails(mediaType, mediaId)
-                    }
+            LaunchedEffect(mediaId) {
+                if (mediaId != null && mediaTypeArg != null) {
+                    val mediaType = MediaType.valueOf(mediaTypeArg)
+                    navActionManager.toMediaDetails(mediaType, mediaId)
                 }
             }
         }
@@ -213,13 +208,8 @@ class MainActivity : AppCompatActivity() {
             val mediaType = intent.getStringExtra("media_type")?.uppercase()
             if (mediaId != 0 && mediaType != null) return mediaId to mediaType
         } else if (intent.data != null) {
-            // Manually handle deep links because the uri pattern in the compose navigation
-            // matches this -> https://myanimelist.net/manga/11514
-            // but not this -> https://myanimelist.net/manga/11514/Otoyomegatari
-            //TODO: find a better solution :)
             val malSchemeIndex = intent.dataString?.indexOf("myanimelist.net")
             if (malSchemeIndex != null && malSchemeIndex != -1) {
-                // Only handle main details links
                 val isMainDetails = intent.data?.pathSegments?.any {
                     when (it) {
                         "character", "episode", "video", "reviews", "stacks", "news", "forum",
@@ -334,32 +324,12 @@ fun MainView(
                 ),
                 padding = PaddingValues(
                     start = padding.calculateStartPadding(LocalLayoutDirection.current),
-                    top = padding.calculateTopPadding(),
                     end = padding.calculateEndPadding(LocalLayoutDirection.current),
-                    bottom = if (pinnedNavBar) 0.dp else padding.calculateBottomPadding(),
+                    top = padding.calculateTopPadding(),
+                    bottom = padding.calculateBottomPadding()
                 ),
                 topBarHeightPx = topBarHeightPx,
                 topBarOffsetY = topBarOffsetY,
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-fun MainPreview() {
-    MoeListTheme {
-        Surface {
-            MainView(
-                isCompactScreen = true,
-                isLoggedIn = false,
-                useListTabs = false,
-                navController = rememberNavController(),
-                navActionManager = rememberNavActionManager(),
-                lastTabOpened = 0,
-                saveLastTab = {},
-                pinnedNavBar = false,
-                profilePicture = null,
             )
         }
     }

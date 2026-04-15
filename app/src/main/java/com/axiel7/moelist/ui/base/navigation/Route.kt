@@ -1,5 +1,6 @@
 package com.axiel7.moelist.ui.base.navigation
 
+import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.MediaType
 import kotlinx.serialization.Serializable
 
@@ -45,6 +46,12 @@ sealed interface Route {
     ) : Route
 
     @Serializable
+    data class UserList(
+        val mediaType: MediaType,
+        val status: ListStatus? = null,
+    ) : Route
+
+    @Serializable
     data class FullPoster(val pictures: List<String>) : Route
 
     @Serializable
@@ -62,4 +69,3 @@ sealed interface Route {
     @Serializable
     data object Credits : Route
 }
-

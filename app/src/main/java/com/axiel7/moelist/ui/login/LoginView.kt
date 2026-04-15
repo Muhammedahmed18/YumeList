@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,16 +28,20 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.axiel7.moelist.R
-import com.axiel7.moelist.data.repository.LoginRepository
+import com.axiel7.moelist.ui.main.MainViewModel
 import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.utils.ContextExtensions.openCustomTab
 import com.axiel7.moelist.utils.ContextExtensions.showToast
+import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun LoginView(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val viewModel = koinViewModel<MainViewModel>()
+    val scope = rememberCoroutineScope()
     var useExternalBrowser by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -56,10 +61,13 @@ fun LoginView(
 
             Button(
                 onClick = {
-                    context.openLoginUrl(
-                        loginUrl = LoginRepository.loginUrl,
-                        useExternalBrowser = useExternalBrowser
-                    )
+                    scope.launch {
+                        val loginUrl = viewModel.generateLoginUrl()
+                        context.openLoginUrl(
+                            loginUrl = loginUrl,
+                            useExternalBrowser = useExternalBrowser
+                        )
+                    }
                 },
                 modifier = Modifier.padding(bottom = 24.dp)
             ) {

@@ -22,6 +22,7 @@
     <string name="login">Login</string>
     <string name="no_results">No results</string>
     <string name="title_profile">Profile</string>
+    <string name="back">Back</string>
     <string name="cancel">Cancel</string>
     <string name="apply">Apply</string>
     <string name="episodes">Episodes</string>
@@ -252,6 +253,7 @@
         <item quantity="one">%d year</item>
         <item quantity="other">%d years</item>
     </plurals>
+    <string name="no_anime_on_list">No anime on list</string>
     <plurals name="num_months">
         <item quantity="one">%d month</item>
         <item quantity="other">%d months</item>
@@ -388,4 +390,16 @@
     <string name="mode_never">Never</string>
     <string name="tablet_mode">Tablet mode</string>
     <string name="refresh">Refresh</string>
+
+    <string name="plus_one_episode">+1 Episode</string>
+    <string name="plus_one_chapter">+1 Chapter</string>
+    <string name="update_progress">Update progress</string>
+    <string name="change_status">Change status</string>
+    <string name="edit_rating">Edit rating</string>
+    <string name="full_edit">Full edit</string>
+    <string name="advanced_options">Advanced options</string>
+    <string name="edit_entry">Edit Entry</string>
+    <string name="something_went_wrong">Something went wrong</string>
+    <string name="retry">Retry</string>
+    <string name="music_themes">Music Themes</string>
 </resources>

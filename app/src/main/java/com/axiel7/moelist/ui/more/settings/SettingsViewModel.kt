@@ -3,14 +3,12 @@ package com.axiel7.moelist.ui.more.settings
 import androidx.lifecycle.viewModelScope
 import com.axiel7.moelist.data.model.media.TitleLanguage
 import com.axiel7.moelist.data.repository.DefaultPreferencesRepository
-import com.axiel7.moelist.ui.base.AppLanguage
 import com.axiel7.moelist.ui.base.ItemsPerRow
 import com.axiel7.moelist.ui.base.ListStyle
 import com.axiel7.moelist.ui.base.StartTab
 import com.axiel7.moelist.ui.base.TabletMode
 import com.axiel7.moelist.ui.base.ThemeStyle
 import com.axiel7.moelist.ui.base.viewmodel.BaseViewModel
-import com.axiel7.moelist.utils.ContextExtensions.changeLocale
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
@@ -23,16 +21,6 @@ class SettingsViewModel(
 ) : BaseViewModel<SettingsUiState>(), SettingsEvent {
 
     override val mutableUiState = MutableStateFlow(SettingsUiState())
-
-    override fun setLanguage(value: AppLanguage) {
-        viewModelScope.launch {
-            defaultPreferencesRepository.setLang(value)
-            changeLocale(value.value)
-            if (value == AppLanguage.JAPANESE) {
-                setTitleLanguage(TitleLanguage.JAPANESE)
-            }
-        }
-    }
 
     override fun setTheme(value: ThemeStyle) {
         viewModelScope.launch {
@@ -119,12 +107,6 @@ class SettingsViewModel(
     }
 
     init {
-        defaultPreferencesRepository.lang
-            .onEach { value ->
-                mutableUiState.update { it.copy(language = value) }
-            }
-            .launchIn(viewModelScope)
-
         defaultPreferencesRepository.theme
             .onEach { value ->
                 mutableUiState.update { it.copy(theme = value) }

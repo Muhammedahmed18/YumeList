@@ -19,10 +19,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.axiel7.moelist.R
 import com.axiel7.moelist.ui.composables.TextIconHorizontal
 import com.axiel7.moelist.ui.composables.defaultPlaceholder
@@ -43,7 +43,7 @@ fun MediaItemDetailed(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Row(
             modifier = Modifier.height(MEDIA_POSTER_SMALL_HEIGHT.dp)
@@ -86,29 +86,34 @@ fun MediaItemDetailed(
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.SpaceEvenly
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
                     text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 17.sp,
                     overflow = TextOverflow.Ellipsis,
-                    maxLines = 1
+                    maxLines = 2
                 )
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    content = subtitle1
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    content = subtitle2
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    content = subtitle3
-                )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        content = subtitle1
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        content = subtitle2
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        content = subtitle3
+                    )
+                }
             }
         }
     }
@@ -116,49 +121,60 @@ fun MediaItemDetailed(
 
 @Composable
 fun MediaItemDetailedPlaceholder() {
-    Row(
+    Card(
         modifier = Modifier
-            .padding(8.dp)
-            .height(MEDIA_POSTER_SMALL_HEIGHT.dp)
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .size(
-                    width = MEDIA_POSTER_SMALL_WIDTH.dp,
-                    height = MEDIA_POSTER_SMALL_HEIGHT.dp
-                )
-                .clip(RoundedCornerShape(8.dp))
-                .defaultPlaceholder(visible = true)
-        )
-
-        Column(
-            modifier = Modifier
-                .fillMaxHeight()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.SpaceEvenly
+        Row(
+            modifier = Modifier.height(MEDIA_POSTER_SMALL_HEIGHT.dp)
         ) {
-            Text(
-                text = "This is a placeholder text",
-                modifier = Modifier.defaultPlaceholder(visible = true),
-                fontSize = 17.sp,
-                overflow = TextOverflow.Ellipsis,
-                maxLines = 1
+            Box(
+                modifier = Modifier
+                    .size(
+                        width = MEDIA_POSTER_SMALL_WIDTH.dp,
+                        height = MEDIA_POSTER_SMALL_HEIGHT.dp
+                    )
+                    .clip(RoundedCornerShape(8.dp))
+                    .defaultPlaceholder(visible = true)
             )
 
-            Text(
-                text = "This is a placeholder",
-                modifier = Modifier.defaultPlaceholder(visible = true)
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "This is a placeholder text for a long title",
+                    modifier = Modifier.defaultPlaceholder(visible = true),
+                    style = MaterialTheme.typography.titleMedium,
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 2
+                )
 
-            Text(
-                text = "Placeholder",
-                modifier = Modifier.defaultPlaceholder(visible = true)
-            )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "This is a placeholder",
+                        modifier = Modifier.defaultPlaceholder(visible = true),
+                        style = MaterialTheme.typography.bodySmall
+                    )
 
-            Text(
-                text = "Placeholder",
-                modifier = Modifier.defaultPlaceholder(visible = true)
-            )
+                    Text(
+                        text = "Placeholder",
+                        modifier = Modifier.defaultPlaceholder(visible = true),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+
+                    Text(
+                        text = "Placeholder",
+                        modifier = Modifier.defaultPlaceholder(visible = true),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
         }
     }
 }
@@ -167,24 +183,27 @@ fun MediaItemDetailedPlaceholder() {
 @Composable
 fun MediaItemDetailedPreview() {
     MoeListTheme {
-        MediaItemDetailed(
-            title = "Boku no Hero Academia and a very very large title to preview",
-            imageUrl = "https://cdn.myanimelist.net/images/anime/1170/124312l.jpg",
-            badgeContent = {
-                Text(text = "#12")
-            },
-            subtitle1 = {
-                Text(text = "TV (13 Episodes)", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            },
-            subtitle2 = { Text(text = "2017", color = MaterialTheme.colorScheme.onSurfaceVariant) },
-            subtitle3 = {
-                TextIconHorizontal(
-                    text = "8.61",
-                    icon = R.drawable.ic_round_details_star_24,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            onClick = { }
-        )
+        Column {
+            MediaItemDetailed(
+                title = "Boku no Hero Academia and a very very large title to preview how it wraps to two lines",
+                imageUrl = "https://cdn.myanimelist.net/images/anime/1170/124312l.jpg",
+                badgeContent = {
+                    Text(text = "#12", style = MaterialTheme.typography.labelSmall)
+                },
+                subtitle1 = {
+                    Text(text = "TV (13 Episodes)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                },
+                subtitle2 = { Text(text = "2017", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                subtitle3 = {
+                    TextIconHorizontal(
+                        text = "8.61",
+                        icon = R.drawable.ic_round_details_star_24,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                onClick = { }
+            )
+            MediaItemDetailedPlaceholder()
+        }
     }
 }

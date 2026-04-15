@@ -7,7 +7,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -21,32 +20,10 @@ import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.utils.ContextExtensions.openLink
 import com.axiel7.moelist.utils.GENERAL_HELP_CREDIT_URL
 import com.axiel7.moelist.utils.LOGO_CREDIT_URL
-import java.util.Locale
 
 val contributorsCredits = mapOf(
     "@uragiristereo" to "https://github.com/uragiristereo",
     "@krishnapandey24" to "https://github.com/krishnapandey24",
-)
-
-val translationsCredits = mapOf(
-    "ar-SA" to "@sakugaky, @WhiteCanvas, @Comikazie, @mlvin, @bobteen1",
-    "bg-BG" to "@itzlighter",
-    "cs" to "@J4kub07, @gxs3lium",
-    "de" to "@Secresa, @MaximilianGT500",
-    "es" to "@axiel7",
-    "fr" to "@mamanamgae, @frosqh, @Eria78, @nesquick",
-    "in-ID" to "@Clxf12",
-    "it-IT" to "@AntoF98, @DomeF, @pasthor",
-    "ja" to "@axiel7, @Ulong32, @watashibeme",
-    "pl" to "@YOGI_AOGI",
-    "pt-BR" to "@RickyM7, @SamOak",
-    "pt-PT" to "@SamOak, @DemiCool",
-    "ru-RU" to "@grin3671, @Ronner231",
-    "sk" to "@gxs3lium",
-    "tr" to "@hsinankirdar, @kyoya",
-    "uk-UA" to "@Sensetivity",
-    "zh-Hans" to "@bengerlorf",
-    "zh-Hant" to "@jhih_yu_lin, @web790709",
 )
 
 @Composable
@@ -108,16 +85,6 @@ fun CreditsView(
                     onClick = {
                         context.openLink(link)
                     }
-                )
-            }
-            HorizontalDivider()
-            SettingsTitle(text = stringResource(R.string.translations))
-            translationsCredits.forEach { (lang, credit) ->
-                val displayName = remember { Locale.forLanguageTag(lang).displayName }
-                MoreItem(
-                    title = displayName,
-                    subtitle = credit,
-                    onClick = { }
                 )
             }
         }

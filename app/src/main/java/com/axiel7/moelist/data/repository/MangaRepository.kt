@@ -12,11 +12,17 @@ import com.axiel7.moelist.data.model.media.MediaSort
 import com.axiel7.moelist.data.model.media.RankingType
 import com.axiel7.moelist.data.network.Api
 import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 class MangaRepository(
     private val api: Api,
     private val defaultPreferencesRepository: DefaultPreferencesRepository
 ) : BaseRepository(api, defaultPreferencesRepository) {
+
+    private val _userMangaList = MutableStateFlow<List<UserMangaList>>(emptyList())
+    val userMangaList = _userMangaList.asStateFlow()
 
     companion object {
         private const val LIST_STATUS_FIELDS =
@@ -62,7 +68,26 @@ class MangaRepository(
             )
             else api.getUserMangaList(page)
             val retry = result.error?.let { handleResponseError(it) }
-            return if (retry == true) getUserMangaList(status, sort, page) else result
+            if (retry == true) return getUserMangaList(status, sort, page)
+
+            if (result.data != null) {
+                _userMangaList.update { currentList ->
+                    val newList = currentList.toMutableList()
+                    if (page == null) {
+                        newList.removeAll { it.listStatus?.status == status }
+                    }
+                    result.data.forEach { newItem ->
+                        val index = newList.indexOfFirst { it.node.id == newItem.node.id }
+                        if (index != -1) {
+                            newList[index] = newItem
+                        } else {
+                            newList.add(newItem)
+                        }
+                    }
+                    newList
+                }
+            }
+            return result
         } catch (e: Exception) {
             Response(message = e.message)
         }
@@ -83,6 +108,31 @@ class MangaRepository(
         tags: String? = null,
         comments: String? = null,
     ): MyMangaListStatus? {
+        // Optimistic update
+        val previousList = _userMangaList.value
+        _userMangaList.update { currentList ->
+            currentList.map {
+                if (it.node.id == mangaId) {
+                    it.copy(
+                        listStatus = it.listStatus?.copy(
+                            status = status ?: it.listStatus.status,
+                            score = score ?: it.listStatus.score,
+                            progress = chaptersRead ?: it.listStatus.progress,
+                            numVolumesRead = volumesRead ?: it.listStatus.numVolumesRead,
+                            startDate = startDate ?: it.listStatus.startDate,
+                            finishDate = endDate ?: it.listStatus.finishDate,
+                            isRepeating = isRereading ?: it.listStatus.isRepeating,
+                            repeatCount = numRereads ?: it.listStatus.repeatCount,
+                            repeatValue = rereadValue ?: it.listStatus.repeatValue,
+                            priority = priority ?: it.listStatus.priority,
+                            tags = tags?.split(",") ?: it.listStatus.tags,
+                            comments = comments ?: it.listStatus.comments
+                        )
+                    )
+                } else it
+            }
+        }
+
         return try {
             val result = api.updateUserMangaList(
                 mangaId,
@@ -100,8 +150,8 @@ class MangaRepository(
                 comments
             )
             val retry = result.error?.let { handleResponseError(it) }
-            return if (retry == true) {
-                updateMangaEntry(
+            if (retry == true) {
+                return updateMangaEntry(
                     mangaId,
                     status,
                     score,
@@ -116,8 +166,20 @@ class MangaRepository(
                     tags,
                     comments
                 )
-            } else result
+            }
+            if (result.status != null) {
+                _userMangaList.update { currentList ->
+                    currentList.map {
+                        if (it.node.id == mangaId) it.copy(listStatus = result) else it
+                    }
+                }
+            } else {
+                // Rollback
+                _userMangaList.value = previousList
+            }
+            result
         } catch (e: Exception) {
+            _userMangaList.value = previousList
             null
         }
     }
@@ -127,7 +189,13 @@ class MangaRepository(
     ): Boolean {
         return try {
             val result = api.deleteMangaEntry(mangaId)
-            return result.status == HttpStatusCode.OK
+            if (result.status == HttpStatusCode.OK) {
+                _userMangaList.update { currentList ->
+                    currentList.filter { it.node.id != mangaId }
+                }
+                return true
+            }
+            false
         } catch (e: Exception) {
             false
         }

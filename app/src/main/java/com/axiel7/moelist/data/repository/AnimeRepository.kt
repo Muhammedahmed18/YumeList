@@ -17,11 +17,17 @@ import com.axiel7.moelist.data.model.media.MediaStatus
 import com.axiel7.moelist.data.model.media.RankingType
 import com.axiel7.moelist.data.network.Api
 import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 class AnimeRepository(
     private val api: Api,
     private val defaultPreferencesRepository: DefaultPreferencesRepository
 ) : BaseRepository(api, defaultPreferencesRepository) {
+
+    private val _userAnimeList = MutableStateFlow<List<UserAnimeList>>(emptyList())
+    val userAnimeList = _userAnimeList.asStateFlow()
 
     companion object {
         const val TODAY_FIELDS =
@@ -44,7 +50,7 @@ class AnimeRepository(
                     "related_manga{media_type,alternative_titles{en,ja}}," +
                     "recommendations{alternative_titles{en,ja}},background,statistics"
         private const val USER_ANIME_LIST_FIELDS =
-            "alternative_titles{en,ja},list_status{$LIST_STATUS_FIELDS},num_episodes,media_type,status,broadcast"
+            "alternative_titles{en,ja},list_status{$LIST_STATUS_FIELDS},num_episodes,media_type,status,broadcast,mean"
         private const val SEARCH_FIELDS =
             "id,title,alternative_titles{en,ja},main_picture,mean,media_type,num_episodes,start_season," +
                     "my_list_status{status}"
@@ -134,7 +140,27 @@ class AnimeRepository(
             )
             else api.getUserAnimeList(page)
             val retry = result.error?.let { handleResponseError(it) }
-            return if (retry == true) getUserAnimeList(status, sort, page) else result
+            if (retry == true) return getUserAnimeList(status, sort, page)
+            
+            if (result.data != null) {
+                _userAnimeList.update { currentList ->
+                    val newList = currentList.toMutableList()
+                    if (page == null) {
+                        // If it's a fresh request for a status, remove existing ones for that status to sync
+                        newList.removeAll { it.listStatus?.status == status }
+                    }
+                    result.data.forEach { newItem ->
+                        val index = newList.indexOfFirst { it.node.id == newItem.node.id }
+                        if (index != -1) {
+                            newList[index] = newItem
+                        } else {
+                            newList.add(newItem)
+                        }
+                    }
+                    newList
+                }
+            }
+            return result
         } catch (e: Exception) {
             Response(message = e.message)
         }
@@ -154,6 +180,30 @@ class AnimeRepository(
         tags: String? = null,
         comments: String? = null,
     ): MyAnimeListStatus? {
+        // Optimistic update
+        val previousList = _userAnimeList.value
+        _userAnimeList.update { currentList ->
+            currentList.map { 
+                if (it.node.id == animeId) {
+                    it.copy(
+                        listStatus = it.listStatus?.copy(
+                            status = status ?: it.listStatus.status,
+                            score = score ?: it.listStatus.score,
+                            progress = watchedEpisodes ?: it.listStatus.progress,
+                            startDate = startDate ?: it.listStatus.startDate,
+                            finishDate = endDate ?: it.listStatus.finishDate,
+                            isRepeating = isRewatching ?: it.listStatus.isRepeating,
+                            repeatCount = numRewatches ?: it.listStatus.repeatCount,
+                            repeatValue = rewatchValue ?: it.listStatus.repeatValue,
+                            priority = priority ?: it.listStatus.priority,
+                            tags = tags?.split(",") ?: it.listStatus.tags,
+                            comments = comments ?: it.listStatus.comments
+                        )
+                    )
+                } else it
+            }
+        }
+
         return try {
             val result = api.updateUserAnimeList(
                 animeId,
@@ -170,8 +220,8 @@ class AnimeRepository(
                 comments
             )
             val retry = result.error?.let { handleResponseError(it) }
-            return if (retry == true) {
-                updateAnimeEntry(
+            if (retry == true) {
+                return updateAnimeEntry(
                     animeId,
                     status,
                     score,
@@ -185,8 +235,20 @@ class AnimeRepository(
                     tags,
                     comments
                 )
-            } else result
+            }
+            if (result.status != null) {
+                _userAnimeList.update { currentList ->
+                    currentList.map { 
+                        if (it.node.id == animeId) it.copy(listStatus = result) else it
+                    }
+                }
+            } else {
+                // Rollback on failure
+                _userAnimeList.value = previousList
+            }
+            result
         } catch (e: Exception) {
+            _userAnimeList.value = previousList
             null
         }
     }
@@ -196,7 +258,13 @@ class AnimeRepository(
     ): Boolean {
         return try {
             val result = api.deleteAnimeEntry(animeId)
-            return result.status == HttpStatusCode.OK
+            if (result.status == HttpStatusCode.OK) {
+                _userAnimeList.update { currentList ->
+                    currentList.filter { it.node.id != animeId }
+                }
+                return true
+            }
+            false
         } catch (e: Exception) {
             false
         }

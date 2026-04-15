@@ -13,7 +13,6 @@ import com.axiel7.moelist.data.model.media.MediaSort
 import com.axiel7.moelist.data.model.media.TitleLanguage
 import com.axiel7.moelist.di.getValue
 import com.axiel7.moelist.di.setValue
-import com.axiel7.moelist.ui.base.AppLanguage
 import com.axiel7.moelist.ui.base.ItemsPerRow
 import com.axiel7.moelist.ui.base.ListStyle
 import com.axiel7.moelist.ui.base.StartTab
@@ -43,6 +42,20 @@ class DefaultPreferencesRepository(
         }
     }
 
+    suspend fun saveCodeVerifier(value: String) {
+        dataStore.setValue(CODE_VERIFIER_KEY, value)
+    }
+
+    suspend fun getCodeVerifier(): String? {
+        return dataStore.getValue(CODE_VERIFIER_KEY).first()
+    }
+
+    suspend fun removeCodeVerifier() {
+        dataStore.edit {
+            it.remove(CODE_VERIFIER_KEY)
+        }
+    }
+
     val nsfw = dataStore.getValue(NSFW_KEY, false)
     suspend fun nsfwInt() = nsfw.first().toInt()
     suspend fun setNsfw(value: Boolean) {
@@ -52,12 +65,6 @@ class DefaultPreferencesRepository(
     val hideScores = dataStore.getValue(HIDE_SCORES_KEY, false)
     suspend fun setHideScores(value: Boolean) {
         dataStore.setValue(HIDE_SCORES_KEY, value)
-    }
-
-    val lang = dataStore.getValue(LANG_KEY, AppLanguage.FOLLOW_SYSTEM.value)
-        .map { AppLanguage.valueOf(isoTag = it) ?: AppLanguage.FOLLOW_SYSTEM }
-    suspend fun setLang(value: AppLanguage) {
-        dataStore.setValue(LANG_KEY, value.value)
     }
 
     val theme = dataStore.getValue(THEME_KEY, ThemeStyle.FOLLOW_SYSTEM.name)
@@ -252,10 +259,10 @@ class DefaultPreferencesRepository(
 
         private val ACCESS_TOKEN_KEY = stringPreferencesKey("access_token")
         private val REFRESH_TOKEN_KEY = stringPreferencesKey("refresh_token")
+        private val CODE_VERIFIER_KEY = stringPreferencesKey("code_verifier")
 
         private val NSFW_KEY = booleanPreferencesKey("nsfw")
         private val HIDE_SCORES_KEY = booleanPreferencesKey("hide_scores")
-        private val LANG_KEY = stringPreferencesKey("lang")
         private val THEME_KEY = stringPreferencesKey("theme")
         private val USE_BLACK_COLORS_KEY = booleanPreferencesKey("use_black_colors")
         private val LAST_TAB_KEY = intPreferencesKey("last_tab")

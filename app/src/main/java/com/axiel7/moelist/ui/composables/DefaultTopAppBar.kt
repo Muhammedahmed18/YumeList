@@ -1,5 +1,6 @@
 package com.axiel7.moelist.ui.composables
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -14,12 +15,14 @@ fun DefaultTopAppBar(
     title: String,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     navigateBack: () -> Unit,
+    actions: @Composable RowScope.() -> Unit = {},
 ) {
     TopAppBar(
         title = { Text(text = title) },
         navigationIcon = {
             BackIconButton(onClick = navigateBack)
         },
+        actions = actions,
         scrollBehavior = scrollBehavior
     )
 }

@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -36,6 +37,7 @@ fun TextIconHorizontal(
     color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     fontSize: TextUnit = TextUnit.Unspecified,
     iconSize: Dp = 24.dp,
+    style: TextStyle = MaterialTheme.typography.bodyLarge,
 ) {
     Row(
         modifier = modifier,
@@ -53,7 +55,8 @@ fun TextIconHorizontal(
             text = text,
             modifier = Modifier.padding(horizontal = 4.dp),
             color = color,
-            fontSize = fontSize
+            fontSize = fontSize,
+            style = style
         )
     }
 }
@@ -65,6 +68,7 @@ fun TextIconVertical(
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     fontSize: TextUnit = TextUnit.Unspecified,
+    style: TextStyle = MaterialTheme.typography.bodyLarge,
     isLoading: Boolean = false,
 ) {
     Column(
@@ -83,7 +87,8 @@ fun TextIconVertical(
                 .padding(horizontal = 4.dp)
                 .defaultPlaceholder(visible = isLoading),
             color = color,
-            fontSize = fontSize
+            fontSize = fontSize,
+            style = style
         )
     }
 }
@@ -95,6 +100,9 @@ fun TextIconVertical(
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
     tooltip: String,
+    color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    fontSize: TextUnit = TextUnit.Unspecified,
+    style: TextStyle = MaterialTheme.typography.bodyLarge,
     isLoading: Boolean = false,
 ) {
     val tooltipState = rememberTooltipState()
@@ -113,6 +121,9 @@ fun TextIconVertical(
             text = text,
             icon = icon,
             modifier = modifier.clickable { scope.launch { tooltipState.show() } },
+            color = color,
+            fontSize = fontSize,
+            style = style,
             isLoading = isLoading
         )
     }

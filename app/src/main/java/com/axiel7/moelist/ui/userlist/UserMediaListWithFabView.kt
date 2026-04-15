@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -61,7 +62,6 @@ import com.axiel7.moelist.ui.composables.LoadingDialog
 import com.axiel7.moelist.ui.editmedia.EditMediaSheet
 import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.ui.userlist.composables.MediaListSortDialog
-import com.axiel7.moelist.ui.userlist.composables.SetScoreDialog
 import com.axiel7.moelist.utils.ContextExtensions.showToast
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -146,13 +146,6 @@ private fun UserMediaListWithFabViewContent(
         MediaListSortDialog(uiState, event)
     }
 
-    if (uiState.openSetScoreDialog) {
-        SetScoreDialog(
-            onDismiss = { event?.toggleSetScoreDialog(false) },
-            onConfirm = { event?.setScore(it) }
-        )
-    }
-
     if (uiState.isLoadingRandom) {
         LoadingDialog()
     }
@@ -182,17 +175,21 @@ private fun UserMediaListWithFabViewContent(
 
     LaunchedEffect(uiState.message) {
         if (uiState.message != null) {
-            context.showToast(uiState.message)
-            event?.onMessageDisplayed()
+            // Show toast only if there is already content on the screen
+            if (uiState.mediaList.isNotEmpty()) {
+                context.showToast(uiState.message)
+                event?.onMessageDisplayed()
+            }
         }
     }
 
     Scaffold(
         modifier = Modifier
+            .statusBarsPadding()
             .padding(bottom = padding.calculateBottomPadding()),
         floatingActionButton = {
             AnimatedVisibility(
-                visible = isFabVisible,
+                visible = isFabVisible && !uiState.isLoading && uiState.mediaList.isNotEmpty(),
                 modifier = Modifier.sizeIn(minWidth = 80.dp, minHeight = 56.dp),
                 enter = slideInVertically(initialOffsetY = { it * 2 }),
                 exit = slideOutVertically(targetOffsetY = { it * 2 }),
@@ -207,6 +204,7 @@ private fun UserMediaListWithFabViewContent(
                         contentDescription = "status",
                         modifier = Modifier.padding(end = 8.dp)
                     )
+                    @Suppress("DEPRECATION")
                     Text(text = uiState.listStatus?.localized() ?: stringResource(R.string.loading))
                 }
             }
@@ -276,6 +274,7 @@ fun ListStatusSheet(
                         else MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
+                    @Suppress("DEPRECATION")
                     Text(
                         text = it.localized(),
                         modifier = Modifier.padding(start = 8.dp),

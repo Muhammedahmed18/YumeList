@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -27,7 +28,6 @@ import com.axiel7.moelist.ui.composables.LoadingDialog
 import com.axiel7.moelist.ui.composables.TabRowWithPager
 import com.axiel7.moelist.ui.editmedia.EditMediaSheet
 import com.axiel7.moelist.ui.userlist.composables.MediaListSortDialog
-import com.axiel7.moelist.ui.userlist.composables.SetScoreDialog
 import com.axiel7.moelist.utils.ContextExtensions.showToast
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -61,6 +61,7 @@ fun UserMediaListWithTabsView(
     TabRowWithPager(
         tabs = tabRowItems,
         modifier = Modifier
+            .statusBarsPadding()
             .padding(
                 top = padding.calculateTopPadding(),
             ),
@@ -78,13 +79,6 @@ fun UserMediaListWithTabsView(
             MediaListSortDialog(
                 uiState = uiState,
                 event = viewModel
-            )
-        }
-
-        if (uiState.openSetScoreDialog) {
-            SetScoreDialog(
-                onDismiss = { viewModel.toggleSetScoreDialog(false) },
-                onConfirm = viewModel::setScore
             )
         }
 
@@ -115,8 +109,11 @@ fun UserMediaListWithTabsView(
 
         LaunchedEffect(uiState.message) {
             if (uiState.message != null) {
-                context.showToast(uiState.message.orEmpty())
-                viewModel.onMessageDisplayed()
+                // Show toast only if there is already content on the screen
+                if (uiState.mediaList.isNotEmpty()) {
+                    context.showToast(uiState.message.orEmpty())
+                    viewModel.onMessageDisplayed()
+                }
             }
         }
 

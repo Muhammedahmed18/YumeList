@@ -20,13 +20,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.axiel7.moelist.R
 import com.axiel7.moelist.ui.composables.defaultPlaceholder
-import com.axiel7.moelist.ui.composables.score.SmallScoreIndicator
 import com.axiel7.moelist.ui.theme.MoeListTheme
 
 const val MEDIA_ITEM_VERTICAL_HEIGHT = 200
@@ -53,7 +52,7 @@ fun MediaItemVertical(
         horizontalAlignment = Alignment.Start
     ) {
         Box(
-            modifier = Modifier.padding(start = 4.dp, top = 2.dp, end = 4.dp, bottom = 8.dp),
+            modifier = Modifier.padding(bottom = 8.dp),
             contentAlignment = Alignment.BottomStart
         ) {
             MediaPoster(
@@ -69,9 +68,9 @@ fun MediaItemVertical(
             if (badgeContent != null) {
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(topEnd = 8.dp, bottomStart = 8.dp))
+                        .clip(RoundedCornerShape(topEnd = 8.dp))
                         .background(MaterialTheme.colorScheme.primaryContainer)
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     content = badgeContent
                 )
@@ -81,18 +80,21 @@ fun MediaItemVertical(
         Text(
             text = title,
             modifier = Modifier
-                .width(MEDIA_POSTER_SMALL_WIDTH.dp)
-                .padding(top = 2.dp, bottom = 4.dp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 15.sp,
-            lineHeight = 18.sp,
+                .width(MEDIA_POSTER_SMALL_WIDTH.dp),
+            color = MaterialTheme.colorScheme.onSurface,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
             overflow = TextOverflow.Ellipsis,
             maxLines = 2,
             minLines = minLines
         )
 
-        subtitle?.let { it() }
-        subtitle2?.let { it() }
+        Column(
+            modifier = Modifier.padding(top = 2.dp),
+        ) {
+            subtitle?.let { it() }
+            subtitle2?.let { it() }
+        }
     }
 }
 
@@ -103,11 +105,10 @@ fun MediaItemVerticalPlaceholder(
     Column(
         modifier = modifier
             .size(
-                width = (MEDIA_POSTER_SMALL_WIDTH + 8).dp,
+                width = MEDIA_POSTER_SMALL_WIDTH.dp,
                 height = MEDIA_ITEM_VERTICAL_HEIGHT.dp
-            )
-            .padding(end = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            ),
+        horizontalAlignment = Alignment.Start
     ) {
         Box(
             modifier = Modifier
@@ -115,16 +116,16 @@ fun MediaItemVerticalPlaceholder(
                     width = MEDIA_POSTER_SMALL_WIDTH.dp,
                     height = MEDIA_POSTER_SMALL_HEIGHT.dp
                 )
+                .clip(RoundedCornerShape(8.dp))
                 .defaultPlaceholder(visible = true)
         )
 
         Text(
-            text = "This is a placeholder",
+            text = "Loading Title",
             modifier = Modifier
                 .padding(top = 8.dp)
                 .defaultPlaceholder(visible = true),
-            fontSize = 15.sp,
-            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.labelLarge,
             maxLines = 2
         )
     }
@@ -135,24 +136,34 @@ fun MediaItemVerticalPlaceholder(
 fun MediaItemVerticalPreview() {
     MoeListTheme {
         Surface {
-            MediaItemVertical(
-                imageUrl = null,
-                title = "This is a very large anime title that should serve as a preview example",
-                badgeContent = {
-                    Icon(
-                        painter = painterResource(R.drawable.check_circle_outline_24),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                },
-                subtitle = {
-                    SmallScoreIndicator(
-                        score = 8.34f,
-                        fontSize = 13.sp
-                    )
-                },
-                onClick = {}
-            )
+            Row(modifier = Modifier.padding(16.dp)) {
+                MediaItemVertical(
+                    imageUrl = null,
+                    title = "This is a very large anime title that should serve as a preview example",
+                    badgeContent = {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_round_star_16),
+                            contentDescription = null,
+                            modifier = Modifier.size(12.dp),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            text = "8.34",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(start = 2.dp)
+                        )
+                    },
+                    subtitle = {
+                        Text(
+                            text = "TV • 12 Eps",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    onClick = {}
+                )
+            }
         }
     }
 }

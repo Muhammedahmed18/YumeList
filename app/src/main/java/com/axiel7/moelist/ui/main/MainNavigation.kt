@@ -22,6 +22,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.axiel7.moelist.R
+import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.BottomDestination
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
@@ -244,6 +245,32 @@ fun MainNavigation(
                 isLoggedIn = isLoggedIn,
                 navActionManager = navActionManager
             )
+        }
+
+        composable<Route.UserList>(
+            typeMap = mapOf(
+                typeOf<MediaType>() to MediaType.navType,
+                typeOf<ListStatus?>() to ListStatus.navType
+            )
+        ) {
+            val args = it.toRoute<Route.UserList>()
+            if (useListTabs) {
+                UserMediaListWithTabsView(
+                    mediaType = args.mediaType,
+                    isCompactScreen = isCompactScreen,
+                    navActionManager = navActionManager,
+                    padding = padding
+                )
+            } else {
+                UserMediaListWithFabView(
+                    mediaType = args.mediaType,
+                    isCompactScreen = isCompactScreen,
+                    navActionManager = navActionManager,
+                    topBarHeightPx = topBarHeightPx,
+                    topBarOffsetY = topBarOffsetY,
+                    padding = padding
+                )
+            }
         }
 
         composable<Route.FullPoster>(

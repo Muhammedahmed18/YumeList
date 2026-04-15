@@ -1,8 +1,6 @@
 package com.axiel7.moelist.ui.userlist
 
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.axiel7.moelist.data.model.anime.AnimeNode
 import com.axiel7.moelist.data.model.manga.MangaNode
 import com.axiel7.moelist.data.model.media.BaseMediaNode
@@ -22,10 +20,12 @@ data class UserMediaListUiState(
     val listSort: MediaSort? = null,
     val listStyle: ListStyle = ListStyle.STANDARD,
     val itemsPerRow: ItemsPerRow = ItemsPerRow.DEFAULT,
-    val mediaList: SnapshotStateList<BaseUserMediaList<out BaseMediaNode>> = mutableStateListOf(),
+    val mediaList: List<BaseUserMediaList<out BaseMediaNode>> = emptyList(),
     val isLoadingMore: Boolean = false,
+    val loadedStatuses: Set<ListStatus> = emptySet(),
     val openSortDialog: Boolean = false,
     val openSetScoreDialog: Boolean = false,
+    val openActionSheet: Boolean = false,
     val selectedItem: BaseUserMediaList<*>? = null,
     val showRandomButton: Boolean = false,
     val randomId: Int? = null,
@@ -43,4 +43,6 @@ data class UserMediaListUiState(
 
     val myListStatus: BaseMyListStatus?
         get() = selectedItem?.listStatus
+        
+    fun isStatusLoaded(status: ListStatus?) = status != null && loadedStatuses.contains(status)
 }

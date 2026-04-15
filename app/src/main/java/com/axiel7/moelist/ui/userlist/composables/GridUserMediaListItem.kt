@@ -25,20 +25,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.anime.AnimeNode
 import com.axiel7.moelist.data.model.anime.exampleUserAnimeList
 import com.axiel7.moelist.data.model.manga.UserMangaList
 import com.axiel7.moelist.data.model.media.BaseMediaNode
 import com.axiel7.moelist.data.model.media.BaseUserMediaList
+import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.ui.composables.defaultPlaceholder
 import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_MEDIUM_HEIGHT
 import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_MEDIUM_WIDTH
@@ -54,8 +54,17 @@ fun GridUserMediaListItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
+    val userProgress = item.userProgress()
+    val totalProgress = remember { item.totalProgress() }
     val broadcast = remember { (item.node as? AnimeNode)?.broadcast }
     val isAiring = remember { item.isAiring }
+    val currentStatus = item.listStatus?.status
+    val progressTextColor = if (currentStatus == ListStatus.DROPPED) {
+        currentStatus.primaryColor()
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -63,8 +72,7 @@ fun GridUserMediaListItem(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp)),
+                .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box {
@@ -79,36 +87,38 @@ fun GridUserMediaListItem(
                 Row(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .clip(RoundedCornerShape(topEnd = 8.dp, bottomStart = 8.dp))
+                        .clip(RoundedCornerShape(topEnd = 8.dp))
                         .background(MaterialTheme.colorScheme.primaryContainer),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = if ((item.listStatus?.score ?: 0) == 0) UNKNOWN_CHAR
                         else "${item.listStatus?.score}",
+                        style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.padding(
-                            start = 8.dp,
-                            top = 4.dp,
+                            start = 6.dp,
+                            top = 2.dp,
                             end = 2.dp,
-                            bottom = 4.dp
+                            bottom = 2.dp
                         ),
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Icon(
                         painter = painterResource(R.drawable.ic_round_star_16),
                         contentDescription = "star",
-                        modifier = Modifier.padding(end = 4.dp),
+                        modifier = Modifier
+                            .padding(end = 4.dp)
+                            .size(10.dp),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }//:Row
                 if (isAiring) {
                     Row(
                         modifier = Modifier
-                            .shadow(8.dp)
                             .fillMaxWidth()
                             .align(Alignment.TopCenter)
                             .clip(RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f)),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -116,14 +126,14 @@ fun GridUserMediaListItem(
                             painter = painterResource(R.drawable.ic_round_rss_feed_24),
                             contentDescription = stringResource(R.string.airing),
                             modifier = Modifier
-                                .padding(start = 8.dp, end = 4.dp)
-                                .size(16.dp),
+                                .padding(start = 6.dp, end = 4.dp)
+                                .size(12.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             text = broadcast?.airingInShortString() ?: stringResource(R.string.airing),
-                            modifier = Modifier.padding(end = 8.dp),
-                            fontSize = 15.sp,
+                            modifier = Modifier.padding(end = 6.dp, top = 2.dp, bottom = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -134,25 +144,23 @@ fun GridUserMediaListItem(
 
             Text(
                 text = item.node.userPreferredTitle(),
-                modifier = Modifier.padding(start = 8.dp, top = 4.dp, end = 8.dp),
-                fontSize = 16.sp,
+                modifier = Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
-                lineHeight = 18.sp,
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 2,
                 minLines = 2,
             )
 
             Row(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                modifier = Modifier.padding(start = 8.dp, top = 4.dp, end = 8.dp, bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${item.userProgress() ?: 0}/${
-                        item.totalProgress().toStringPositiveValueOrUnknown()
-                    }",
-                    fontSize = 16.sp,
-                    lineHeight = 19.sp,
+                    text = "${userProgress ?: 0}/${totalProgress.toStringPositiveValueOrUnknown()}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = progressTextColor
                 )
                 if ((item as? UserMangaList)?.listStatus?.isUsingVolumeProgress() == true) {
                     Icon(
@@ -160,7 +168,8 @@ fun GridUserMediaListItem(
                         contentDescription = stringResource(R.string.volumes),
                         modifier = Modifier
                             .padding(start = 4.dp)
-                            .size(16.dp)
+                            .size(12.dp),
+                        tint = progressTextColor
                     )
                 }
             }
@@ -176,20 +185,18 @@ fun GridUserMediaListItemPlaceholder() {
     ) {
         Box(
             modifier = Modifier
-                .size(
-                    width = MEDIA_POSTER_MEDIUM_WIDTH.dp,
-                    height = MEDIA_POSTER_MEDIUM_HEIGHT.dp
-                )
+                .fillMaxWidth()
+                .height(MEDIA_POSTER_MEDIUM_HEIGHT.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .defaultPlaceholder(visible = true)
         )
         Text(
-            text = "This is a loading placeholder",
+            text = "Loading Title Placeholder",
             modifier = Modifier
                 .padding(top = 8.dp)
                 .defaultPlaceholder(visible = true),
-            fontSize = 16.sp,
-            lineHeight = 18.sp,
+            style = MaterialTheme.typography.labelLarge,
+            minLines = 2
         )
     }
 }
@@ -200,9 +207,9 @@ fun GridUserMediaListItemPreview() {
     MoeListTheme {
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = (MEDIA_POSTER_MEDIUM_WIDTH + 8).dp),
-            contentPadding = PaddingValues(vertical = 8.dp, horizontal = 8.dp),
+            contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally)
         ) {
             items(3) {
                 GridUserMediaListItem(

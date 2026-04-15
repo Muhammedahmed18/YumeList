@@ -2,6 +2,7 @@ package com.axiel7.moelist.ui.home
 
 import androidx.lifecycle.viewModelScope
 import com.axiel7.moelist.data.model.anime.AnimeRanking
+import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.MediaSort
 import com.axiel7.moelist.data.model.media.MediaStatus
 import com.axiel7.moelist.data.model.media.RankingType
@@ -27,9 +28,8 @@ class HomeViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             mutableUiState.update { it.copy(isLoading = true) }
             mutableUiState.value.run {
-                if (todayAnimes.isEmpty()) getTodayAiringAnimes()
-                if (seasonAnimes.isEmpty()) getSeasonAnimes()
-                if (isLoggedIn && recommendedAnimes.isEmpty()) getRecommendedAnimes()
+                getTodayAiringAnimes()
+                if (isLoggedIn) getWatchingAnimes()
             }
             mutableUiState.update { it.copy(isLoading = false) }
         }
@@ -44,10 +44,14 @@ class HomeViewModel(
         if (result.data != null) {
             val tempList = mutableListOf<AnimeRanking>()
             for (anime in result.data) {
+                val status = anime.node.myListStatus?.status
+                val isInList = status == ListStatus.WATCHING || status == ListStatus.PLAN_TO_WATCH
+                
                 if (anime.node.broadcast != null
                     && !tempList.contains(anime)
                     && anime.node.broadcast.dayOfTheWeek == SeasonCalendar.currentJapanWeekday
                     && anime.node.status == MediaStatus.AIRING
+                    && isInList
                 ) {
                     tempList.add(anime)
                 }
@@ -59,27 +63,13 @@ class HomeViewModel(
         }
     }
 
-    private suspend fun getSeasonAnimes() {
-        val currentStartSeason = SeasonCalendar.currentStartSeason
-        val result = animeRepository.getSeasonalAnimes(
+    private suspend fun getWatchingAnimes() {
+        val result = animeRepository.getUserAnimeList(
+            status = ListStatus.WATCHING,
             sort = MediaSort.SCORE,
-            startSeason = currentStartSeason,
-            limit = 25,
-            fields = "alternative_titles{en,ja},mean,my_list_status{status}",
         )
         if (result.data != null) {
-            mutableUiState.update { it.copy(seasonAnimes = result.data) }
-        } else {
-            showMessage(result.message ?: result.error)
-        }
-    }
-
-    private suspend fun getRecommendedAnimes() {
-        val result = animeRepository.getRecommendedAnimes(
-            limit = 25
-        )
-        if (result.data != null) {
-            mutableUiState.update { it.copy(recommendedAnimes = result.data) }
+            mutableUiState.update { it.copy(watchingAnimes = result.data) }
         } else {
             showMessage(result.message ?: result.error)
         }

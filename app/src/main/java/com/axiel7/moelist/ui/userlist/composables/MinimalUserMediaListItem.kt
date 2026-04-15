@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -21,10 +22,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.anime.AnimeNode
 import com.axiel7.moelist.data.model.anime.exampleUserAnimeList
@@ -47,18 +48,27 @@ fun MinimalUserMediaListItem(
     onLongClick: () -> Unit,
     onClickPlus: () -> Unit,
 ) {
+    val totalProgress = remember { item.totalProgress() }
+    val userProgress = item.userProgress()
     val broadcast = remember { (item.node as? AnimeNode)?.broadcast }
-    val isAiring = remember { broadcast != null && item.node.status == MediaStatus.AIRING }
+    val isAiring = remember { item.node.status == MediaStatus.AIRING }
+    val currentStatus = item.listStatus?.status
+    val progressTextColor = if (currentStatus == ListStatus.DROPPED) {
+        currentStatus.primaryColor()
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp)
             .combinedClickable(onLongClick = onLongClick, onClick = onClick),
     ) {
         Row(
             modifier = Modifier
                 .height(84.dp)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
@@ -67,22 +77,25 @@ fun MinimalUserMediaListItem(
                     .fillMaxHeight(),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = item.node.userPreferredTitle(),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 16.sp,
-                    lineHeight = 19.sp,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = if (isAiring) 1 else 2
-                )
-
-                if (isAiring) {
+                Column {
                     Text(
-                        text = broadcast?.airingInString() ?: stringResource(R.string.airing),
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = 16.sp,
-                        lineHeight = 19.sp,
+                        text = item.node.userPreferredTitle(),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 2
                     )
+
+                    if (isAiring) {
+                        Text(
+                            text = broadcast?.airingInString() ?: stringResource(R.string.airing),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
 
                 Row(
@@ -94,11 +107,9 @@ fun MinimalUserMediaListItem(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "${item.userProgress() ?: 0}/${
-                                item.totalProgress().toStringPositiveValueOrUnknown()
-                            }",
-                            fontSize = 16.sp,
-                            lineHeight = 19.sp,
+                            text = "${userProgress ?: 0}/${totalProgress.toStringPositiveValueOrUnknown()}",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = progressTextColor
                         )
                         if ((item as? UserMangaList)?.listStatus?.isUsingVolumeProgress() == true) {
                             Icon(
@@ -106,20 +117,22 @@ fun MinimalUserMediaListItem(
                                 contentDescription = stringResource(R.string.volumes),
                                 modifier = Modifier
                                     .padding(start = 4.dp)
-                                    .size(16.dp)
+                                    .size(12.dp),
+                                tint = if (currentStatus == ListStatus.DROPPED) progressTextColor else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
 
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.Bottom
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         if (item.listStatus?.hasRepeated() == true) {
                             Icon(
                                 painter = painterResource(R.drawable.round_repeat_24),
                                 contentDescription = stringResource(R.string.rewatching),
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
 
@@ -127,23 +140,26 @@ fun MinimalUserMediaListItem(
                             Icon(
                                 painter = painterResource(R.drawable.round_notes_24),
                                 contentDescription = stringResource(R.string.notes),
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                        
                         Row(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
                                 text = if ((item.listStatus?.score ?: 0) == 0) UNKNOWN_CHAR
                                 else "${item.listStatus?.score}",
-                                modifier = Modifier.padding(start = 8.dp, end = 2.dp),
-                                color = MaterialTheme.colorScheme.secondary,
-                                fontSize = 16.sp,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.secondary
                             )
                             Icon(
                                 painter = painterResource(R.drawable.ic_round_star_16),
                                 contentDescription = "star",
-                                modifier = Modifier.padding(end = 16.dp),
+                                modifier = Modifier
+                                    .padding(start = 2.dp)
+                                    .size(12.dp),
                                 tint = MaterialTheme.colorScheme.secondary
                             )
                         }
@@ -152,8 +168,18 @@ fun MinimalUserMediaListItem(
             }//:Column
 
             if (listStatus?.isCurrent() == true) {
-                OutlinedButton(onClick = onClickPlus) {
-                    Text(text = stringResource(R.string.plus_one))
+                OutlinedButton(
+                    onClick = onClickPlus,
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .height(32.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.plus_one),
+                        style = MaterialTheme.typography.labelLarge
+                    )
                 }
             }
         }//:Row
@@ -164,29 +190,37 @@ fun MinimalUserMediaListItem(
 fun MinimalUserMediaListItemPlaceholder() {
     Column(
         modifier = Modifier
-            .padding(16.dp)
             .fillMaxWidth()
-            .height(84.dp),
-        verticalArrangement = Arrangement.SpaceBetween
+            .padding(horizontal = 16.dp, vertical = 4.dp),
     ) {
-        Text(
-            text = "This is a loading placeholder",
-            modifier = Modifier.defaultPlaceholder(visible = true),
-            color = MaterialTheme.colorScheme.onSurface,
-            fontSize = 17.sp,
-            lineHeight = 22.sp,
-            overflow = TextOverflow.Ellipsis,
-            maxLines = 2
-        )
-        Text(
-            text = "Placeholder",
-            modifier = Modifier.defaultPlaceholder(visible = true),
-        )
+        Column(
+            modifier = Modifier
+                .height(84.dp)
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    text = "This is a loading placeholder for long titles",
+                    modifier = Modifier.defaultPlaceholder(visible = true),
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 2
+                )
+                Text(
+                    text = "Placeholder Format",
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .defaultPlaceholder(visible = true),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
 
-        Text(
-            text = "??/??",
-            modifier = Modifier.defaultPlaceholder(visible = true)
-        )
+            Text(
+                text = "??/??",
+                modifier = Modifier.defaultPlaceholder(visible = true),
+                style = MaterialTheme.typography.labelLarge
+            )
+        }//:Column
     }//:Column
 }
 

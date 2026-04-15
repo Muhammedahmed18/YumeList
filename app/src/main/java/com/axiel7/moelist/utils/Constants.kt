@@ -3,7 +3,7 @@ package com.axiel7.moelist.utils
 //Urls
 const val MAL_OAUTH2_URL = "https://myanimelist.net/v1/oauth2/"
 const val MAL_API_URL = "https://api.myanimelist.net/v2/"
-const val MOELIST_PAGELINK = "moelist://moelist.page.link/"
+const val MOELIST_PAGELINK = "yume://callback"
 const val ANIME_URL = "https://myanimelist.net/anime/"
 const val MANGA_URL = "https://myanimelist.net/manga/"
 const val MAL_NEWS_URL = "https://myanimelist.net/news"
