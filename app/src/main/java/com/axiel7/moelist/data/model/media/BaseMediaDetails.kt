@@ -78,7 +78,7 @@ abstract class BaseMediaDetails : BaseResponse {
                     count = numEpisodes,
                     numEpisodes
                 )
-            } else stringResource(R.string.unknown)
+            } else stringResource(R.string.unspecified)
         }
 
         is MangaDetails -> {
@@ -88,10 +88,10 @@ abstract class BaseMediaDetails : BaseResponse {
                     count = numChapters,
                     numChapters
                 )
-            } else stringResource(R.string.unknown)
+            } else stringResource(R.string.unspecified)
         }
 
-        else -> stringResource(R.string.unknown)
+        else -> stringResource(R.string.unspecified)
     }
 
     @Composable

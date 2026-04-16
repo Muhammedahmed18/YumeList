@@ -1,13 +1,11 @@
 package com.axiel7.moelist.ui.composables.media
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,25 +28,19 @@ const val MEDIA_POSTER_BIG_WIDTH = 150
 @Composable
 fun MediaPoster(
     url: String?,
-    showShadow: Boolean = true,
+    showShadow: Boolean = true, // Kept for compatibility, but M3 avoids shadows
     contentScale: ContentScale = ContentScale.Crop,
     modifier: Modifier
 ) {
     AsyncImage(
         model = url,
         contentDescription = "poster",
-        placeholder = ColorPainter(MaterialTheme.colorScheme.outline),
-        error = ColorPainter(MaterialTheme.colorScheme.outline),
-        fallback = ColorPainter(MaterialTheme.colorScheme.outline),
+        placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
+        error = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
+        fallback = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
         contentScale = contentScale,
         modifier = modifier
-            .then(
-                if (showShadow) Modifier
-                    .padding(start = 4.dp, top = 2.dp, end = 4.dp, bottom = 8.dp)
-                    .shadow(4.dp, shape = RoundedCornerShape(8.dp))
-                else Modifier
-            )
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(16.dp)) // M3 Large Shape
     )
 }
 

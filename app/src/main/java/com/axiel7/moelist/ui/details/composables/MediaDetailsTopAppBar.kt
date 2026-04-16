@@ -3,25 +3,19 @@ package com.axiel7.moelist.ui.details.composables
 import android.Manifest
 import android.os.Build
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumTopAppBar
-import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.anime.AnimeDetails
 import com.axiel7.moelist.data.model.media.MediaStatus
@@ -110,23 +104,8 @@ fun MediaDetailsTopAppBar(
         label = "appBarContentColor"
     )
 
-    MediumTopAppBar(
-        title = {
-            Text(
-                text = uiState.mediaDetails?.userPreferredTitle().orEmpty(),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                style = if (collapsedFraction > 0.8f) {
-                    MaterialTheme.typography.titleLarge
-                } else {
-                    MaterialTheme.typography.headlineSmall.copy(
-                        fontSize = (24 - (collapsedFraction * 4)).sp
-                    )
-                },
-                color = contentColor,
-                modifier = Modifier.padding(end = 16.dp)
-            )
-        },
+    TopAppBar(
+        title = { },
         navigationIcon = {
             IconButton(onClick = navigateBack) {
                 Icon(
@@ -174,7 +153,7 @@ fun MediaDetailsTopAppBar(
                 )
             }
         },
-        colors = TopAppBarDefaults.mediumTopAppBarColors(
+        colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Color.Transparent,
             scrolledContainerColor = MaterialTheme.colorScheme.surface
         ),

@@ -9,6 +9,7 @@ import com.axiel7.moelist.data.repository.UserRepository
 import com.axiel7.moelist.ui.base.viewmodel.BaseViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -22,12 +23,24 @@ class ProfileViewModel(
     override val mutableUiState = MutableStateFlow(ProfileUiState())
 
     init {
+        // Observe profile picture from repository for instant UI updates
+        viewModelScope.launch {
+            defaultPreferencesRepository.profilePicture.collectLatest { picture ->
+                mutableUiState.update { it.copy(profilePictureUrl = picture) }
+            }
+        }
+
+        refreshUserProfile()
+    }
+
+    private fun refreshUserProfile() {
         viewModelScope.launch {
             setLoading(true)
             val user = withContext(Dispatchers.IO) { userRepository.getMyUser() }
 
             if (user == null || user.message != null) {
                 showMessage(user?.message)
+                setLoading(false)
             } else {
                 val tempAnimeStatList = mutableListOf<Stat<ListStatus>>()
                 user.animeStatistics?.let { stats ->
@@ -62,6 +75,7 @@ class ProfileViewModel(
                         )
                     )
 
+                    // Sync picture if it changed on the server
                     if (user.picture != null && user.picture != mutableUiState.value.profilePictureUrl) {
                         defaultPreferencesRepository.setProfilePicture(user.picture)
                     }
@@ -70,7 +84,6 @@ class ProfileViewModel(
                 mutableUiState.update {
                     it.copy(
                         user = user,
-                        profilePictureUrl = user.picture,
                         animeStats = tempAnimeStatList,
                         isLoading = false,
                         isLoadingManga = user.name != null,

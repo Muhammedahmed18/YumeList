@@ -77,7 +77,7 @@ fun UserStatsView(
 
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         if (showSectionTitle || (mediaType == MediaType.MANGA && isError && !isLoading)) {
             Row(
@@ -97,12 +97,12 @@ fun UserStatsView(
                 if (mediaType == MediaType.MANGA && isError && !isLoading) {
                     IconButton(
                         onClick = onRefreshManga,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(28.dp)
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_round_refresh_24),
                             contentDescription = stringResource(R.string.refresh),
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(18.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -116,8 +116,8 @@ fun UserStatsView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(120.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .height(84.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             BentoStatCard(
                 title = stringResource(R.string.days),
@@ -144,8 +144,8 @@ fun UserStatsView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(100.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .height(72.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             val watchingStatus = if (mediaType == MediaType.ANIME) ListStatus.WATCHING else ListStatus.READING
             BentoStatCard(
@@ -172,8 +172,8 @@ fun UserStatsView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(100.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .height(72.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             BentoStatCard(
                 title = progressLabel,
@@ -199,8 +199,8 @@ fun UserStatsView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(100.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .height(72.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             val ptwStatus = if (mediaType == MediaType.ANIME) ListStatus.PLAN_TO_WATCH else ListStatus.PLAN_TO_READ
             BentoStatCard(
@@ -239,12 +239,10 @@ fun UserStatsView(
                 icon = R.drawable.ic_outline_book_24,
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 contentColor = MaterialTheme.colorScheme.outline,
-                modifier = Modifier.fillMaxWidth().height(80.dp),
+                modifier = Modifier.fillMaxWidth().height(56.dp),
                 isLoading = isLoading
             )
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
     }
 }
 
@@ -265,11 +263,11 @@ fun BentoStatCard(
             containerColor = containerColor,
             contentColor = contentColor
         ),
-        shape = MaterialTheme.shapes.extraLarge
+        shape = MaterialTheme.shapes.large
     ) {
         Column(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(8.dp)
                 .fillMaxHeight(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = if (isHero) Alignment.Start else Alignment.CenterHorizontally
@@ -282,26 +280,26 @@ fun BentoStatCard(
                 Icon(
                     painter = painterResource(id = icon),
                     contentDescription = null,
-                    modifier = Modifier.size(if (isHero) 24.dp else 20.dp),
+                    modifier = Modifier.size(if (isHero) 20.dp else 16.dp),
                     tint = contentColor.copy(alpha = 0.8f)
                 )
                 if (isHero) {
-                    Spacer(modifier = Modifier.size(8.dp))
+                    Spacer(modifier = Modifier.size(6.dp))
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.labelMedium,
+                        style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = contentColor.copy(alpha = 0.7f)
                     )
                 }
             }
             
-            Spacer(modifier = Modifier.height(if (isHero) 8.dp else 4.dp))
+            Spacer(modifier = Modifier.height(if (isHero) 4.dp else 2.dp))
             
             Text(
                 text = value,
-                style = if (isHero) MaterialTheme.typography.displaySmall else MaterialTheme.typography.titleLarge,
-                fontSize = if (isHero) 32.sp else 20.sp,
+                style = if (isHero) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleMedium,
+                fontSize = if (isHero) 24.sp else 16.sp,
                 fontWeight = FontWeight.Black,
                 modifier = Modifier.defaultPlaceholder(visible = isLoading),
                 color = contentColor
@@ -311,6 +309,7 @@ fun BentoStatCard(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.labelSmall,
+                    fontSize = 10.sp,
                     maxLines = 1,
                     fontWeight = FontWeight.Bold,
                     color = contentColor.copy(alpha = 0.6f)

@@ -42,6 +42,14 @@ class DefaultPreferencesRepository(
         }
     }
 
+    suspend fun clearUserData() {
+        dataStore.edit {
+            it.remove(ACCESS_TOKEN_KEY)
+            it.remove(REFRESH_TOKEN_KEY)
+            it.remove(PROFILE_PICTURE_KEY)
+        }
+    }
+
     suspend fun saveCodeVerifier(value: String) {
         dataStore.setValue(CODE_VERIFIER_KEY, value)
     }

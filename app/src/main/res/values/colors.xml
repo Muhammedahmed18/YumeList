@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorYumeList">#5c6bc0</color>
-    <color name="colorPlaceHolder">#dedede</color>
+    <color name="colorYumeList">#5C6BC0</color>
+    <color name="colorYumeListLight">#9EACFF</color>
+    <color name="colorPlaceHolder">#DEDEDE</color>
+
+    <!-- Splash Screen Colors -->
+    <color name="splash_background_light">#FDFBFF</color>
+    <color name="splash_background_dark">#1B1B1F</color>
 
     <color name="md_theme_primary">#4858AB</color>
 </resources>

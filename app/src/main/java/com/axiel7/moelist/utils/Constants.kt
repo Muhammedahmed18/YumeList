@@ -14,7 +14,7 @@ const val CHARACTER_URL = "https://myanimelist.net/character/"
 const val JIKAN_API_URL = "https://api.jikan.moe/v4/"
 
 const val DISCORD_SERVER_URL = "https://discord.gg/CTv3WdfxHh"
-const val GITHUB_REPO_URL = "https://github.com/axiel7/MoeList"
+const val GITHUB_REPO_URL = "https://github.com/Muhammedahmed18/YumeList"
 const val GITHUB_ISSUES_URL = "$GITHUB_REPO_URL/issues"
 const val LOGO_CREDIT_URL = "https://instagram.com/danielvd_art"
 const val GENERAL_HELP_CREDIT_URL = "https://github.com/Jeluchu"

@@ -1,11 +1,15 @@
 package com.axiel7.moelist.ui.userlist
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.axiel7.moelist.data.model.media.ListStatus.Companion.listStatusValues
 import com.axiel7.moelist.data.model.media.MediaType
@@ -49,7 +54,7 @@ fun UserMediaListWithTabsView(
                 TabRowItem(value = it, title = it.stringRes)
             }.toTypedArray()
     }
-    val editSheetState = rememberModalBottomSheetState()
+    val editSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showEditSheet by remember { mutableStateOf(false) }
     fun hideEditSheet() {
         scope.launch { editSheetState.hide() }.invokeOnCompletion { showEditSheet = false }
@@ -57,80 +62,87 @@ fun UserMediaListWithTabsView(
 
     val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 
-    TabRowWithPager(
-        tabs = tabRowItems,
-        modifier = Modifier
-            .padding(
-                top = padding.calculateTopPadding(),
-            ),
-        beyondBoundsPageCount = -1,
-        isTabScrollable = true
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
     ) {
-        val listStatus = tabRowItems[it].value
-        val viewModel: UserMediaListViewModel = koinViewModel(
-            key = listStatus.name,
-            parameters = { parametersOf(mediaType, listStatus) }
-        )
-        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+        Column(
+            modifier = Modifier
+                .padding(top = padding.calculateTopPadding())
+        ) {
+            TabRowWithPager(
+                tabs = tabRowItems,
+                modifier = Modifier.fillMaxSize(),
+                beyondBoundsPageCount = 1,
+                isTabScrollable = true,
+                isPrimaryTab = false // Using Secondary style for a cleaner, modern look
+            ) { page ->
+                val listStatus = tabRowItems[page].value
+                val viewModel: UserMediaListViewModel = koinViewModel(
+                    key = "${mediaType.name}_${listStatus.name}",
+                    parameters = { parametersOf(mediaType, listStatus) }
+                )
+                val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-        if (uiState.openSortDialog && uiState.listSort != null) {
-            MediaListSortDialog(
-                uiState = uiState,
-                event = viewModel
-            )
-        }
+                if (uiState.openSortDialog && uiState.listSort != null) {
+                    MediaListSortDialog(
+                        uiState = uiState,
+                        event = viewModel
+                    )
+                }
 
-        if (uiState.isLoadingRandom) {
-            LoadingDialog()
-        }
+                if (uiState.isLoadingRandom) {
+                    LoadingDialog()
+                }
 
-        if (showEditSheet && uiState.mediaInfo != null) {
-            EditMediaSheet(
-                sheetState = editSheetState,
-                mediaInfo = uiState.mediaInfo!!,
-                myListStatus = uiState.myListStatus,
-                bottomPadding = systemBarsPadding.calculateBottomPadding(),
-                onEdited = { status, removed ->
-                    hideEditSheet()
-                    viewModel.onChangeItemMyListStatus(status, removed)
-                },
-                onDismissed = { hideEditSheet() }
-            )
-        }
+                if (showEditSheet && uiState.mediaInfo != null) {
+                    EditMediaSheet(
+                        sheetState = editSheetState,
+                        mediaInfo = uiState.mediaInfo!!,
+                        myListStatus = uiState.myListStatus,
+                        bottomPadding = systemBarsPadding.calculateBottomPadding(),
+                        onEdited = { status, removed ->
+                            hideEditSheet()
+                            viewModel.onChangeItemMyListStatus(status, removed)
+                        },
+                        onDismissed = { hideEditSheet() }
+                    )
+                }
 
-        LaunchedEffect(uiState.randomId) {
-            uiState.randomId?.let { id ->
-                navActionManager.toMediaDetails(uiState.mediaType, id)
-                viewModel.onRandomIdOpen()
-            }
-        }
+                LaunchedEffect(uiState.randomId) {
+                    uiState.randomId?.let { id ->
+                        navActionManager.toMediaDetails(uiState.mediaType, id)
+                        viewModel.onRandomIdOpen()
+                    }
+                }
 
-        LaunchedEffect(uiState.message) {
-            if (uiState.message != null) {
-                // Show toast only if there is already content on the screen
-                if (uiState.mediaList.isNotEmpty()) {
-                    context.showToast(uiState.message.orEmpty())
-                    viewModel.onMessageDisplayed()
+                LaunchedEffect(uiState.message) {
+                    if (uiState.message != null) {
+                        if (uiState.mediaList.isNotEmpty()) {
+                            context.showToast(uiState.message.orEmpty())
+                            viewModel.onMessageDisplayed()
+                        }
+                    }
+                }
+
+                if (uiState.listSort != null) {
+                    UserMediaListView(
+                        uiState = uiState,
+                        event = viewModel,
+                        navActionManager = navActionManager,
+                        isCompactScreen = isCompactScreen,
+                        contentPadding = PaddingValues(
+                            top = 8.dp, // Added small top padding for breathability
+                            bottom = padding.calculateBottomPadding() + 8.dp
+                        ),
+                        onShowEditSheet = { item ->
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            viewModel.onItemSelected(item)
+                            showEditSheet = true
+                        },
+                    )
                 }
             }
         }
-
-        if (uiState.listSort != null) {
-            UserMediaListView(
-                uiState = uiState,
-                event = viewModel,
-                navActionManager = navActionManager,
-                isCompactScreen = isCompactScreen,
-                contentPadding = PaddingValues(
-                    bottom = padding.calculateBottomPadding() +
-                            systemBarsPadding.calculateBottomPadding()
-                ),
-                onShowEditSheet = { item ->
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    viewModel.onItemSelected(item)
-                    showEditSheet = true
-                },
-            )
-        }
-    }//:Pager
+    }
 }

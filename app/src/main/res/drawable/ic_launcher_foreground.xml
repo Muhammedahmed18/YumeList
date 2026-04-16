@@ -7,12 +7,12 @@
 
     <!-- Stylized Y / Crescent Moon -->
     <path
-        android:fillColor="#FFFFFF"
+        android:fillColor="#FDFBFF"
         android:pathData="M35,30 C30,45 30,65 54,80 L54,85 L54,80 C78,65 78,45 73,30 L65,30 C68,40 68,55 54,65 C40,55 40,40 43,30 Z" />
 
     <!-- Sparkle Star -->
     <path
-        android:fillColor="#FFFFFF"
+        android:fillColor="#FDFBFF"
         android:pathData="M75,25 L77,30 L82,32 L77,34 L75,39 L73,34 L68,32 L73,30 Z" />
 
 </vector>

@@ -1,6 +1,7 @@
 package com.axiel7.moelist.ui.editmedia
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,7 +24,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
@@ -35,7 +35,6 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetProperties
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
@@ -69,7 +68,6 @@ import com.axiel7.moelist.data.model.media.BaseMyListStatus
 import com.axiel7.moelist.data.model.media.ListStatus.Companion.listStatusValues
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.data.model.media.scoreText
-import com.axiel7.moelist.ui.composables.SelectableIconToggleButton
 import com.axiel7.moelist.ui.composables.media.MediaPoster
 import com.axiel7.moelist.ui.composables.score.ScoreSlider
 import com.axiel7.moelist.ui.editmedia.composables.DeleteMediaEntryDialog
@@ -175,6 +173,16 @@ private fun EditMediaSheetContent(
         onDismissRequest = onDismissed,
         contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
         properties = ModalBottomSheetProperties(shouldDismissOnBackPress = false),
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = {
+            Surface(
+                modifier = Modifier.padding(vertical = 12.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                shape = CircleShape
+            ) {
+                Spacer(modifier = Modifier.size(width = 32.dp, height = 4.dp))
+            }
+        }
     ) {
         BackHandler(enabled = true) {
             if (isKeyboardVisible) keyboardController?.hide()
@@ -187,18 +195,18 @@ private fun EditMediaSheetContent(
                 .padding(bottom = 24.dp + bottomPadding)
                 .imePadding(),
         ) {
-            // Header
+            // Immersive Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 8.dp),
+                    .padding(horizontal = 24.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 MediaPoster(
                     url = uiState.mediaInfo?.mainPicture?.medium,
                     modifier = Modifier
-                        .size(width = 56.dp, height = 80.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .size(width = 64.dp, height = 90.dp)
+                        .clip(RoundedCornerShape(16.dp))
                 )
 
                 Column(
@@ -208,29 +216,29 @@ private fun EditMediaSheetContent(
                 ) {
                     Text(
                         text = uiState.mediaInfo?.userPreferredTitle() ?: stringResource(R.string.edit_entry),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.ExtraBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = "${uiState.mediaInfo?.mediaFormat?.localized().orEmpty()} • ${uiState.status.localized()}",
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (uiState.isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp
-                        )
-                    }
-
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
                     FilledIconButton(
                         onClick = { event?.updateListItem() },
-                        modifier = Modifier.padding(start = 16.dp),
+                        modifier = Modifier.size(48.dp),
+                        shape = CircleShape,
                         colors = IconButtonDefaults.filledIconButtonColors(
                             containerColor = MaterialTheme.colorScheme.primary
                         )
@@ -243,55 +251,60 @@ private fun EditMediaSheetContent(
                 }
             }
 
-            // Status Selection
+            // Modern Status Selection (Horizontal Tonal Tabs)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 12.dp, horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                    .padding(vertical = 16.dp, horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 statusValues.forEach { status ->
                     val isSelected = uiState.status == status
+                    val containerColor by animateColorAsState(
+                        targetValue = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                        label = "statusContainer"
+                    )
+                    val contentColor by animateColorAsState(
+                        targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        label = "statusContent"
+                    )
+                    
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .height(56.dp)
+                            .height(48.dp)
                             .clip(RoundedCornerShape(16.dp))
+                            .background(containerColor)
                             .clickable {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 event?.onChangeStatus(status)
-                            }
-                            .background(
-                                if (isSelected) MaterialTheme.colorScheme.primaryContainer
-                                else Color.Transparent
-                            ),
+                            },
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
                         Icon(
                             painter = painterResource(id = status.icon),
                             contentDescription = status.localized(),
-                            tint = if (isSelected) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(28.dp)
+                            tint = contentColor,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
             }
 
-            // Progress Widget
+            // High-Contrast Progress Module
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp, vertical = 8.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shape = RoundedCornerShape(24.dp)
+                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                shape = RoundedCornerShape(28.dp)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -301,7 +314,7 @@ private fun EditMediaSheetContent(
                             event?.onChangeProgress((uiState.progress ?: 0) - 1)
                         },
                         enabled = (uiState.progress ?: 0) > 0,
-                        modifier = Modifier.size(48.dp),
+                        modifier = Modifier.size(52.dp),
                         shape = CircleShape
                     ) {
                         Icon(painterResource(R.drawable.round_remove_24), contentDescription = null)
@@ -311,20 +324,23 @@ private fun EditMediaSheetContent(
                         Text(
                             text = if (uiState.mediaType == MediaType.ANIME) stringResource(R.string.episodes)
                             else stringResource(R.string.chapters),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
                         )
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(verticalAlignment = Alignment.Bottom) {
                             Text(
                                 text = (uiState.progress ?: 0).toString(),
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.displaySmall,
+                                fontWeight = FontWeight.Black,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
                                 text = " / ${uiState.mediaInfo?.totalDuration().toStringPositiveValueOrUnknown()}",
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = 6.dp, start = 4.dp)
                             )
                         }
                     }
@@ -335,7 +351,7 @@ private fun EditMediaSheetContent(
                             event?.onChangeProgress((uiState.progress ?: 0) + 1)
                         },
                         enabled = uiState.mediaInfo?.totalDuration() == null || (uiState.progress ?: 0) < (uiState.mediaInfo?.totalDuration() ?: Int.MAX_VALUE),
-                        modifier = Modifier.size(48.dp),
+                        modifier = Modifier.size(52.dp),
                         shape = CircleShape,
                         colors = IconButtonDefaults.filledTonalIconButtonColors(
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -347,19 +363,19 @@ private fun EditMediaSheetContent(
                 }
             }
 
-            // Volume Progress (Manga only)
+            // Volume Progress (Manga only) - Unified Design
             if (uiState.mediaType == MediaType.MANGA) {
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp, vertical = 8.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    shape = RoundedCornerShape(24.dp)
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    shape = RoundedCornerShape(28.dp)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -369,7 +385,7 @@ private fun EditMediaSheetContent(
                                 event?.onChangeVolumeProgress((uiState.volumeProgress ?: 0) - 1)
                             },
                             enabled = (uiState.volumeProgress ?: 0) > 0,
-                            modifier = Modifier.size(48.dp),
+                            modifier = Modifier.size(52.dp),
                             shape = CircleShape
                         ) {
                             Icon(painterResource(R.drawable.round_remove_24), contentDescription = null)
@@ -378,20 +394,23 @@ private fun EditMediaSheetContent(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
                                 text = stringResource(R.string.volumes),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
                             )
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(verticalAlignment = Alignment.Bottom) {
                                 Text(
                                     text = (uiState.volumeProgress ?: 0).toString(),
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.displaySmall,
+                                    fontWeight = FontWeight.Black,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
                                     text = " / ${uiState.mediaInfo?.totalVolumes().toStringPositiveValueOrUnknown()}",
                                     style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(bottom = 6.dp, start = 4.dp)
                                 )
                             }
                         }
@@ -402,7 +421,7 @@ private fun EditMediaSheetContent(
                                 event?.onChangeVolumeProgress((uiState.volumeProgress ?: 0) + 1)
                             },
                             enabled = uiState.mediaInfo?.totalVolumes() == null || (uiState.volumeProgress ?: 0) < (uiState.mediaInfo?.totalVolumes() ?: Int.MAX_VALUE),
-                            modifier = Modifier.size(48.dp),
+                            modifier = Modifier.size(52.dp),
                             shape = CircleShape,
                             colors = IconButtonDefaults.filledTonalIconButtonColors(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -415,11 +434,11 @@ private fun EditMediaSheetContent(
                 }
             }
 
-            // Rating Section
+            // Rating Dashboard
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 12.dp)
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -428,18 +447,20 @@ private fun EditMediaSheetContent(
                 ) {
                     Text(
                         text = stringResource(R.string.edit_rating),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                    val scoreText = uiState.score.scoreText()
+                    val scoreTextValue = uiState.score.scoreText()
                     Text(
-                        text = if (scoreText.isEmpty()) "" else "$scoreText (${uiState.score})",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
+                        text = if (scoreTextValue.isEmpty()) "" else "$scoreTextValue (${uiState.score})",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
+
+                Spacer(modifier = Modifier.height(12.dp))
 
                 ScoreSlider(
                     score = uiState.score,
@@ -449,15 +470,15 @@ private fun EditMediaSheetContent(
             }
 
             HorizontalDivider(
-                modifier = Modifier.padding(vertical = 4.dp, horizontal = 24.dp),
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
             )
 
-            // Dates in a Row
+            // Date Selection Area
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 8.dp),
+                    .padding(horizontal = 8.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 EditMediaDateField(
@@ -484,16 +505,18 @@ private fun EditMediaSheetContent(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Delete Action
             FilledTonalButton(
                 onClick = { event?.toggleDeleteDialog(true) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
+                    .padding(horizontal = 24.dp)
+                    .height(52.dp),
+                shape = CircleShape,
                 colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f),
                     contentColor = MaterialTheme.colorScheme.onErrorContainer
                 ),
                 enabled = !uiState.isNewEntry
@@ -501,10 +524,14 @@ private fun EditMediaSheetContent(
                 Icon(
                     imageVector = Icons.Rounded.Delete,
                     contentDescription = null,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(20.dp)
                 )
-                Spacer(modifier = Modifier.size(8.dp))
-                Text(text = stringResource(R.string.delete))
+                Spacer(modifier = Modifier.size(12.dp))
+                Text(
+                    text = stringResource(R.string.delete),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }

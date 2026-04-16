@@ -170,28 +170,6 @@ private fun SettingsViewContent(
                     }
                 )
             }
-
-            SettingsTitle(text = stringResource(R.string.experimental))
-
-            SwitchPreferenceView(
-                title = stringResource(R.string.enable_list_tabs),
-                subtitle = stringResource(R.string.enable_list_tabs_subtitle),
-                value = uiState.useListTabs,
-                onValueChange = {
-                    event?.setUseListTabs(it)
-                }
-            )
-
-            SwitchPreferenceView(
-                title = stringResource(R.string.always_load_characters),
-                value = uiState.loadCharacters,
-                onValueChange = { event?.setLoadCharacters(it) }
-            )
-            SwitchPreferenceView(
-                title = stringResource(R.string.random_button_on_list),
-                value = uiState.randomListEntryEnabled,
-                onValueChange = { event?.setRandomListEntryEnabled(it) }
-            )
         }
     }
 }

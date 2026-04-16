@@ -265,6 +265,14 @@ class UserMediaListViewModel(
         mutableUiState.update { it.copy(randomId = null) }
     }
 
+    override fun showMessage(message: String?) {
+        mutableUiState.update { it.copy(message = message) }
+    }
+
+    override fun onMessageDisplayed() {
+        mutableUiState.update { it.copy(message = null) }
+    }
+
     init {
         if (initialListStatus == null) {
             val listStatusFlow = when (mediaType) {

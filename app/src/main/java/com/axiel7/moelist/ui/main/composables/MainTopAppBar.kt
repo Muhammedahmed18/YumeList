@@ -35,6 +35,7 @@ import com.axiel7.moelist.ui.base.navigation.Route
 
 @Composable
 fun MainTopAppBar(
+    isLoggedIn: Boolean,
     profilePicture: String?,
     isVisible: Boolean,
     navController: NavController,
@@ -45,9 +46,10 @@ fun MainTopAppBar(
         transitionSpec = {
             slideInVertically(initialOffsetY = { -it }) togetherWith
                     slideOutVertically(targetOffsetY = { -it })
-        }
-    ) { isVisible ->
-        if (isVisible) {
+        },
+        label = "TopAppBarVisibility"
+    ) { visible ->
+        if (visible) {
             Card(
                 onClick = dropUnlessResumed { navController.navigate(Route.Search()) },
                 modifier = modifier
@@ -77,16 +79,28 @@ fun MainTopAppBar(
                         modifier = Modifier.weight(1f),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    AsyncImage(
-                        model = profilePicture,
-                        contentDescription = "profile",
-                        placeholder = painterResource(R.drawable.ic_round_account_circle_24),
-                        error = painterResource(R.drawable.ic_round_account_circle_24),
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(100))
-                            .size(32.dp)
-                            .clickable { navController.navigate(Route.Profile) }
-                    )
+                    if (isLoggedIn) {
+                        AsyncImage(
+                            model = profilePicture,
+                            contentDescription = "profile",
+                            placeholder = painterResource(R.drawable.ic_round_account_circle_24),
+                            error = painterResource(R.drawable.ic_round_account_circle_24),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(100))
+                                .size(32.dp)
+                                .clickable { navController.navigate(Route.Profile) }
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_round_account_circle_24),
+                            contentDescription = "profile",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(100))
+                                .size(32.dp)
+                                .clickable { navController.navigate(Route.Profile) }
+                        )
+                    }
                 }
             }//:Card
         } else {

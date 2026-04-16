@@ -28,8 +28,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
@@ -53,6 +52,7 @@ import com.axiel7.moelist.ui.userlist.composables.RandomChip
 import com.axiel7.moelist.ui.userlist.composables.SortChip
 import com.axiel7.moelist.ui.userlist.composables.StandardUserMediaListItem
 import com.axiel7.moelist.ui.userlist.composables.StandardUserMediaListItemPlaceholder
+import com.axiel7.moelist.utils.ContextExtensions.showToast
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,15 +62,22 @@ fun UserMediaListView(
     navActionManager: NavActionManager,
     isCompactScreen: Boolean,
     modifier: Modifier = Modifier,
-    nestedScrollConnection: NestedScrollConnection? = null,
     topBarHeightPx: Float = 0f,
     topBarOffsetY: Animatable<Float, AnimationVector1D> = Animatable(0f),
     contentPadding: PaddingValues = PaddingValues(),
     onShowEditSheet: (BaseUserMediaList<out BaseMediaNode>) -> Unit,
 ) {
+    val context = LocalContext.current
     val layoutDirection = LocalLayoutDirection.current
     val haptic = LocalHapticFeedback.current
     val pullRefreshState = rememberPullToRefreshState()
+
+    LaunchedEffect(uiState.message) {
+        if (uiState.message != null) {
+            context.showToast(uiState.message)
+            event?.onMessageDisplayed()
+        }
+    }
 
     @Composable
     fun StandardItemView(item: BaseUserMediaList<out BaseMediaNode>) {
@@ -148,11 +155,6 @@ fun UserMediaListView(
         val listModifier = Modifier
             .fillMaxWidth()
             .align(Alignment.TopStart)
-            .then(
-                if (nestedScrollConnection != null)
-                    Modifier.nestedScroll(nestedScrollConnection)
-                else Modifier
-            )
 
         when {
             uiState.isLoading && uiState.mediaList.isEmpty() -> {
@@ -407,7 +409,7 @@ fun UserMediaListView(
                     }
                 }
             }
-            
+
             else -> {
                 // Fallback to loading state instead of empty while state is uncertain
                 LoadingState(uiState, contentPadding)

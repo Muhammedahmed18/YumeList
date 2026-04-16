@@ -83,9 +83,6 @@ private fun ColorScheme.toBlack() = this.copy(
     background = Color.Black,
     surface = Color.Black,
     surfaceVariant = surfaceVariant.copy(alpha = 0.4f).compositeOver(Color.Black),
-    surfaceContainer = Color.Black,
-    surfaceContainerHigh = surfaceContainerHigh.copy(alpha = 0.5f).compositeOver(Color.Black),
-    surfaceContainerHighest = surfaceContainerHighest.copy(alpha = 0.6f).compositeOver(Color.Black)
 )
 
 @Composable
@@ -100,7 +97,7 @@ fun MoeListTheme(
         when {
             dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
                 if (darkTheme) dynamicDarkColorScheme(context).let {
-                    return@let if (useBlackColors) it.toBlack() else it
+                    if (useBlackColors) it.toBlack() else it
                 }
                 else dynamicLightColorScheme(context)
             }

@@ -1,13 +1,13 @@
 package com.axiel7.moelist.ui.home
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccountCircle
@@ -32,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,8 +43,8 @@ import androidx.lifecycle.compose.dropUnlessResumed
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
+import com.axiel7.moelist.ui.base.navigation.NavActionManager.Companion.rememberNavActionManager
 import com.axiel7.moelist.ui.composables.HeaderHorizontalList
-import com.axiel7.moelist.ui.composables.collapsable
 import com.axiel7.moelist.ui.composables.media.MEDIA_ITEM_VERTICAL_HEIGHT
 import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_SMALL_HEIGHT
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailedPlaceholder
@@ -60,8 +62,6 @@ import org.koin.androidx.compose.koinViewModel
 fun HomeView(
     isLoggedIn: Boolean,
     navActionManager: NavActionManager,
-    topBarHeightPx: Float,
-    topBarOffsetY: Animatable<Float, AnimationVector1D>,
     padding: PaddingValues,
 ) {
     val viewModel: HomeViewModel = koinViewModel()
@@ -72,8 +72,6 @@ fun HomeView(
         event = viewModel,
         isLoggedIn = isLoggedIn,
         navActionManager = navActionManager,
-        topBarHeightPx = topBarHeightPx,
-        topBarOffsetY = topBarOffsetY,
         padding = padding,
     )
 }
@@ -84,8 +82,6 @@ private fun HomeViewContent(
     event: HomeEvent?,
     isLoggedIn: Boolean,
     navActionManager: NavActionManager,
-    topBarHeightPx: Float = 0f,
-    topBarOffsetY: Animatable<Float, AnimationVector1D> = Animatable(0f),
     padding: PaddingValues = PaddingValues(),
 ) {
     val context = LocalContext.current
@@ -106,64 +102,76 @@ private fun HomeViewContent(
 
     Column(
         modifier = Modifier
-            .collapsable(
-                state = scrollState,
-                topBarHeightPx = topBarHeightPx,
-                topBarOffsetY = topBarOffsetY,
-            )
+            .fillMaxSize()
             .verticalScroll(scrollState)
             .padding(padding)
     ) {
-        // Main Shortcuts
+        // Hero Section Header
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            Text(
+                text = "Discover",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = "What will you watch today?",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        // Bento Grid Shortcuts
         Row(
-            modifier = Modifier.padding(top = 16.dp, start = 16.dp, end = 16.dp)
+            modifier = Modifier.padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             HomeCard(
                 text = stringResource(R.string.anime_ranking),
                 icon = R.drawable.ic_round_movie_24,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).height(72.dp),
                 onClick = dropUnlessResumed {
                     navActionManager.toMediaRanking(MediaType.ANIME)
                 },
             )
 
-            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-
             HomeCard(
-                text = stringResource(R.string.manga_ranking),
-                icon = R.drawable.ic_round_menu_book_24,
-                modifier = Modifier.weight(1f),
+                text = stringResource(R.string.seasonal_chart),
+                icon = SeasonCalendar.currentSeason.icon,
+                modifier = Modifier.weight(1f).height(72.dp),
                 onClick = dropUnlessResumed {
-                    navActionManager.toMediaRanking(MediaType.MANGA)
+                    navActionManager.toSeasonChart()
                 },
             )
         }
 
         Row(
-            modifier = Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp)
+            modifier = Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             HomeCard(
-                text = stringResource(R.string.seasonal_chart),
-                icon = SeasonCalendar.currentSeason.icon,
-                modifier = Modifier.weight(1f),
+                text = stringResource(R.string.manga_ranking),
+                icon = R.drawable.ic_round_menu_book_24,
+                modifier = Modifier.weight(1f).height(72.dp),
                 onClick = dropUnlessResumed {
-                    navActionManager.toSeasonChart()
+                    navActionManager.toMediaRanking(MediaType.MANGA)
                 },
             )
-
-            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
 
             HomeCard(
                 text = stringResource(R.string.calendar),
                 icon = R.drawable.ic_round_event_24,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).height(72.dp),
                 onClick = dropUnlessResumed {
                     navActionManager.toCalendar()
                 },
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Airing Today
         HeaderHorizontalList(
@@ -174,8 +182,9 @@ private fun HomeViewContent(
             OutlinedCard(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                onClick = dropUnlessResumed { navActionManager.toLogin() }
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                onClick = dropUnlessResumed { navActionManager.toLogin() },
+                shape = RoundedCornerShape(24.dp),
             ) {
                 Row(
                     modifier = Modifier
@@ -186,7 +195,7 @@ private fun HomeViewContent(
                     Icon(
                         imageVector = Icons.Rounded.AccountCircle,
                         contentDescription = null,
-                        modifier = Modifier.size(40.dp),
+                        modifier = Modifier.size(32.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.padding(horizontal = 8.dp))
@@ -215,11 +224,12 @@ private fun HomeViewContent(
             } else {
                 LazyRow(
                     modifier = Modifier
-                        .padding(top = 8.dp)
+                        .padding(top = 4.dp)
                         .sizeIn(minHeight = MEDIA_POSTER_SMALL_HEIGHT.dp),
                     state = airingListState,
                     contentPadding = PaddingValues(horizontal = 16.dp),
-                    flingBehavior = rememberSnapFlingBehavior(lazyListState = airingListState)
+                    flingBehavior = rememberSnapFlingBehavior(lazyListState = airingListState),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(
                         items = uiState.todayAnimes,
@@ -243,7 +253,7 @@ private fun HomeViewContent(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         // This Season
         HeaderHorizontalList(
@@ -252,11 +262,12 @@ private fun HomeViewContent(
         )
         LazyRow(
             modifier = Modifier
-                .padding(top = 8.dp)
+                .padding(top = 4.dp)
                 .sizeIn(minHeight = MEDIA_ITEM_VERTICAL_HEIGHT.dp),
             state = seasonalListState,
             contentPadding = PaddingValues(horizontal = 16.dp),
-            flingBehavior = rememberSnapFlingBehavior(lazyListState = seasonalListState)
+            flingBehavior = rememberSnapFlingBehavior(lazyListState = seasonalListState),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             items(
                 items = uiState.seasonalAnimes,
@@ -266,7 +277,7 @@ private fun HomeViewContent(
                 MediaItemVertical(
                     imageUrl = it.node.mainPicture?.large,
                     title = it.node.userPreferredTitle(),
-                    modifier = Modifier.padding(end = 12.dp),
+                    modifier = Modifier,
                     subtitle = if (!uiState.hideScore) {
                         {
                             SmallScoreIndicator(
@@ -287,8 +298,6 @@ private fun HomeViewContent(
                 }
             }
         }
-        
-        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
@@ -301,7 +310,7 @@ fun HomePreview() {
                 uiState = HomeUiState(),
                 event = null,
                 isLoggedIn = false,
-                navActionManager = NavActionManager.rememberNavActionManager()
+                navActionManager = rememberNavActionManager()
             )
         }
     }

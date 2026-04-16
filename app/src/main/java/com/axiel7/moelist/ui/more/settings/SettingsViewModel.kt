@@ -175,12 +175,6 @@ class SettingsViewModel(
             }
             .launchIn(viewModelScope)
 
-        defaultPreferencesRepository.useListTabs
-            .onEach { value ->
-                mutableUiState.update { it.copy(useListTabs = value) }
-            }
-            .launchIn(viewModelScope)
-
         defaultPreferencesRepository.loadCharacters
             .onEach { value ->
                 mutableUiState.update { it.copy(loadCharacters = value) }

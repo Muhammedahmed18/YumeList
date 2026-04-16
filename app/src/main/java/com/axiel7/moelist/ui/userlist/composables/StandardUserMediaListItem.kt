@@ -4,14 +4,12 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,13 +19,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -82,7 +80,7 @@ fun StandardUserMediaListItem(
 
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(if (isPressed) 0.96f else 1f, label = "scale")
+    val scale by animateFloatAsState(if (isPressed) 0.98f else 1f, label = "scale")
 
     Card(
         modifier = Modifier
@@ -94,7 +92,7 @@ fun StandardUserMediaListItem(
             }
             .combinedClickable(
                 interactionSource = interactionSource,
-                indication = null, // Custom indication or handled by Card
+                indication = null,
                 onLongClick = onLongClick,
                 onClick = onClick
             ),
@@ -145,7 +143,7 @@ fun StandardUserMediaListItem(
                             painter = painterResource(R.drawable.ic_round_star_16),
                             contentDescription = "star",
                             modifier = Modifier.size(10.dp),
-                            tint = Color(0xFFFFB300) // Gold color for star
+                            tint = Color(0xFFFFB300)
                         )
                     }
                 }
@@ -252,19 +250,20 @@ fun StandardUserMediaListItem(
                             }
 
                             if (listStatus?.isCurrent() == true) {
-                                FilledTonalButton(
+                                OutlinedIconButton(
                                     onClick = onClickPlus,
-                                    modifier = Modifier.height(36.dp),
+                                    modifier = Modifier.size(36.dp),
                                     shape = CircleShape,
-                                    contentPadding = PaddingValues(horizontal = 16.dp),
-                                    colors = ButtonDefaults.filledTonalButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
-                                    )
+                                    colors = IconButtonDefaults.outlinedIconButtonColors(
+                                        contentColor = MaterialTheme.colorScheme.primary,
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
+                                    ),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
                                 ) {
-                                    Text(
-                                        text = stringResource(R.string.plus_one),
-                                        style = MaterialTheme.typography.labelLarge,
-                                        fontWeight = FontWeight.Bold
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_round_add_24),
+                                        contentDescription = stringResource(R.string.plus_one),
+                                        modifier = Modifier.size(18.dp)
                                     )
                                 }
                             }
@@ -275,7 +274,7 @@ fun StandardUserMediaListItem(
                         progress = { item.calculateProgressBarValue() },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(8.dp)
+                            .height(6.dp)
                             .padding(bottom = 2.dp),
                         color = progressBarColor,
                         trackColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -356,7 +355,7 @@ fun StandardUserMediaListItemPlaceholder() {
 
                         Box(
                             modifier = Modifier
-                                .size(60.dp, 36.dp)
+                                .size(36.dp)
                                 .clip(CircleShape)
                                 .defaultPlaceholder(visible = true)
                         )
@@ -365,7 +364,7 @@ fun StandardUserMediaListItemPlaceholder() {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(8.dp)
+                            .height(6.dp)
                             .padding(bottom = 2.dp)
                             .defaultPlaceholder(visible = true)
                     )

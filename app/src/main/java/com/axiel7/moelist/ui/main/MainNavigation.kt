@@ -44,7 +44,6 @@ import com.axiel7.moelist.ui.ranking.MediaRankingView
 import com.axiel7.moelist.ui.recommendations.RecommendationsView
 import com.axiel7.moelist.ui.search.SearchHostView
 import com.axiel7.moelist.ui.season.SeasonChartView
-import com.axiel7.moelist.ui.userlist.UserMediaListWithFabView
 import com.axiel7.moelist.ui.userlist.UserMediaListWithTabsView
 import kotlin.reflect.typeOf
 
@@ -98,8 +97,6 @@ fun MainNavigation(
                 isLoggedIn = isLoggedIn,
                 navActionManager = navActionManager,
                 padding = padding,
-                topBarHeightPx = topBarHeightPx,
-                topBarOffsetY = topBarOffsetY,
             )
         }
 
@@ -113,23 +110,12 @@ fun MainNavigation(
             if (!isLoggedIn) {
                 LoginView()
             } else {
-                if (useListTabs) {
-                    UserMediaListWithTabsView(
-                        mediaType = MediaType.ANIME,
-                        isCompactScreen = isCompactScreen,
-                        navActionManager = navActionManager,
-                        padding = padding
-                    )
-                } else {
-                    UserMediaListWithFabView(
-                        mediaType = MediaType.ANIME,
-                        isCompactScreen = isCompactScreen,
-                        navActionManager = navActionManager,
-                        topBarHeightPx = topBarHeightPx,
-                        topBarOffsetY = topBarOffsetY,
-                        padding = padding
-                    )
-                }
+                UserMediaListWithTabsView(
+                    mediaType = MediaType.ANIME,
+                    isCompactScreen = isCompactScreen,
+                    navActionManager = navActionManager,
+                    padding = padding
+                )
             }
         }
 
@@ -143,23 +129,12 @@ fun MainNavigation(
             if (!isLoggedIn) {
                 LoginView()
             } else {
-                if (useListTabs) {
-                    UserMediaListWithTabsView(
-                        mediaType = MediaType.MANGA,
-                        isCompactScreen = isCompactScreen,
-                        navActionManager = navActionManager,
-                        padding = padding
-                    )
-                } else {
-                    UserMediaListWithFabView(
-                        mediaType = MediaType.MANGA,
-                        isCompactScreen = isCompactScreen,
-                        navActionManager = navActionManager,
-                        topBarHeightPx = topBarHeightPx,
-                        topBarOffsetY = topBarOffsetY,
-                        padding = padding
-                    )
-                }
+                UserMediaListWithTabsView(
+                    mediaType = MediaType.MANGA,
+                    isCompactScreen = isCompactScreen,
+                    navActionManager = navActionManager,
+                    padding = padding
+                )
             }
         }
 
@@ -172,8 +147,6 @@ fun MainNavigation(
             MoreView(
                 navActionManager = navActionManager,
                 padding = padding,
-                topBarHeightPx = topBarHeightPx,
-                topBarOffsetY = topBarOffsetY,
                 isLoggedIn = isLoggedIn
             )
         }
@@ -254,23 +227,12 @@ fun MainNavigation(
             )
         ) {
             val args = it.toRoute<Route.UserList>()
-            if (useListTabs) {
-                UserMediaListWithTabsView(
-                    mediaType = args.mediaType,
-                    isCompactScreen = isCompactScreen,
-                    navActionManager = navActionManager,
-                    padding = padding
-                )
-            } else {
-                UserMediaListWithFabView(
-                    mediaType = args.mediaType,
-                    isCompactScreen = isCompactScreen,
-                    navActionManager = navActionManager,
-                    topBarHeightPx = topBarHeightPx,
-                    topBarOffsetY = topBarOffsetY,
-                    padding = padding
-                )
-            }
+            UserMediaListWithTabsView(
+                mediaType = args.mediaType,
+                isCompactScreen = isCompactScreen,
+                navActionManager = navActionManager,
+                padding = padding
+            )
         }
 
         composable<Route.FullPoster>(

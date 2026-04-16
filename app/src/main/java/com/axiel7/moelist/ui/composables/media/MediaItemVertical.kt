@@ -1,7 +1,10 @@
 package com.axiel7.moelist.ui.composables.media
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,9 +19,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -28,7 +34,7 @@ import com.axiel7.moelist.R
 import com.axiel7.moelist.ui.composables.defaultPlaceholder
 import com.axiel7.moelist.ui.theme.MoeListTheme
 
-const val MEDIA_ITEM_VERTICAL_HEIGHT = 200
+const val MEDIA_ITEM_VERTICAL_HEIGHT = 210
 
 @Composable
 fun MediaItemVertical(
@@ -41,14 +47,26 @@ fun MediaItemVertical(
     minLines: Int = 1,
     onClick: () -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (isPressed) 0.96f else 1f, label = "scale")
+
     Column(
         modifier = modifier
             .width(MEDIA_POSTER_SMALL_WIDTH.dp)
             .sizeIn(
                 minHeight = MEDIA_ITEM_VERTICAL_HEIGHT.dp
             )
-            .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick),
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            ),
         horizontalAlignment = Alignment.Start
     ) {
         Box(
@@ -68,7 +86,7 @@ fun MediaItemVertical(
             if (badgeContent != null) {
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(topEnd = 8.dp))
+                        .clip(RoundedCornerShape(topEnd = 12.dp))
                         .background(MaterialTheme.colorScheme.primaryContainer)
                         .padding(horizontal = 6.dp, vertical = 2.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -80,17 +98,18 @@ fun MediaItemVertical(
         Text(
             text = title,
             modifier = Modifier
-                .width(MEDIA_POSTER_SMALL_WIDTH.dp),
+                .width(MEDIA_POSTER_SMALL_WIDTH.dp)
+                .padding(horizontal = 4.dp),
             color = MaterialTheme.colorScheme.onSurface,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
             overflow = TextOverflow.Ellipsis,
             maxLines = 2,
             minLines = minLines
         )
 
         Column(
-            modifier = Modifier.padding(top = 2.dp),
+            modifier = Modifier.padding(top = 2.dp, start = 4.dp, end = 4.dp),
         ) {
             subtitle?.let { it() }
             subtitle2?.let { it() }
@@ -116,16 +135,16 @@ fun MediaItemVerticalPlaceholder(
                     width = MEDIA_POSTER_SMALL_WIDTH.dp,
                     height = MEDIA_POSTER_SMALL_HEIGHT.dp
                 )
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(16.dp))
                 .defaultPlaceholder(visible = true)
         )
 
         Text(
             text = "Loading Title",
             modifier = Modifier
-                .padding(top = 8.dp)
+                .padding(top = 8.dp, start = 4.dp)
                 .defaultPlaceholder(visible = true),
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.titleSmall,
             maxLines = 2
         )
     }

@@ -3,14 +3,13 @@ package com.axiel7.moelist.ui.profile
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,7 +21,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +29,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,10 +40,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -53,14 +53,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.compose.dropUnlessResumed
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import coil3.compose.AsyncImage
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
-import com.axiel7.moelist.ui.composables.TextIconHorizontal
-import com.axiel7.moelist.ui.composables.defaultPlaceholder
 import com.axiel7.moelist.ui.profile.composables.UserStatsView
 import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.utils.ContextExtensions.openLink
@@ -117,17 +113,13 @@ private fun ProfileViewContent(
         targetValue = if (scrollState.value > threshold) 1f else 0f,
         label = "titleAlpha"
     )
-    val largeTitleAlpha by animateFloatAsState(
-        targetValue = if (scrollState.value > threshold) 0f else 1f,
-        label = "largeTitleAlpha"
-    )
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { 
                     Text(
-                        text = uiState.user?.name ?: stringResource(R.string.title_profile),
+                        text = stringResource(R.string.title_profile),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.alpha(titleAlpha)
@@ -205,44 +197,86 @@ private fun ProfileViewContent(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(scrollState)
                     .statusBarsPadding(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // One UI Reachability Spacer - Large header area
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Column(
+                // Modern Immersive Profile Header
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .widthIn(max = 840.dp)
-                        .padding(horizontal = horizontalPadding),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .height(220.dp),
+                    contentAlignment = Alignment.BottomCenter
                 ) {
-                    Text(
-                        text = stringResource(R.string.title_profile),
-                        style = if (widthClass == WindowWidthSizeClass.Compact) 
-                            MaterialTheme.typography.displayMedium 
-                        else MaterialTheme.typography.displayLarge,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = (-1).sp,
+                    // Dynamic Gradient Backdrop
+                    Box(
                         modifier = Modifier
-                            .padding(bottom = 24.dp)
-                            .alpha(largeTitleAlpha)
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                                        MaterialTheme.colorScheme.background
+                                    )
+                                )
+                            )
                     )
 
-                    ProfileHeader(
-                        uiState = uiState,
-                        widthClass = widthClass,
-                        onAvatarClick = {
-                            uiState.profilePictureUrl?.let {
-                                navActionManager.toFullPoster(listOf(it))
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    ) {
+                        ProfileAvatar(
+                            url = uiState.profilePictureUrl,
+                            size = if (widthClass == WindowWidthSizeClass.Compact) 90.dp else 120.dp,
+                            onAvatarClick = {
+                                uiState.profilePictureUrl?.let {
+                                    navActionManager.toFullPoster(listOf(it))
+                                }
+                            }
+                        )
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        Text(
+                            text = uiState.user?.name ?: "Loading...",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Black,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            letterSpacing = (-1).sp
+                        )
+                        
+                        uiState.user?.location?.let { location ->
+                            if (location.isNotBlank()) {
+                                Surface(
+                                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                                    shape = CircleShape,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_round_location_on_24),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(14.dp),
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                        Text(
+                                            text = location,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                                        )
+                                    }
+                                }
                             }
                         }
-                    )
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Column(
                     modifier = Modifier
@@ -251,14 +285,41 @@ private fun ProfileViewContent(
                         .padding(horizontal = horizontalPadding),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Segmented Pill Control
+                    // Refined Meta Info Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        ProfileMetaItem(
+                            text = uiState.user?.birthday?.parseDateAndLocalize().orEmpty(),
+                            icon = R.drawable.ic_round_cake_24,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                        Text(
+                            text = "•",
+                            color = MaterialTheme.colorScheme.outlineVariant,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        ProfileMetaItem(
+                            text = uiState.user?.joinedAt?.parseDateAndLocalize(
+                                inputFormat = DateTimeFormatter.ISO_DATE_TIME
+                            ).orEmpty(),
+                            icon = R.drawable.ic_round_access_time_24,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Premium Segmented Control
                     SegmentedPillControl(
                         options = listOf(stringResource(R.string.anime), stringResource(R.string.manga)),
                         selectedIndex = selectedStatsTab,
                         onOptionSelected = { selectedStatsTab = it }
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     val mediaType =
                         if (selectedStatsTab == 0) MediaType.ANIME else MediaType.MANGA
@@ -266,13 +327,46 @@ private fun ProfileViewContent(
                         uiState = uiState,
                         mediaType = mediaType,
                         showSectionTitle = false,
-                        compactStats = widthClass == WindowWidthSizeClass.Compact,
+                        compactStats = true,
                         onRefreshManga = { event?.refreshMangaStats() }
                     )
                     
-                    Spacer(modifier = Modifier.height(48.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ProfileAvatar(
+    url: String?,
+    size: androidx.compose.ui.unit.Dp,
+    onAvatarClick: () -> Unit
+) {
+    Surface(
+        shape = CircleShape,
+        modifier = Modifier.size(size),
+        border = BorderStroke(4.dp, MaterialTheme.colorScheme.surface),
+        tonalElevation = 4.dp,
+        shadowElevation = 8.dp
+    ) {
+        if (url.isNullOrEmpty()) {
+            Image(
+                painter = painterResource(R.drawable.ic_round_account_circle_24),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            AsyncImage(
+                model = url,
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable(onClick = onAvatarClick),
+                contentScale = ContentScale.Crop
+            )
         }
     }
 }
@@ -287,9 +381,9 @@ private fun SegmentedPillControl(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .height(52.dp),
+            .height(48.dp),
         shape = CircleShape,
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+        color = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         Row(
             modifier = Modifier
@@ -321,10 +415,9 @@ private fun SegmentedPillControl(
                 ) {
                     Text(
                         text = label,
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = contentColor,
-                        letterSpacing = 0.5.sp
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Bold,
+                        color = contentColor
                     )
                 }
             }
@@ -343,164 +436,13 @@ private fun GlassIconButton(
         onClick = onClick,
         enabled = enabled,
         shape = CircleShape,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.65f),
+        color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.4f),
         contentColor = MaterialTheme.colorScheme.onSurface,
-        modifier = modifier.size(44.dp),
-        shadowElevation = 1.dp
+        modifier = modifier.size(40.dp),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
     ) {
         Box(contentAlignment = Alignment.Center) {
             content()
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ProfileHeader(
-    uiState: ProfileUiState,
-    widthClass: WindowWidthSizeClass,
-    onAvatarClick: () -> Unit
-) {
-    val avatarSize = when (widthClass) {
-        WindowWidthSizeClass.Compact -> 120.dp
-        WindowWidthSizeClass.Medium -> 140.dp
-        else -> 160.dp
-    }
-    val nameStyle = when (widthClass) {
-        WindowWidthSizeClass.Compact -> MaterialTheme.typography.headlineLarge
-        else -> MaterialTheme.typography.displaySmall
-    }
-
-    if (widthClass == WindowWidthSizeClass.Compact) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(28.dp)
-        ) {
-            ProfileAvatar(
-                url = uiState.profilePictureUrl,
-                size = avatarSize,
-                onClick = onAvatarClick
-            )
-            ProfileMeta(
-                uiState = uiState,
-                nameStyle = nameStyle,
-                centered = true
-            )
-        }
-    } else {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(48.dp)
-        ) {
-            ProfileAvatar(
-                url = uiState.profilePictureUrl,
-                size = avatarSize,
-                onClick = onAvatarClick
-            )
-            ProfileMeta(
-                uiState = uiState,
-                nameStyle = nameStyle,
-                centered = false
-            )
-        }
-    }
-}
-
-@Composable
-private fun ProfileAvatar(
-    url: String?,
-    size: androidx.compose.ui.unit.Dp,
-    onClick: () -> Unit
-) {
-    Surface(
-        shape = CircleShape,
-        tonalElevation = 6.dp,
-        shadowElevation = 20.dp,
-        modifier = Modifier.size(size),
-        border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-    ) {
-        if (url.isNullOrEmpty()) {
-            Image(
-                painter = painterResource(R.drawable.ic_round_account_circle_24),
-                contentDescription = stringResource(R.string.title_profile),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .defaultPlaceholder(true),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            AsyncImage(
-                model = url,
-                contentDescription = stringResource(R.string.title_profile),
-                placeholder = painterResource(R.drawable.ic_round_account_circle_24),
-                error = painterResource(R.drawable.ic_round_account_circle_24),
-                fallback = painterResource(R.drawable.ic_round_account_circle_24),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clickable(onClick = dropUnlessResumed { onClick() }),
-                contentScale = ContentScale.Crop
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ProfileMeta(
-    uiState: ProfileUiState,
-    nameStyle: androidx.compose.ui.text.TextStyle,
-    centered: Boolean
-) {
-    Column(
-        horizontalAlignment = if (centered) Alignment.CenterHorizontally else Alignment.Start
-    ) {
-        Text(
-            text = uiState.user?.name ?: "Loading...",
-            modifier = Modifier
-                .defaultPlaceholder(visible = uiState.isLoading),
-            color = MaterialTheme.colorScheme.onSurface,
-            style = nameStyle,
-            fontWeight = FontWeight.Black,
-            letterSpacing = (-0.5).sp
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        FlowRow(
-            horizontalArrangement = if (centered) Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally) else Arrangement.spacedBy(24.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            uiState.user?.location?.let { location ->
-                if (location.isNotBlank()) {
-                    ProfileMetaItem(
-                        text = location,
-                        icon = R.drawable.ic_round_location_on_24,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-            uiState.user?.birthday?.let { birthday ->
-                ProfileMetaItem(
-                    text = birthday.parseDateAndLocalize().orEmpty(),
-                    icon = R.drawable.ic_round_cake_24,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-            }
-
-            ProfileMetaItem(
-                text = if (uiState.user?.joinedAt != null)
-                    uiState.user.joinedAt.parseDateAndLocalize(
-                        inputFormat = DateTimeFormatter.ISO_DATE_TIME
-                    ).orEmpty()
-                else "Loading...",
-                icon = R.drawable.ic_round_access_time_24,
-                modifier = Modifier
-                    .defaultPlaceholder(visible = uiState.isLoading),
-                color = MaterialTheme.colorScheme.tertiary
-            )
         }
     }
 }
@@ -514,20 +456,20 @@ private fun ProfileMetaItem(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         modifier = modifier
     ) {
         Icon(
             painter = painterResource(icon),
             contentDescription = null,
-            tint = color,
-            modifier = Modifier.size(20.dp)
+            tint = color.copy(alpha = 0.8f),
+            modifier = Modifier.size(18.dp)
         )
         Text(
             text = text,
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.Bold
         )
     }
 }

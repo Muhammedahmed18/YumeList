@@ -52,7 +52,7 @@ class LoginRepository(
     }
 
     suspend fun logOut() {
-        defaultPreferencesRepository.removeTokens()
+        defaultPreferencesRepository.clearUserData()
         App.accessToken = null
     }
 }

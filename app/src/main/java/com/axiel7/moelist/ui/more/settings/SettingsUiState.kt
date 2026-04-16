@@ -20,7 +20,6 @@ data class SettingsUiState(
     val tabletMode: TabletMode = TabletMode.AUTO,
     val pinnedNavBar: Boolean = false,
     val titleLanguage: TitleLanguage = TitleLanguage.ROMAJI,
-    val useListTabs: Boolean = false,
     val loadCharacters: Boolean = false,
     val randomListEntryEnabled: Boolean = false,
     override val isLoading: Boolean = false,

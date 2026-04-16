@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -25,27 +24,27 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
@@ -58,12 +57,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -71,12 +67,10 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
-import coil3.compose.AsyncImage
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.anime.AnimeDetails
 import com.axiel7.moelist.data.model.anime.RelatedAnime
@@ -184,7 +178,10 @@ private fun MediaDetailsContent(
                         } else {
                             context.showToast(context.getString(R.string.please_login_to_use_this_feature))
                         }
-                    }
+                    },
+                    shape = RoundedCornerShape(20.dp),
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 ) {
                     Icon(
                         painter = painterResource(
@@ -193,12 +190,13 @@ private fun MediaDetailsContent(
                         ),
                         contentDescription = "edit"
                     )
-                    @Suppress("DEPRECATION")
                     Text(
                         text = if (uiState.isNewEntry) stringResource(R.string.add)
                         else uiState.mediaDetails?.myListStatus?.status?.localized()
                             ?: stringResource(R.string.edit),
-                        modifier = Modifier.padding(start = 16.dp, end = 8.dp)
+                        modifier = Modifier.padding(start = 16.dp, end = 8.dp),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -210,56 +208,28 @@ private fun MediaDetailsContent(
                     .verticalScroll(scrollState)
                     .padding(bottom = padding.calculateBottomPadding() + 80.dp)
             ) {
-                // Hero Header
-                Box(
+                // Header Row
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(280.dp)
+                        .padding(top = 112.dp, start = 16.dp, end = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Blurred Banner
-                    AsyncImage(
-                        model = uiState.mediaDetails?.mainPicture?.large,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .blur(20.dp),
-                        contentScale = ContentScale.Crop,
-                        alpha = 0.6f
-                    )
-                    // Gradient for top bar blend
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color.Black.copy(alpha = 0.4f),
-                                        Color.Transparent,
-                                        MaterialTheme.colorScheme.surface
-                                    )
-                                )
-                            )
-                    )
-
-                    // Overlapping Poster with Border
-                    val posterShape = RoundedCornerShape(8.dp)
+                    // Poster
                     MediaPoster(
                         url = uiState.mediaDetails?.mainPicture?.large,
                         showShadow = false,
                         modifier = Modifier
-                            .padding(start = 24.dp)
                             .size(
                                 width = (MEDIA_POSTER_BIG_WIDTH * 0.85).dp,
                                 height = (MEDIA_POSTER_BIG_HEIGHT * 0.85).dp
                             )
-                            .align(Alignment.BottomStart)
-                            .offset { IntOffset(0, 30.dp.roundToPx()) }
-                            .clip(posterShape)
+                            .clip(RoundedCornerShape(16.dp))
                             .background(MaterialTheme.colorScheme.surface)
                             .border(
                                 width = 1.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                                shape = posterShape
+                                color = MaterialTheme.colorScheme.outlineVariant,
+                                shape = RoundedCornerShape(16.dp)
                             )
                             .defaultPlaceholder(visible = uiState.isLoading)
                             .clickable(onClick = dropUnlessResumed {
@@ -267,55 +237,109 @@ private fun MediaDetailsContent(
                                     navActionManager.toFullPoster(uiState.picturesUrls)
                             })
                     )
-                }
 
-                Spacer(modifier = Modifier.height(36.dp))
-
-                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Format & Status Info
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    // Right Side Info
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        TextIconHorizontal(
-                            text = uiState.mediaDetails?.mediaFormatWithYear() ?: "Loading",
-                            icon = if (uiState.isAnime) R.drawable.ic_round_local_movies_24
-                            else R.drawable.ic_round_book_24,
-                            modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading),
-                            fontSize = 14.sp
+                        Text(
+                            text = uiState.mediaDetails?.userPreferredTitle().orEmpty(),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis
                         )
-                        VerticalDivider(modifier = Modifier.height(12.dp))
-                        TextIconHorizontal(
-                            text = uiState.mediaDetails?.status?.localized() ?: "Loading",
-                            icon = if (uiState.isAnime) R.drawable.ic_round_rss_feed_24
-                            else R.drawable.round_drive_file_rename_outline_24,
-                            modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading),
-                            fontSize = 14.sp
-                        )
-                    }
 
-                    if (!uiState.hideScore) {
-                        TextIconHorizontal(
-                            text = uiState.mediaDetails?.mean.toStringOrNull() ?: "??",
-                            icon = R.drawable.ic_round_details_star_24,
-                            modifier = Modifier
-                                .padding(top = 4.dp)
-                                .defaultPlaceholder(visible = uiState.isLoading),
-                            fontSize = 16.sp,
-                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        // Format & Episode/Chapter Count Row
+                        val totalCount = if (uiState.mediaDetails is AnimeDetails) {
+                            uiState.mediaDetails.numEpisodes?.takeIf { it > 0 }?.toString()
+                        } else if (uiState.mediaDetails is MangaDetails) {
+                            uiState.mediaDetails.numChapters?.takeIf { it > 0 }?.toString()
+                        } else null
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Surface(
+                                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                                shape = CircleShape
+                            ) {
+                                Text(
+                                    text = uiState.mediaDetails?.mediaFormat?.localized() ?: "??",
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            }
+
+                            Surface(
+                                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                                shape = CircleShape
+                            ) {
+                                Text(
+                                    text = buildString {
+                                        append(totalCount ?: stringResource(R.string.unknown))
+                                        append(" ")
+                                        append(
+                                            if (uiState.isAnime) stringResource(R.string.episodes)
+                                            else stringResource(R.string.chapters)
+                                        )
+                                    },
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            }
+                        }
+
+                        // Score
+                        if (!uiState.hideScore) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_round_details_star_24),
+                                    contentDescription = null,
+                                    tint = Color(0xFFFFB300),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = uiState.mediaDetails?.mean.toStringOrNull() ?: "??",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.padding(start = 4.dp)
+                                )
+                            }
+                        }
+
+                        // Status Chip
+                        Surface(
+                            color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f),
+                            shape = CircleShape,
+                            modifier = Modifier.align(Alignment.Start)
+                        ) {
+                            TextIconHorizontal(
+                                text = uiState.mediaDetails?.status?.localized() ?: "Loading",
+                                icon = if (uiState.isAnime) R.drawable.ic_round_rss_feed_24
+                                else R.drawable.round_drive_file_rename_outline_24,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                fontSize = 12.sp,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
                     }
                 }
 
-                //Genres
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Modern Pill Genres
                 LazyRow(
-                    modifier = Modifier.padding(vertical = 12.dp),
+                    modifier = Modifier.padding(bottom = 8.dp),
                     contentPadding = PaddingValues(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -323,11 +347,16 @@ private fun MediaDetailsContent(
                         AssistChip(
                             onClick = { },
                             label = { Text(text = it.localized()) },
+                            shape = CircleShape,
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                            ),
+                            border = null
                         )
                     }
                 }
 
-                //Synopsis
+                // Synopsis with Fade Effect
                 val synopsisAndBackground = uiState.mediaDetails?.synopsisAndBackground()
                 if (uiState.isLoading || !synopsisAndBackground.isNullOrEmpty()) {
                     SelectionContainer {
@@ -340,7 +369,7 @@ private fun MediaDetailsContent(
                                 .animateContentSize()
                                 .defaultPlaceholder(visible = uiState.isLoading),
                             style = MaterialTheme.typography.bodyLarge,
-                            lineHeight = 24.sp,
+                            lineHeight = 26.sp,
                             overflow = TextOverflow.Ellipsis,
                             maxLines = maxLinesSynopsis
                         )
@@ -349,15 +378,17 @@ private fun MediaDetailsContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.End,
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+
                         TextButton(
                             onClick = { isSynopsisExpanded = !isSynopsisExpanded }
                         ) {
                             Text(
-                                text = if (isSynopsisExpanded) stringResource(R.string.back)
-                                else stringResource(R.string.more)
+                                text = if (isSynopsisExpanded) "Show Less"
+                                else "Read Full Synopsis",
+                                fontWeight = FontWeight.Bold
                             )
                         }
 
@@ -368,13 +399,15 @@ private fun MediaDetailsContent(
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.round_content_copy_24),
-                                contentDescription = stringResource(R.string.copied)
+                                contentDescription = stringResource(R.string.copied),
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
                 }
 
-                //Stats Grid
+                // Modern Stats Dashboard
                 InfoTitle(text = stringResource(R.string.stats))
                 Column(
                     modifier = Modifier
@@ -390,13 +423,15 @@ private fun MediaDetailsContent(
                             modifier = Modifier.weight(1f),
                             label = stringResource(R.string.top_ranked),
                             value = uiState.mediaDetails?.rankText().orEmpty(),
-                            icon = R.drawable.ic_round_bar_chart_24
+                            icon = R.drawable.ic_round_bar_chart_24,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                         )
                         StatCard(
                             modifier = Modifier.weight(1f),
                             label = stringResource(R.string.users_scores),
                             value = uiState.mediaDetails?.numScoringUsers?.format() ?: UNKNOWN_CHAR,
-                            icon = R.drawable.ic_round_thumbs_up_down_24
+                            icon = R.drawable.ic_round_thumbs_up_down_24,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                         )
                     }
                     Row(
@@ -407,97 +442,156 @@ private fun MediaDetailsContent(
                             modifier = Modifier.weight(1f),
                             label = stringResource(R.string.members),
                             value = uiState.mediaDetails?.numListUsers?.format() ?: UNKNOWN_CHAR,
-                            icon = R.drawable.ic_round_group_24
+                            icon = R.drawable.ic_round_group_24,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                         )
                         StatCard(
                             modifier = Modifier.weight(1f),
                             label = stringResource(R.string.popularity),
                             value = "# ${uiState.mediaDetails?.popularity}",
-                            icon = R.drawable.ic_round_trending_up_24
+                            icon = R.drawable.ic_round_trending_up_24,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                         )
                     }
                 }
 
-                //Info Section
+                //Info Section - Tonal Column Grid
                 InfoTitle(text = stringResource(R.string.more_info))
-                Column(
+                Surface(
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh
                 ) {
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        if (uiState.mediaDetails is AnimeDetails) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            if (uiState.mediaDetails is AnimeDetails) {
+                                MediaInfoView(
+                                    title = stringResource(R.string.duration),
+                                    info = uiState.mediaDetails.episodeDurationLocalized(),
+                                    icon = R.drawable.ic_round_access_time_24,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                MediaInfoView(
+                                    title = stringResource(R.string.source),
+                                    info = uiState.mediaDetails.source?.localized()
+                                        ?: stringResource(R.string.unknown),
+                                    icon = R.drawable.ic_round_menu_book_24,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            } else if (uiState.mediaDetails is MangaDetails) {
+                                val volumes = uiState.mediaDetails.numVolumes
+                                MediaInfoView(
+                                    title = stringResource(R.string.volumes),
+                                    info = if (volumes == null || volumes == 0) "-" else volumes.toString(),
+                                    icon = R.drawable.ic_round_book_24,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+
+                        Row(modifier = Modifier.fillMaxWidth()) {
                             MediaInfoView(
-                                title = stringResource(R.string.duration),
-                                info = uiState.mediaDetails.episodeDurationLocalized(),
-                                modifier = Modifier.weight(1f).defaultPlaceholder(visible = uiState.isLoading)
+                                title = stringResource(R.string.start_date),
+                                info = uiState.mediaDetails?.startDate?.parseDateAndLocalize(),
+                                icon = R.drawable.round_calendar_today_24,
+                                modifier = Modifier.weight(1f)
                             )
+                            MediaInfoView(
+                                title = stringResource(R.string.end_date),
+                                info = uiState.mediaDetails?.endDate?.parseDateAndLocalize(),
+                                icon = R.drawable.round_calendar_today_24,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        if (uiState.mediaDetails is AnimeDetails) {
+                            Row(modifier = Modifier.fillMaxWidth()) {
+                                MediaInfoView(
+                                    title = stringResource(R.string.season),
+                                    info = uiState.mediaDetails.startSeason?.seasonYearText(),
+                                    icon = R.drawable.ic_spring_24,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                MediaInfoView(
+                                    title = stringResource(R.string.studios),
+                                    info = uiState.studiosJoined,
+                                    icon = R.drawable.ic_round_movie_24,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
                         } else if (uiState.mediaDetails is MangaDetails) {
                             MediaInfoView(
                                 title = stringResource(R.string.authors),
                                 info = uiState.mediaDetails.authors
                                     ?.joinToString { "${it.node.firstName} ${it.node.lastName}" },
-                                modifier = Modifier.weight(1f).defaultPlaceholder(visible = uiState.isLoading)
-                            )
-                        }
-                        MediaInfoView(
-                            title = stringResource(R.string.source),
-                            info = (uiState.mediaDetails as? AnimeDetails)?.source?.localized()
-                                ?: stringResource(R.string.unknown),
-                            modifier = Modifier.weight(1f).defaultPlaceholder(visible = uiState.isLoading)
-                        )
-                    }
-
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        MediaInfoView(
-                            title = stringResource(R.string.start_date),
-                            info = uiState.mediaDetails?.startDate?.parseDateAndLocalize(),
-                            modifier = Modifier.weight(1f).defaultPlaceholder(visible = uiState.isLoading)
-                        )
-                        MediaInfoView(
-                            title = stringResource(R.string.end_date),
-                            info = uiState.mediaDetails?.endDate?.parseDateAndLocalize(),
-                            modifier = Modifier.weight(1f).defaultPlaceholder(visible = uiState.isLoading)
-                        )
-                    }
-
-                    if (uiState.mediaDetails is AnimeDetails) {
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            MediaInfoView(
-                                title = stringResource(R.string.season),
-                                info = uiState.mediaDetails.startSeason?.seasonYearText(),
-                                modifier = Modifier.weight(1f).defaultPlaceholder(visible = uiState.isLoading)
-                            )
-                            MediaInfoView(
-                                title = stringResource(R.string.studios),
-                                info = uiState.studiosJoined,
-                                modifier = Modifier.weight(1f).defaultPlaceholder(visible = uiState.isLoading)
+                                icon = R.drawable.ic_round_person_24,
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     }
-
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-                    MediaInfoView(
-                        title = stringResource(R.string.jp_title),
-                        info = uiState.mediaDetails?.alternativeTitles?.ja,
-                        modifier = Modifier.fillMaxWidth().defaultPlaceholder(visible = uiState.isLoading)
-                    )
-                    MediaInfoView(
-                        title = stringResource(R.string.english),
-                        info = uiState.mediaDetails?.alternativeTitles?.en,
-                        modifier = Modifier.fillMaxWidth().defaultPlaceholder(visible = uiState.isLoading)
-                    )
                 }
 
-                //Characters
+                // Alternative Titles Section - Tonal Column Grid
+                val englishTitle = uiState.mediaDetails?.alternativeTitles?.en
+                val japaneseTitle = uiState.mediaDetails?.alternativeTitles?.ja
+                val synonyms = uiState.mediaDetails?.alternativeTitles?.synonyms
+
+                if (!englishTitle.isNullOrBlank() || !japaneseTitle.isNullOrBlank() || !synonyms.isNullOrEmpty()) {
+                    InfoTitle(text = stringResource(R.string.title_language))
+                    Surface(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            if (!englishTitle.isNullOrBlank()) {
+                                MediaInfoView(
+                                    title = stringResource(R.string.english),
+                                    info = englishTitle,
+                                    icon = R.drawable.ic_round_language_24,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+
+                            if (!japaneseTitle.isNullOrBlank()) {
+                                MediaInfoView(
+                                    title = stringResource(R.string.japanese),
+                                    info = japaneseTitle,
+                                    icon = R.drawable.ic_outline_translate_24,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+
+                            if (!synonyms.isNullOrEmpty()) {
+                                MediaInfoView(
+                                    title = stringResource(R.string.synonyms),
+                                    info = synonyms.joinToString(", "),
+                                    icon = R.drawable.round_title_24,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+                    }
+                }
+
+                //Characters - Immersive Carousel
                 if (uiState.isAnime) {
                     InfoTitle(text = stringResource(R.string.characters))
                     if (uiState.characters.isNotEmpty() || uiState.isLoadingCharacters) {
                         LazyRow(
                             modifier = Modifier.padding(top = 8.dp),
-                            contentPadding = PaddingValues(horizontal = 16.dp)
+                            contentPadding = PaddingValues(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             items(
                                 items = uiState.characters,
@@ -506,12 +600,13 @@ private fun MediaDetailsContent(
                                 MediaItemVertical(
                                     imageUrl = item.node.mainPicture?.medium,
                                     title = item.fullName(),
-                                    modifier = Modifier.padding(end = 8.dp),
+                                    modifier = Modifier,
                                     subtitle = {
                                         Text(
                                             text = item.role?.localized().orEmpty(),
-                                            color = MaterialTheme.colorScheme.outline,
-                                            fontSize = 13.sp
+                                            color = MaterialTheme.colorScheme.primary,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold
                                         )
                                     },
                                     minLines = 2,
@@ -531,9 +626,9 @@ private fun MediaDetailsContent(
                             onClick = {
                                 event?.getCharacters()
                             },
-                            modifier = Modifier.padding(8.dp)
+                            modifier = Modifier.padding(horizontal = 16.dp)
                         ) {
-                            Text(text = stringResource(R.string.view_characters))
+                            Text(text = stringResource(R.string.view_characters), fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -594,7 +689,7 @@ private fun MediaDetailsContent(
                             title = stringResource(R.string.ending),
                             themes = endingThemes.map { it.text },
                             onDismiss = { showEndingSheet = false },
-                            onThemeClick = { 
+                            onThemeClick = {
                                 selectedSong = it
                                 showMusicSheet = true
                             }
@@ -607,11 +702,16 @@ private fun MediaDetailsContent(
                     .filter { it.relationType == RelationType.PREQUEL || it.relationType == RelationType.SEQUEL }
 
                 if (relatedMedia.isNotEmpty()) {
-                    InfoTitle(text = stringResource(R.string.related_anime))
+                    InfoTitle(
+                        text = stringResource(
+                            if (uiState.isAnime) R.string.related_anime
+                            else R.string.related_manga
+                        )
+                    )
                     LazyRow(
                         modifier = Modifier.padding(top = 8.dp),
                         contentPadding = PaddingValues(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(relatedMedia) { item ->
                             val mediaType = if (item is RelatedAnime) MediaType.ANIME else MediaType.MANGA
@@ -619,12 +719,19 @@ private fun MediaDetailsContent(
                                 imageUrl = item.node.mainPicture?.medium,
                                 title = item.node.title,
                                 subtitle = {
-                                    Text(
-                                        text = item.relationType.localized(),
-                                        color = MaterialTheme.colorScheme.primary,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                                        shape = CircleShape,
+                                        modifier = Modifier.padding(top = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = item.relationType.localized(),
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.ExtraBold
+                                        )
+                                    }
                                 },
                                 onClick = {
                                     navActionManager.toMediaDetails(mediaType, item.node.id)
@@ -636,9 +743,11 @@ private fun MediaDetailsContent(
 
                 (uiState.mediaDetails as? AnimeDetails)?.statistics?.status?.toStats()?.let { stats ->
                     InfoTitle(text = stringResource(R.string.status_distribution))
-                    HorizontalStatsBar(
-                        stats = stats
-                    )
+                    Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        HorizontalStatsBar(
+                            stats = stats
+                        )
+                    }
                 }
             }
 
@@ -650,7 +759,7 @@ private fun MediaDetailsContent(
                 scrollBehavior = topAppBarScrollBehavior,
             )
         }
-    }//:Scaffold
+    }
 }
 
 @Composable
@@ -659,11 +768,13 @@ fun ThemeSummaryCard(
     count: Int,
     onClick: () -> Unit
 ) {
-    OutlinedCard(
+    Surface(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         Row(
             modifier = Modifier
@@ -680,13 +791,13 @@ fun ThemeSummaryCard(
                 Text(
                     text = "$count tracks",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Icon(
                 imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.outline
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -703,7 +814,8 @@ fun ThemeListSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        contentWindowInsets = { WindowInsets.statusBars }
+        contentWindowInsets = { WindowInsets.statusBars },
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ) {
         Column(
             modifier = Modifier
@@ -714,7 +826,7 @@ fun ThemeListSheet(
                 text = title,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.ExtraBold
             )
             LazyColumn(
                 modifier = Modifier.fillMaxWidth()
@@ -735,39 +847,42 @@ fun StatCard(
     label: String,
     value: String,
     icon: Int,
+    containerColor: Color,
     modifier: Modifier = Modifier
 ) {
     ElevatedCard(
         modifier = modifier,
         colors = androidx.compose.material3.CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+            containerColor = containerColor
+        ),
+        shape = RoundedCornerShape(20.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Icon(
                 painter = painterResource(icon),
                 contentDescription = null,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(24.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = value,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.ExtraBold,
                 textAlign = TextAlign.Center
             )
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outline,
-                textAlign = TextAlign.Center
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold
             )
         }
     }

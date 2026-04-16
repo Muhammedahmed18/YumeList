@@ -37,7 +37,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -59,8 +58,6 @@ import com.axiel7.moelist.ui.main.composables.MainBottomNavBar
 import com.axiel7.moelist.ui.main.composables.MainNavigationRail
 import com.axiel7.moelist.ui.main.composables.MainTopAppBar
 import com.axiel7.moelist.ui.theme.MoeListTheme
-import com.axiel7.moelist.ui.theme.dark_scrim
-import com.axiel7.moelist.ui.theme.light_scrim
 import com.axiel7.moelist.utils.ContextExtensions.openLink
 import com.axiel7.moelist.utils.MOELIST_PAGELINK
 import kotlinx.coroutines.flow.first
@@ -116,6 +113,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             val accessToken by viewModel.accessToken.collectAsStateWithLifecycle(App.accessToken)
+            val isLoggedIn = !accessToken.isNullOrEmpty()
             val useListTabs by viewModel.useListTabs.collectAsStateWithLifecycle()
             val profilePicture by viewModel.profilePicture.collectAsStateWithLifecycle()
             val pinnedNavBar by viewModel.pinnedNavBar.collectAsStateWithLifecycle(false)
@@ -124,14 +122,13 @@ class MainActivity : AppCompatActivity() {
                 darkTheme = isDark,
                 useBlackColors = useBlackColors
             ) {
-                val backgroundColor = MaterialTheme.colorScheme.background
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = backgroundColor
+                    color = MaterialTheme.colorScheme.background
                 ) {
                     MainView(
                         isCompactScreen = isCompactScreen,
-                        isLoggedIn = !accessToken.isNullOrEmpty(),
+                        isLoggedIn = isLoggedIn,
                         useListTabs = useListTabs,
                         navController = navController,
                         navActionManager = navActionManager,
@@ -141,27 +138,15 @@ class MainActivity : AppCompatActivity() {
                         profilePicture = profilePicture,
                     )
 
-                    DisposableEffect(isDark, navBackStackEntry) {
-                        var statusBarStyle = SystemBarStyle.auto(
-                            android.graphics.Color.TRANSPARENT,
-                            android.graphics.Color.TRANSPARENT
-                        ) { isDark }
-
-                        if (isCompactScreen
-                            && navBackStackEntry?.isBottomDestination() == true
-                        ) {
-                            statusBarStyle =
-                                if (isDark) SystemBarStyle.dark(backgroundColor.toArgb())
-                                else SystemBarStyle.light(
-                                    backgroundColor.toArgb(),
-                                    dark_scrim.toArgb()
-                                )
-                        }
-                        enableEdgeToEdge(
-                            statusBarStyle = statusBarStyle,
+                    DisposableEffect(isDark) {
+                        this@MainActivity.enableEdgeToEdge(
+                            statusBarStyle = SystemBarStyle.auto(
+                                android.graphics.Color.TRANSPARENT,
+                                android.graphics.Color.TRANSPARENT,
+                            ) { isDark },
                             navigationBarStyle = SystemBarStyle.auto(
-                                light_scrim.toArgb(),
-                                dark_scrim.toArgb(),
+                                android.graphics.Color.TRANSPARENT,
+                                android.graphics.Color.TRANSPARENT,
                             ) { isDark },
                         )
                         onDispose {}
@@ -258,6 +243,7 @@ fun MainView(
         topBar = {
             if (isCompactScreen) {
                 MainTopAppBar(
+                    isLoggedIn = isLoggedIn,
                     profilePicture = profilePicture,
                     isVisible = isBottomDestination,
                     navController = navController,
