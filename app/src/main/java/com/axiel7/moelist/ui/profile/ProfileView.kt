@@ -1,7 +1,10 @@
 package com.axiel7.moelist.ui.profile
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,10 +26,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -50,6 +51,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -109,9 +111,15 @@ private fun ProfileViewContent(
         }
     }
 
+    // One UI scroll logic
+    val threshold = with(density) { 60.dp.toPx() }
     val titleAlpha by animateFloatAsState(
-        targetValue = if (scrollState.value > 150) 1f else 0f,
+        targetValue = if (scrollState.value > threshold) 1f else 0f,
         label = "titleAlpha"
+    )
+    val largeTitleAlpha by animateFloatAsState(
+        targetValue = if (scrollState.value > threshold) 0f else 1f,
+        label = "largeTitleAlpha"
     )
 
     Scaffold(
@@ -119,20 +127,21 @@ private fun ProfileViewContent(
             TopAppBar(
                 title = { 
                     Text(
-                        text = stringResource(R.string.title_profile),
+                        text = uiState.user?.name ?: stringResource(R.string.title_profile),
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.Bold,
                         modifier = Modifier.alpha(titleAlpha)
                     ) 
                 },
                 navigationIcon = {
                     GlassIconButton(
                         onClick = navActionManager::goBack,
-                        modifier = Modifier.padding(start = 8.dp)
+                        modifier = Modifier.padding(start = 12.dp)
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_arrow_back),
-                            contentDescription = stringResource(R.string.title_home) // Using home as a fallback for back
+                            contentDescription = stringResource(R.string.title_home),
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 },
@@ -140,7 +149,8 @@ private fun ProfileViewContent(
                     GlassIconButton(onClick = { navActionManager.toSettings() }) {
                         Icon(
                             painter = painterResource(R.drawable.ic_round_settings_24),
-                            contentDescription = stringResource(R.string.settings)
+                            contentDescription = stringResource(R.string.settings),
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                     Spacer(modifier = Modifier.size(8.dp))
@@ -150,23 +160,25 @@ private fun ProfileViewContent(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_round_language_24),
-                            contentDescription = stringResource(R.string.view_profile_mal)
+                            contentDescription = stringResource(R.string.view_profile_mal),
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                     Spacer(modifier = Modifier.size(8.dp))
                     GlassIconButton(
                         onClick = { event?.logOut() },
-                        modifier = Modifier.padding(end = 8.dp)
+                        modifier = Modifier.padding(end = 12.dp)
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_round_power_settings_new_24),
-                            contentDescription = stringResource(R.string.logout)
+                            contentDescription = stringResource(R.string.logout),
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+                    scrolledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)
                 )
             )
         }
@@ -174,7 +186,7 @@ private fun ProfileViewContent(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = padding.calculateBottomPadding()) // Only use bottom padding to allow bleed at top
+                .padding(bottom = padding.calculateBottomPadding())
         ) {
             val containerWidthDp = remember(windowInfo, density) {
                 with(density) { windowInfo.containerSize.width.toDp() }
@@ -185,26 +197,40 @@ private fun ProfileViewContent(
                 else -> WindowWidthSizeClass.Expanded
             }
             val horizontalPadding = when (widthClass) {
-                WindowWidthSizeClass.Compact -> 16.dp
-                WindowWidthSizeClass.Medium -> 24.dp
-                else -> 32.dp
+                WindowWidthSizeClass.Compact -> 24.dp
+                WindowWidthSizeClass.Medium -> 32.dp
+                else -> 48.dp
             }
 
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(scrollState),
+                    .verticalScroll(scrollState)
+                    .statusBarsPadding(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // One UI Reachability Spacer - Large header area
+                Spacer(modifier = Modifier.height(24.dp))
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .widthIn(max = 840.dp)
-                        .statusBarsPadding()
-                        .padding(horizontal = horizontalPadding)
-                        .padding(top = 56.dp), // Adjust for TopAppBar
+                        .padding(horizontal = horizontalPadding),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    Text(
+                        text = stringResource(R.string.title_profile),
+                        style = if (widthClass == WindowWidthSizeClass.Compact) 
+                            MaterialTheme.typography.displayMedium 
+                        else MaterialTheme.typography.displayLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-1).sp,
+                        modifier = Modifier
+                            .padding(bottom = 24.dp)
+                            .alpha(largeTitleAlpha)
+                    )
+
                     ProfileHeader(
                         uiState = uiState,
                         widthClass = widthClass,
@@ -216,6 +242,8 @@ private fun ProfileViewContent(
                     )
                 }
 
+                Spacer(modifier = Modifier.height(32.dp))
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -223,36 +251,14 @@ private fun ProfileViewContent(
                         .padding(horizontal = horizontalPadding),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Spacer(modifier = Modifier.height(32.dp))
-
-                    val tabLabels = listOf(
-                        stringResource(R.string.anime),
-                        stringResource(R.string.manga)
+                    // Segmented Pill Control
+                    SegmentedPillControl(
+                        options = listOf(stringResource(R.string.anime), stringResource(R.string.manga)),
+                        selectedIndex = selectedStatsTab,
+                        onOptionSelected = { selectedStatsTab = it }
                     )
-                    PrimaryTabRow(
-                        selectedTabIndex = selectedStatsTab,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(MaterialTheme.shapes.medium),
-                        containerColor = Color.Transparent,
-                        divider = {}
-                    ) {
-                        tabLabels.forEachIndexed { index, label ->
-                            Tab(
-                                selected = selectedStatsTab == index,
-                                onClick = { selectedStatsTab = index },
-                                text = { 
-                                    Text(
-                                        text = label,
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = if (selectedStatsTab == index) FontWeight.Bold else FontWeight.Normal
-                                    ) 
-                                }
-                            )
-                        }
-                    }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     val mediaType =
                         if (selectedStatsTab == 0) MediaType.ANIME else MediaType.MANGA
@@ -264,7 +270,62 @@ private fun ProfileViewContent(
                         onRefreshManga = { event?.refreshMangaStats() }
                     )
                     
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(48.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SegmentedPillControl(
+    options: List<String>,
+    selectedIndex: Int,
+    onOptionSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(52.dp),
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            options.forEachIndexed { index, label ->
+                val isSelected = selectedIndex == index
+                val containerColor by animateColorAsState(
+                    targetValue = if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent,
+                    animationSpec = tween(durationMillis = 250),
+                    label = "containerColor"
+                )
+                val contentColor by animateColorAsState(
+                    targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    animationSpec = tween(durationMillis = 250),
+                    label = "contentColor"
+                )
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxSize()
+                        .clip(CircleShape)
+                        .background(containerColor)
+                        .clickable { onOptionSelected(index) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = contentColor,
+                        letterSpacing = 0.5.sp
+                    )
                 }
             }
         }
@@ -282,9 +343,10 @@ private fun GlassIconButton(
         onClick = onClick,
         enabled = enabled,
         shape = CircleShape,
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.65f),
         contentColor = MaterialTheme.colorScheme.onSurface,
-        modifier = modifier.size(40.dp)
+        modifier = modifier.size(44.dp),
+        shadowElevation = 1.dp
     ) {
         Box(contentAlignment = Alignment.Center) {
             content()
@@ -300,20 +362,20 @@ private fun ProfileHeader(
     onAvatarClick: () -> Unit
 ) {
     val avatarSize = when (widthClass) {
-        WindowWidthSizeClass.Compact -> 110.dp
-        WindowWidthSizeClass.Medium -> 120.dp
-        else -> 130.dp
+        WindowWidthSizeClass.Compact -> 120.dp
+        WindowWidthSizeClass.Medium -> 140.dp
+        else -> 160.dp
     }
     val nameStyle = when (widthClass) {
-        WindowWidthSizeClass.Compact -> MaterialTheme.typography.headlineMedium
-        else -> MaterialTheme.typography.headlineLarge
+        WindowWidthSizeClass.Compact -> MaterialTheme.typography.headlineLarge
+        else -> MaterialTheme.typography.displaySmall
     }
 
     if (widthClass == WindowWidthSizeClass.Compact) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(28.dp)
         ) {
             ProfileAvatar(
                 url = uiState.profilePictureUrl,
@@ -330,7 +392,7 @@ private fun ProfileHeader(
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(32.dp)
+            horizontalArrangement = Arrangement.spacedBy(48.dp)
         ) {
             ProfileAvatar(
                 url = uiState.profilePictureUrl,
@@ -354,9 +416,10 @@ private fun ProfileAvatar(
 ) {
     Surface(
         shape = CircleShape,
-        tonalElevation = 2.dp,
-        shadowElevation = 12.dp,
-        modifier = Modifier.size(size)
+        tonalElevation = 6.dp,
+        shadowElevation = 20.dp,
+        modifier = Modifier.size(size),
+        border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
     ) {
         if (url.isNullOrEmpty()) {
             Image(
@@ -399,36 +462,35 @@ private fun ProfileMeta(
                 .defaultPlaceholder(visible = uiState.isLoading),
             color = MaterialTheme.colorScheme.onSurface,
             style = nameStyle,
-            fontWeight = FontWeight.ExtraBold
+            fontWeight = FontWeight.Black,
+            letterSpacing = (-0.5).sp
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         FlowRow(
-            horizontalArrangement = if (centered) Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally) else Arrangement.spacedBy(16.dp),
+            horizontalArrangement = if (centered) Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally) else Arrangement.spacedBy(24.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             uiState.user?.location?.let { location ->
                 if (location.isNotBlank()) {
-                    TextIconHorizontal(
+                    ProfileMetaItem(
                         text = location,
                         icon = R.drawable.ic_round_location_on_24,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodyLarge
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
 
             uiState.user?.birthday?.let { birthday ->
-                TextIconHorizontal(
+                ProfileMetaItem(
                     text = birthday.parseDateAndLocalize().orEmpty(),
                     icon = R.drawable.ic_round_cake_24,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyLarge
+                    color = MaterialTheme.colorScheme.secondary
                 )
             }
 
-            TextIconHorizontal(
+            ProfileMetaItem(
                 text = if (uiState.user?.joinedAt != null)
                     uiState.user.joinedAt.parseDateAndLocalize(
                         inputFormat = DateTimeFormatter.ISO_DATE_TIME
@@ -437,10 +499,36 @@ private fun ProfileMeta(
                 icon = R.drawable.ic_round_access_time_24,
                 modifier = Modifier
                     .defaultPlaceholder(visible = uiState.isLoading),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyLarge
+                color = MaterialTheme.colorScheme.tertiary
             )
         }
+    }
+}
+
+@Composable
+private fun ProfileMetaItem(
+    text: String,
+    icon: Int,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier
+    ) {
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(20.dp)
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
 

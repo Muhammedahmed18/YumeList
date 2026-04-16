@@ -120,7 +120,7 @@ class AnimeRepository(
     ): AnimeDetails? {
         return try {
             api.getAnimeDetails(animeId, ANIME_DETAILS_FIELDS)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -150,12 +150,10 @@ class AnimeRepository(
                         newList.removeAll { it.listStatus?.status == status }
                     }
                     result.data.forEach { newItem ->
-                        val index = newList.indexOfFirst { it.node.id == newItem.node.id }
-                        if (index != -1) {
-                            newList[index] = newItem
-                        } else {
-                            newList.add(newItem)
-                        }
+                        // Remove item if it exists anywhere in the list (even with different status)
+                        // to ensure it takes the new position provided by the API sort
+                        newList.removeAll { it.node.id == newItem.node.id }
+                        newList.add(newItem)
                     }
                     newList
                 }
@@ -236,18 +234,13 @@ class AnimeRepository(
                     comments
                 )
             }
-            if (result.status != null) {
-                _userAnimeList.update { currentList ->
-                    currentList.map { 
-                        if (it.node.id == animeId) it.copy(listStatus = result) else it
-                    }
+            _userAnimeList.update { currentList ->
+                currentList.map {
+                    if (it.node.id == animeId) it.copy(listStatus = result) else it
                 }
-            } else {
-                // Rollback on failure
-                _userAnimeList.value = previousList
             }
             result
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             _userAnimeList.value = previousList
             null
         }
@@ -265,7 +258,7 @@ class AnimeRepository(
                 return true
             }
             false
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -355,7 +348,7 @@ class AnimeRepository(
     ): AnimeDetails? {
         return try {
             api.getAnimeDetails(animeId, fields = "id,status")
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -397,7 +390,7 @@ class AnimeRepository(
             else result.data?.map { it.node }
                 ?.filter { it.broadcast != null && it.status == MediaStatus.AIRING }
                 ?.sortedBy { it.broadcast!!.secondsUntilNextBroadcast() }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }

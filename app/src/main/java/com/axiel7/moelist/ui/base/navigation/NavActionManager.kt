@@ -69,6 +69,14 @@ class NavActionManager(
         navController.navigate(Route.Credits)
     }
 
+    fun toProfile() {
+        navController.navigate(Route.Profile)
+    }
+
+    fun toLogin() {
+        navController.navigate(Route.Profile)
+    }
+
     companion object {
         @Composable
         fun rememberNavActionManager(

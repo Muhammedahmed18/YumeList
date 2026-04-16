@@ -52,7 +52,7 @@ object ContextExtensions {
     /** Open link in Chrome Custom Tabs */
     fun Context.openCustomTab(url: String) {
         val colors = CustomTabColorSchemeParams.Builder()
-            .setToolbarColor(ContextCompat.getColor(this, R.color.colorMoeList))
+            .setToolbarColor(ContextCompat.getColor(this, R.color.colorYumeList))
             .build()
         CustomTabsIntent.Builder()
             .setDefaultColorSchemeParams(colors)

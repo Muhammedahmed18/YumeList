@@ -328,9 +328,23 @@ class UserMediaListViewModel(
         combine(
             repositoryFlow,
             mutableUiState.map { it.listStatus }.distinctUntilChanged(),
+            mutableUiState.map { it.listSort }.distinctUntilChanged(),
             isFetching
-        ) { list, status, fetching ->
-            val filteredList = list.filter { it.listStatus?.status == status }
+        ) { list: List<BaseUserMediaList<out BaseMediaNode>>,
+            status: ListStatus?,
+            sort: MediaSort?,
+            fetching: Boolean ->
+            var filteredList = list.filter { it.listStatus?.status == status }
+
+            // Explicitly sort the list to match UI selection
+            filteredList = when (sort) {
+                MediaSort.ANIME_TITLE, MediaSort.MANGA_TITLE -> filteredList.sortedBy { it.node.title }
+                MediaSort.SCORE, MediaSort.ANIME_SCORE -> filteredList.sortedByDescending { it.listStatus?.score }
+                MediaSort.UPDATED -> filteredList.sortedByDescending { it.listStatus?.updatedAt }
+                MediaSort.ANIME_START_DATE, MediaSort.MANGA_START_DATE -> filteredList.sortedByDescending { it.node.startDate }
+                else -> filteredList
+            }
+
             mutableUiState.update { state ->
                 val alreadyLoaded = state.isStatusLoaded(status)
                 state.copy(

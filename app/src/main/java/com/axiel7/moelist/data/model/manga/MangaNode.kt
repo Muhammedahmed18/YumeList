@@ -20,7 +20,7 @@ data class MangaNode(
     @SerialName("main_picture")
     override val mainPicture: MainPicture? = null,
     @SerialName("start_date")
-    val startDate: String? = null,
+    override val startDate: String? = null,
     @SerialName("num_volumes")
     val numVolumes: Int? = null,
     @SerialName("num_chapters")

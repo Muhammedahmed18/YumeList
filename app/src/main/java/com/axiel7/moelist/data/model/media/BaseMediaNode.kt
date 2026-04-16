@@ -18,6 +18,7 @@ abstract class BaseMediaNode {
     abstract val mediaFormat: MediaFormat?
     abstract val status: MediaStatus?
     abstract val mean: Float?
+    open val startDate: String? = null
     open val myListStatus: BasicMyListStatus? = null
 
     val mediaType

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">MoeList</string>
+    <string name="app_name" translatable="false">YumeList</string>
     <string name="title_home">Home</string>
     <string name="title_anime_list">Anime</string>
     <string name="title_manga_list">Manga</string>
@@ -118,7 +118,7 @@
     <string name="default_section">Default section</string>
     <string name="display">Display</string>
     <string name="logout">Log Out</string>
-    <string name="logout_summary">Log out only from MoeList, not MAL.</string>
+    <string name="logout_summary">Log out only from YumeList, not MAL.</string>
     <string name="version">Version</string>
     <string name="discord" translatable="false">Discord</string>
     <string name="github" translatable="false">GitHub</string>

@@ -89,7 +89,7 @@ private fun MoreViewContent(
             .padding(padding)
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_moelist_logo),
+            painter = painterResource(R.drawable.ic_yumelist_logo),
             contentDescription = stringResource(R.string.app_name),
             modifier = Modifier
                 .padding(vertical = 24.dp)

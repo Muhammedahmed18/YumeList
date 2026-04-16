@@ -19,11 +19,11 @@ android {
     compileSdk = 36
 
     base {
-        archivesName = "moelist-v${versionProps.getProperty("name")}"
+        archivesName = "yumelist-v${versionProps.getProperty("name")}"
     }
 
     defaultConfig {
-        applicationId = "com.axiel7.moelist"
+        applicationId = "com.ahmad.yumelist"
         minSdk = 23
         targetSdk = 36
         versionCode = versionProps.getProperty("code").toInt()
@@ -51,7 +51,7 @@ android {
                 "proguard-rules.pro"
             )
             buildConfigField("String", "CLIENT_ID", "\"${privateProps.getProperty("CLIENT_ID")}\"")
-            resValue("string", "app_name", "MoeList Debug")
+            resValue("string", "app_name", "YumeList Debug")
         }
         release {
             isDebuggable = false

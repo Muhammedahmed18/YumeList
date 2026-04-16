@@ -2,13 +2,13 @@ package com.axiel7.moelist.ui.home
 
 import androidx.compose.runtime.Immutable
 import com.axiel7.moelist.data.model.anime.AnimeRanking
-import com.axiel7.moelist.data.model.anime.UserAnimeList
+import com.axiel7.moelist.data.model.anime.AnimeSeasonal
 import com.axiel7.moelist.ui.base.state.UiState
 
 @Immutable
 data class HomeUiState(
     val todayAnimes: List<AnimeRanking> = emptyList(),
-    val watchingAnimes: List<UserAnimeList> = emptyList(),
+    val seasonalAnimes: List<AnimeSeasonal> = emptyList(),
     val hideScore: Boolean = false,
     override val isLoading: Boolean = true,
     override val message: String? = null

@@ -8,7 +8,7 @@
         <intent
             android:action="home"
             android:targetClass="com.axiel7.moelist.ui.main.MainActivity"
-            android:targetPackage="com.axiel7.moelist" />
+            android:targetPackage="com.ahmad.yumelist" />
     </shortcut>
     <shortcut
         android:enabled="true"
@@ -18,7 +18,7 @@
         <intent
             android:action="anime"
             android:targetClass="com.axiel7.moelist.ui.main.MainActivity"
-            android:targetPackage="com.axiel7.moelist" />
+            android:targetPackage="com.ahmad.yumelist" />
     </shortcut>
     <shortcut
         android:enabled="true"
@@ -28,6 +28,6 @@
         <intent
             android:action="manga"
             android:targetClass="com.axiel7.moelist.ui.main.MainActivity"
-            android:targetPackage="com.axiel7.moelist" />
+            android:targetPackage="com.ahmad.yumelist" />
     </shortcut>
 </shortcuts>

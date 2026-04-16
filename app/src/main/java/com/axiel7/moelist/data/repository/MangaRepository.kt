@@ -48,7 +48,7 @@ class MangaRepository(
     ): MangaDetails? {
         return try {
             api.getMangaDetails(mangaId, MANGA_DETAILS_FIELDS)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -77,12 +77,10 @@ class MangaRepository(
                         newList.removeAll { it.listStatus?.status == status }
                     }
                     result.data.forEach { newItem ->
-                        val index = newList.indexOfFirst { it.node.id == newItem.node.id }
-                        if (index != -1) {
-                            newList[index] = newItem
-                        } else {
-                            newList.add(newItem)
-                        }
+                        // Remove item if it exists anywhere in the list (even with different status)
+                        // to ensure it takes the new position provided by the API sort
+                        newList.removeAll { it.node.id == newItem.node.id }
+                        newList.add(newItem)
                     }
                     newList
                 }
@@ -167,18 +165,13 @@ class MangaRepository(
                     comments
                 )
             }
-            if (result.status != null) {
-                _userMangaList.update { currentList ->
-                    currentList.map {
-                        if (it.node.id == mangaId) it.copy(listStatus = result) else it
-                    }
+            _userMangaList.update { currentList ->
+                currentList.map {
+                    if (it.node.id == mangaId) it.copy(listStatus = result) else it
                 }
-            } else {
-                // Rollback
-                _userMangaList.value = previousList
             }
             result
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             _userMangaList.value = previousList
             null
         }
@@ -196,7 +189,7 @@ class MangaRepository(
                 return true
             }
             false
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }

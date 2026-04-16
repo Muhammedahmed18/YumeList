@@ -27,10 +27,8 @@ class HomeViewModel(
     override fun initRequestChain(isLoggedIn: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             mutableUiState.update { it.copy(isLoading = true) }
-            mutableUiState.value.run {
-                getTodayAiringAnimes()
-                if (isLoggedIn) getWatchingAnimes()
-            }
+            getTodayAiringAnimes()
+            getSeasonalAnimes()
             mutableUiState.update { it.copy(isLoading = false) }
         }
     }
@@ -63,13 +61,15 @@ class HomeViewModel(
         }
     }
 
-    private suspend fun getWatchingAnimes() {
-        val result = animeRepository.getUserAnimeList(
-            status = ListStatus.WATCHING,
-            sort = MediaSort.SCORE,
+    private suspend fun getSeasonalAnimes() {
+        val result = animeRepository.getSeasonalAnimes(
+            sort = MediaSort.ANIME_NUM_USERS,
+            startSeason = SeasonCalendar.currentStartSeason,
+            limit = 20,
+            fields = AnimeRepository.SEASONAL_FIELDS
         )
         if (result.data != null) {
-            mutableUiState.update { it.copy(watchingAnimes = result.data) }
+            mutableUiState.update { it.copy(seasonalAnimes = result.data) }
         } else {
             showMessage(result.message ?: result.error)
         }

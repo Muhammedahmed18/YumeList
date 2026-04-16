@@ -41,7 +41,7 @@ fun AboutView(
             MoreItem(
                 title = stringResource(R.string.version),
                 subtitle = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                icon = R.drawable.ic_moelist_logo,
+                icon = R.drawable.ic_yumelist_logo,
                 onClick = {
                     if (versionClicks >= 7) {
                         context.showToast("✧◝(⁰▿⁰)◜✧")
