@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -42,6 +43,9 @@ import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.DefaultScaffoldWithTopAppBar
+import com.axiel7.moelist.ui.composables.EmptyState
+import com.axiel7.moelist.ui.composables.ErrorState
+import com.axiel7.moelist.ui.composables.LoadingState
 import com.axiel7.moelist.ui.composables.TextIconHorizontal
 import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_SMALL_WIDTH
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailedPlaceholder
@@ -124,75 +128,92 @@ private fun SeasonChartViewContent(
         contentWindowInsets = WindowInsets.systemBars
             .only(WindowInsetsSides.Horizontal)
     ) { padding ->
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = MEDIA_POSTER_SMALL_WIDTH.dp),
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 8.dp,
-                top = 8.dp,
-                end = 8.dp,
-                bottom = bottomBarPadding
-            ),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
-        ) {
-            items(
-                items = uiState.animes,
-                key = { it.node.id },
-                contentType = { it.node }
-            ) { item ->
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.TopCenter
+        when {
+            uiState.isLoading && uiState.animes.isEmpty() -> {
+                LoadingState(modifier = Modifier.padding(padding))
+            }
+            uiState.message != null && uiState.animes.isEmpty() -> {
+                ErrorState(
+                    modifier = Modifier.padding(padding),
+                    message = uiState.message,
+                    onAction = { event?.onApplyFilters() }
+                )
+            }
+            !uiState.isLoading && uiState.animes.isEmpty() -> {
+                EmptyState(modifier = Modifier.padding(padding))
+            }
+            else -> {
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = MEDIA_POSTER_SMALL_WIDTH.dp),
+                    modifier = Modifier
+                        .padding(padding)
+                        .fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = 8.dp,
+                        top = 8.dp,
+                        end = 8.dp,
+                        bottom = bottomBarPadding
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
                 ) {
-                    MediaItemVertical(
-                        imageUrl = item.node.mainPicture?.large,
-                        title = item.node.userPreferredTitle(),
-                        badgeContent = item.node.myListStatus?.status?.let { status ->
-                            {
-                                Icon(
-                                    painter = painterResource(status.icon),
-                                    contentDescription = status.localized(),
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            }
-                        },
-                        subtitle = if (!uiState.hideScore) {
-                            {
-                                SmallScoreIndicator(
-                                    score = item.node.mean,
-                                    fontSize = 13.sp
-                                )
-                            }
-                        } else null,
-                        subtitle2 = {
-                            item.node.numListUsers?.format()?.let { users ->
-                                TextIconHorizontal(
-                                    text = users,
-                                    icon = R.drawable.ic_round_group_24,
-                                    color = MaterialTheme.colorScheme.outline,
-                                    fontSize = 13.sp,
-                                    iconSize = 16.dp
-                                )
-                            }
-                        },
-                        minLines = 2,
-                        onClick = dropUnlessResumed {
-                            navActionManager.toMediaDetails(MediaType.ANIME, item.node.id)
+                    items(
+                        items = uiState.animes,
+                        key = { it.node.id },
+                        contentType = { it.node }
+                    ) { item ->
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.TopCenter
+                        ) {
+                            MediaItemVertical(
+                                imageUrl = item.node.mainPicture?.large,
+                                title = item.node.userPreferredTitle(),
+                                badgeContent = item.node.myListStatus?.status?.let { status ->
+                                    {
+                                        Icon(
+                                            painter = painterResource(status.icon),
+                                            contentDescription = status.localized(),
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                    }
+                                },
+                                subtitle = if (!uiState.hideScore) {
+                                    {
+                                        SmallScoreIndicator(
+                                            score = item.node.mean,
+                                            fontSize = 13.sp
+                                        )
+                                    }
+                                } else null,
+                                subtitle2 = {
+                                    item.node.numListUsers?.format()?.let { users ->
+                                        TextIconHorizontal(
+                                            text = users,
+                                            icon = R.drawable.ic_round_group_24,
+                                            color = MaterialTheme.colorScheme.outline,
+                                            fontSize = 13.sp,
+                                            iconSize = 16.dp
+                                        )
+                                    }
+                                },
+                                minLines = 2,
+                                onClick = dropUnlessResumed {
+                                    navActionManager.toMediaDetails(MediaType.ANIME, item.node.id)
+                                }
+                            )
                         }
-                    )
-                }
-            }
-            if (uiState.isLoading) {
-                items(12) {
-                    MediaItemDetailedPlaceholder()
-                }
-            }
-            item(contentType = { 0 }) {
-                LaunchedEffect(uiState.nextPage) {
-                    event?.loadMore()
+                    }
+                    if (uiState.isLoading) {
+                        items(12) {
+                            MediaItemDetailedPlaceholder()
+                        }
+                    }
+                    item(contentType = { 0 }) {
+                        LaunchedEffect(uiState.nextPage) {
+                            event?.loadMore()
+                        }
+                    }
                 }
             }
         }

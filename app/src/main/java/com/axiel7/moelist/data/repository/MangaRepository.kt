@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.update
 class MangaRepository(
     private val api: Api,
     private val defaultPreferencesRepository: DefaultPreferencesRepository
-) : BaseRepository(api, defaultPreferencesRepository) {
+) {
 
     private val _userMangaList = MutableStateFlow<List<UserMangaList>>(emptyList())
     val userMangaList = _userMangaList.asStateFlow()
@@ -67,8 +67,6 @@ class MangaRepository(
                 fields = USER_MANGA_LIST_FIELDS,
             )
             else api.getUserMangaList(page)
-            val retry = result.error?.let { handleResponseError(it) }
-            if (retry == true) return getUserMangaList(status, sort, page)
 
             if (result.data != null) {
                 _userMangaList.update { currentList ->
@@ -85,7 +83,7 @@ class MangaRepository(
                     newList
                 }
             }
-            return result
+            result
         } catch (e: Exception) {
             Response(message = e.message)
         }
@@ -147,24 +145,6 @@ class MangaRepository(
                 tags,
                 comments
             )
-            val retry = result.error?.let { handleResponseError(it) }
-            if (retry == true) {
-                return updateMangaEntry(
-                    mangaId,
-                    status,
-                    score,
-                    chaptersRead,
-                    volumesRead,
-                    startDate,
-                    endDate,
-                    isRereading,
-                    numRereads,
-                    rereadValue,
-                    priority,
-                    tags,
-                    comments
-                )
-            }
             _userMangaList.update { currentList ->
                 currentList.map {
                     if (it.node.id == mangaId) it.copy(listStatus = result) else it
@@ -201,7 +181,7 @@ class MangaRepository(
         page: String? = null
     ): Response<List<MangaList>> {
         return try {
-            val result = if (page == null) api.getMangaList(
+            if (page == null) api.getMangaList(
                 query = query,
                 limit = limit,
                 offset = offset,
@@ -209,8 +189,6 @@ class MangaRepository(
                 fields = SEARCH_FIELDS,
             )
             else api.getMangaList(page)
-            result.error?.let { handleResponseError(it) }
-            return result
         } catch (e: Exception) {
             Response(message = e.message)
         }
@@ -222,16 +200,13 @@ class MangaRepository(
         page: String? = null
     ): Response<List<MangaRanking>> {
         return try {
-            val result =
-                if (page == null) api.getMangaRanking(
-                    rankingType = rankingType.serialName,
-                    limit = limit,
-                    nsfw = defaultPreferencesRepository.nsfwInt(),
-                    fields = RANKING_FIELDS,
-                )
-                else api.getMangaRanking(page)
-            result.error?.let { handleResponseError(it) }
-            return result
+            if (page == null) api.getMangaRanking(
+                rankingType = rankingType.serialName,
+                limit = limit,
+                nsfw = defaultPreferencesRepository.nsfwInt(),
+                fields = RANKING_FIELDS,
+            )
+            else api.getMangaRanking(page)
         } catch (e: Exception) {
             Response(message = e.message)
         }
@@ -250,8 +225,7 @@ class MangaRepository(
                 nsfw = defaultPreferencesRepository.nsfwInt(),
                 fields = "id",
             ) else api.getUserMangaList(page)
-            result.error?.let {
-                handleResponseError(it)
+            if (result.error != null) {
                 return Response(error = result.error, message = result.message)
             }
             if (result.paging?.next != null) {

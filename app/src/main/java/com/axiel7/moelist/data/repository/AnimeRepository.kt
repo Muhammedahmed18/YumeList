@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.update
 class AnimeRepository(
     private val api: Api,
     private val defaultPreferencesRepository: DefaultPreferencesRepository
-) : BaseRepository(api, defaultPreferencesRepository) {
+) {
 
     private val _userAnimeList = MutableStateFlow<List<UserAnimeList>>(emptyList())
     val userAnimeList = _userAnimeList.asStateFlow()
@@ -80,8 +80,7 @@ class AnimeRepository(
                 fields = fields,
             )
             else api.getSeasonalAnime(page)
-            result.error?.let { handleResponseError(it) }
-            return if (isNew != null) {
+            if (isNew != null) {
                 result.copy(
                     // filter for new or continuing anime
                     data = result.data?.filter {
@@ -102,14 +101,12 @@ class AnimeRepository(
         page: String? = null
     ): Response<List<AnimeList>> {
         return try {
-            val result = if (page == null) api.getAnimeRecommendations(
+            if (page == null) api.getAnimeRecommendations(
                 limit = limit,
                 nsfw = defaultPreferencesRepository.nsfwInt(),
                 fields = RECOMMENDED_FIELDS
             )
             else api.getAnimeRecommendations(page)
-            val retry = result.error?.let { handleResponseError(it) }
-            return if (retry == true) getRecommendedAnimes(limit, page) else result
         } catch (e: Exception) {
             Response(message = e.message)
         }
@@ -139,8 +136,6 @@ class AnimeRepository(
                 fields = USER_ANIME_LIST_FIELDS
             )
             else api.getUserAnimeList(page)
-            val retry = result.error?.let { handleResponseError(it) }
-            if (retry == true) return getUserAnimeList(status, sort, page)
             
             if (result.data != null) {
                 _userAnimeList.update { currentList ->
@@ -158,7 +153,7 @@ class AnimeRepository(
                     newList
                 }
             }
-            return result
+            result
         } catch (e: Exception) {
             Response(message = e.message)
         }
@@ -217,23 +212,6 @@ class AnimeRepository(
                 tags,
                 comments
             )
-            val retry = result.error?.let { handleResponseError(it) }
-            if (retry == true) {
-                return updateAnimeEntry(
-                    animeId,
-                    status,
-                    score,
-                    watchedEpisodes,
-                    startDate,
-                    endDate,
-                    isRewatching,
-                    numRewatches,
-                    rewatchValue,
-                    priority,
-                    tags,
-                    comments
-                )
-            }
             _userAnimeList.update { currentList ->
                 currentList.map {
                     if (it.node.id == animeId) it.copy(listStatus = result) else it
@@ -270,7 +248,7 @@ class AnimeRepository(
         page: String? = null,
     ): Response<List<AnimeList>> {
         return try {
-            val result = if (page == null) api.getAnimeList(
+            if (page == null) api.getAnimeList(
                 query = query,
                 limit = limit,
                 offset = offset,
@@ -278,8 +256,6 @@ class AnimeRepository(
                 fields = SEARCH_FIELDS,
             )
             else api.getAnimeList(page)
-            result.error?.let { handleResponseError(it) }
-            return result
         } catch (e: Exception) {
             Response(message = e.message)
         }
@@ -293,16 +269,13 @@ class AnimeRepository(
         page: String? = null
     ): Response<List<AnimeRanking>> {
         return try {
-            val result =
-                if (page == null) api.getAnimeRanking(
-                    rankingType = rankingType.serialName,
-                    limit = limit,
-                    nsfw = defaultPreferencesRepository.nsfwInt(),
-                    fields = fields,
-                )
-                else api.getAnimeRanking(page)
-            result.error?.let { handleResponseError(it) }
-            return result
+            if (page == null) api.getAnimeRanking(
+                rankingType = rankingType.serialName,
+                limit = limit,
+                nsfw = defaultPreferencesRepository.nsfwInt(),
+                fields = fields,
+            )
+            else api.getAnimeRanking(page)
         } catch (e: Exception) {
             Response(message = e.message)
         }
@@ -360,15 +333,13 @@ class AnimeRepository(
         page: String? = null
     ): Response<List<Character>> {
         return try {
-            val result = if (page == null) api.getAnimeCharacters(
+            if (page == null) api.getAnimeCharacters(
                 animeId = animeId,
                 limit = limit,
                 offset = offset,
                 fields = CHARACTERS_FIELDS,
             )
             else api.getAnimeCharacters(page)
-            result.error?.let { handleResponseError(it) }
-            return result
         } catch (e: Exception) {
             Response(message = e.message)
         }
@@ -385,9 +356,7 @@ class AnimeRepository(
                 fields = "status,broadcast,alternative_titles{en,ja}"
             )
 
-            val retry = result.error?.let { handleResponseError(it) }
-            return if (retry == true) getAiringAnimeOnList()
-            else result.data?.map { it.node }
+            result.data?.map { it.node }
                 ?.filter { it.broadcast != null && it.status == MediaStatus.AIRING }
                 ?.sortedBy { it.broadcast!!.secondsUntilNextBroadcast() }
         } catch (_: Exception) {
@@ -408,8 +377,7 @@ class AnimeRepository(
                 nsfw = defaultPreferencesRepository.nsfwInt(),
                 fields = "id",
             ) else api.getUserAnimeList(page)
-            result.error?.let {
-                handleResponseError(it)
+            if (result.error != null) {
                 return Response(error = result.error, message = result.message)
             }
             if (result.paging?.next != null) {

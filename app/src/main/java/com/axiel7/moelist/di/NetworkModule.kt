@@ -2,12 +2,12 @@ package com.axiel7.moelist.di
 
 import com.axiel7.moelist.data.network.Api
 import com.axiel7.moelist.data.network.JikanApi
-import com.axiel7.moelist.data.network.ktorHttpClient
+import com.axiel7.moelist.data.network.createKtorHttpClient
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 val networkModule = module {
-    single { ktorHttpClient }
+    single { createKtorHttpClient(get()) }
     singleOf(::Api)
     singleOf(::JikanApi)
 }

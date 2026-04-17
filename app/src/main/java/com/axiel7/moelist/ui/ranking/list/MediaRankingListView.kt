@@ -3,7 +3,9 @@ package com.axiel7.moelist.ui.ranking.list
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -18,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -29,6 +32,9 @@ import com.axiel7.moelist.data.model.media.BaseRanking
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.data.model.media.RankingType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
+import com.axiel7.moelist.ui.composables.EmptyState
+import com.axiel7.moelist.ui.composables.ErrorState
+import com.axiel7.moelist.ui.composables.LoadingState
 import com.axiel7.moelist.ui.composables.OnBottomReached
 import com.axiel7.moelist.ui.composables.TextIconHorizontal
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailed
@@ -74,7 +80,6 @@ private fun MediaRankingListViewContent(
     navActionManager: NavActionManager,
 ) {
     val context = LocalContext.current
-    val shouldShowPlaceholder = uiState.mediaList.isEmpty() && uiState.isLoading
 
     LaunchedEffect(uiState.message) {
         if (uiState.message != null) {
@@ -136,57 +141,75 @@ private fun MediaRankingListViewContent(
         )
     }
 
-    if (!isCompactScreen) {
-        val listState = rememberLazyGridState()
-        listState.OnBottomReached(buffer = 3) {
-            event?.loadMore()
+    when {
+        uiState.isLoading && uiState.mediaList.isEmpty() -> {
+            LoadingState()
         }
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            state = listState,
-            contentPadding = PaddingValues(
-                top = 8.dp,
-                bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-            ),
-        ) {
-            items(
-                items = uiState.mediaList,
-                key = { it.node.id },
-                contentType = { it.node }
-            ) { item ->
-                ItemView(item = item)
-            }
-            if (shouldShowPlaceholder) {
-                items(10) {
-                    MediaItemDetailedPlaceholder()
+        uiState.message != null && uiState.mediaList.isEmpty() -> {
+            ErrorState(
+                message = uiState.message,
+                onAction = { event?.loadMore() }
+            )
+        }
+        !uiState.isLoading && uiState.mediaList.isEmpty() -> {
+            EmptyState()
+        }
+        else -> {
+            if (!isCompactScreen) {
+                val listState = rememberLazyGridState()
+                listState.OnBottomReached(buffer = 3) {
+                    event?.loadMore()
                 }
-            }
-        }
-    } else {
-        val listState = rememberLazyListState()
-        listState.OnBottomReached(buffer = 3) {
-            event?.loadMore()
-        }
-        LazyColumn(
-            contentPadding = PaddingValues(
-                top = 8.dp,
-                bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-            ),
-            state = listState
-        ) {
-            items(
-                items = uiState.mediaList,
-                key = { it.node.id },
-                contentType = { it.node }
-            ) { item ->
-                ItemView(item = item)
-            }
-            if (shouldShowPlaceholder) {
-                items(10) {
-                    MediaItemDetailedPlaceholder()
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        top = 8.dp,
+                        bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                    ),
+                ) {
+                    items(
+                        items = uiState.mediaList,
+                        key = { it.node.id },
+                        contentType = { it.node }
+                    ) { item ->
+                        ItemView(item = item)
+                    }
+                    if (uiState.isLoading) {
+                        items(10) {
+                            MediaItemDetailedPlaceholder()
+                        }
+                    }
                 }
+            } else {
+                val listState = rememberLazyListState()
+                listState.OnBottomReached(buffer = 3) {
+                    event?.loadMore()
+                }
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        top = 8.dp,
+                        bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                    ),
+                    state = listState
+                ) {
+                    items(
+                        items = uiState.mediaList,
+                        key = { it.node.id },
+                        contentType = { it.node }
+                    ) { item ->
+                        ItemView(item = item)
+                    }
+                    if (uiState.isLoading) {
+                        items(10) {
+                            MediaItemDetailedPlaceholder()
+                        }
+                    }
+                }//:LazyColumn
             }
-        }//:LazyColumn
+        }
     }
 }
 

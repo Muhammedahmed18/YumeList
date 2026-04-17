@@ -48,10 +48,10 @@ fun MediaRankingView(
                 .fillMaxSize()
                 .padding(padding),
             isTabScrollable = true
-        ) {
+        ) { page, _ ->
             MediaRankingListView(
                 mediaType = mediaType,
-                rankingType = tabRowItems[it].value,
+                rankingType = tabRowItems[page].value,
                 isCompactScreen = isCompactScreen,
                 navActionManager = navActionManager,
             )

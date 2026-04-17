@@ -3,7 +3,6 @@ package com.axiel7.moelist.ui.search
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -61,6 +60,9 @@ import com.axiel7.moelist.data.model.manga.MangaList
 import com.axiel7.moelist.data.model.media.BaseMediaList
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
+import com.axiel7.moelist.ui.composables.EmptyState
+import com.axiel7.moelist.ui.composables.ErrorState
+import com.axiel7.moelist.ui.composables.LoadingState
 import com.axiel7.moelist.ui.composables.OnBottomReached
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailed
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailedPlaceholder
@@ -211,7 +213,6 @@ private fun SearchViewContent(
     contentPadding: PaddingValues = PaddingValues(),
 ) {
     val context = LocalContext.current
-    val shouldShowPlaceholder = query.isNotBlank() && uiState.mediaList.isEmpty()
 
     LaunchedEffect(uiState.message) {
         if (uiState.message != null) {
@@ -327,58 +328,56 @@ private fun SearchViewContent(
         FilterRow()
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
-        if (uiState.mediaList.isNotEmpty()) {
-            if (!isCompactScreen) {
-                val gridState = rememberLazyGridState()
-                gridState.OnBottomReached(buffer = 4) { event?.loadMore() }
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    modifier = Modifier.fillMaxSize(),
-                    state = gridState,
-                    contentPadding = contentPadding
-                ) {
-                    items(
-                        items = uiState.mediaList,
-                        contentType = { it.node }
+        when {
+            uiState.isLoading && uiState.mediaList.isEmpty() -> {
+                LoadingState()
+            }
+            uiState.message != null && uiState.mediaList.isEmpty() -> {
+                ErrorState(
+                    message = uiState.message,
+                    onAction = { event?.search(query) }
+                )
+            }
+            uiState.noResults -> {
+                EmptyState()
+            }
+            uiState.mediaList.isNotEmpty() -> {
+                if (!isCompactScreen) {
+                    val gridState = rememberLazyGridState()
+                    gridState.OnBottomReached(buffer = 4) { event?.loadMore() }
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier.fillMaxSize(),
+                        state = gridState,
+                        contentPadding = contentPadding
                     ) {
-                        ItemView(item = it)
-                    }
-                }
-            } else {
-                val listState = rememberLazyListState()
-                listState.OnBottomReached(buffer = 3) { event?.loadMore() }
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    state = listState,
-                    contentPadding = contentPadding
-                ) {
-                    items(
-                        items = uiState.mediaList,
-                        contentType = { it.node }
-                    ) {
-                        ItemView(item = it)
-                    }
-                    if (uiState.isLoading) {
-                        items(5) {
-                            MediaItemDetailedPlaceholder()
+                        items(
+                            items = uiState.mediaList,
+                            contentType = { it.node }
+                        ) {
+                            ItemView(item = it)
                         }
                     }
-                }
-            }
-        } else if (shouldShowPlaceholder) {
-            if (uiState.isLoading) {
-                LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
-                    items(10) {
-                        MediaItemDetailedPlaceholder()
+                } else {
+                    val listState = rememberLazyListState()
+                    listState.OnBottomReached(buffer = 3) { event?.loadMore() }
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        state = listState,
+                        contentPadding = contentPadding
+                    ) {
+                        items(
+                            items = uiState.mediaList,
+                            contentType = { it.node }
+                        ) {
+                            ItemView(item = it)
+                        }
+                        if (uiState.isLoading) {
+                            items(5) {
+                                MediaItemDetailedPlaceholder()
+                            }
+                        }
                     }
-                }
-            } else if (uiState.noResults) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = stringResource(R.string.no_results),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
             }
         }

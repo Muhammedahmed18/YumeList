@@ -76,13 +76,18 @@ fun UserMediaListWithTabsView(
                 beyondBoundsPageCount = 1,
                 isTabScrollable = true,
                 isPrimaryTab = false // Using Secondary style for a cleaner, modern look
-            ) { page ->
+            ) { page, currentPage ->
                 val listStatus = tabRowItems[page].value
                 val viewModel: UserMediaListViewModel = koinViewModel(
                     key = "${mediaType.name}_${listStatus.name}",
                     parameters = { parametersOf(mediaType, listStatus) }
                 )
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+                // Reset sheet state when navigating between tabs
+                LaunchedEffect(currentPage) {
+                    showEditSheet = false
+                }
 
                 if (uiState.openSortDialog && uiState.listSort != null) {
                     MediaListSortDialog(
@@ -95,7 +100,7 @@ fun UserMediaListWithTabsView(
                     LoadingDialog()
                 }
 
-                if (showEditSheet && uiState.mediaInfo != null) {
+                if (showEditSheet && uiState.mediaInfo != null && page == currentPage) {
                     EditMediaSheet(
                         sheetState = editSheetState,
                         mediaInfo = uiState.mediaInfo!!,

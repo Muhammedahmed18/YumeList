@@ -3,7 +3,6 @@ package com.axiel7.moelist.ui.userlist.composables
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -21,11 +20,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -96,7 +95,7 @@ fun StandardUserMediaListItem(
                 onLongClick = onLongClick,
                 onClick = onClick
             ),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )
@@ -111,8 +110,8 @@ fun StandardUserMediaListItem(
                 modifier = Modifier
                     .fillMaxHeight()
                     .width(MEDIA_POSTER_SMALL_WIDTH.dp)
-                    .clip(RoundedCornerShape(16.dp)),
-                contentAlignment = Alignment.BottomStart
+                    .clip(MaterialTheme.shapes.medium),
+                contentAlignment = Alignment.TopStart
             ) {
                 MediaPoster(
                     url = item.node.mainPicture?.large,
@@ -120,30 +119,28 @@ fun StandardUserMediaListItem(
                     modifier = Modifier.fillMaxHeight()
                 )
 
-                // Glass Score Badge
+                // Integrated Tonal Score Tab
                 Surface(
-                    modifier = Modifier.padding(6.dp),
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                    shape = CircleShape,
-                    border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.2f))
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    shape = RoundedCornerShape(bottomEnd = 12.dp)
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Text(
-                            text = if ((item.listStatus?.score ?: 0) == 0) UNKNOWN_CHAR
-                            else "${item.listStatus?.score}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.ExtraBold
-                        )
                         Icon(
                             painter = painterResource(R.drawable.ic_round_star_16),
                             contentDescription = "star",
                             modifier = Modifier.size(10.dp),
-                            tint = Color(0xFFFFB300)
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        Text(
+                            text = if ((item.listStatus?.score ?: 0) == 0) UNKNOWN_CHAR
+                            else "${item.listStatus?.score}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            fontWeight = FontWeight.ExtraBold
                         )
                     }
                 }
@@ -165,19 +162,18 @@ fun StandardUserMediaListItem(
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 2
                     )
-                    
+
                     if (isAiring) {
                         Surface(
                             modifier = Modifier.padding(top = 4.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-                            shape = CircleShape,
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+                            color = MaterialTheme.colorScheme.tertiaryContainer,
+                            shape = CircleShape
                         ) {
                             Text(
                                 text = broadcast?.airingInString() ?: stringResource(R.string.airing),
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -231,34 +227,12 @@ fun StandardUserMediaListItem(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            if (item.listStatus?.hasRepeated() == true) {
-                                Icon(
-                                    painter = painterResource(R.drawable.round_repeat_24),
-                                    contentDescription = stringResource(R.string.rewatching),
-                                    modifier = Modifier.size(18.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-
-                            if (item.listStatus?.hasNotes() == true) {
-                                Icon(
-                                    painter = painterResource(R.drawable.round_notes_24),
-                                    contentDescription = stringResource(R.string.notes),
-                                    modifier = Modifier.size(18.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
 
                             if (listStatus?.isCurrent() == true) {
-                                OutlinedIconButton(
+                                FilledTonalIconButton(
                                     onClick = onClickPlus,
                                     modifier = Modifier.size(36.dp),
-                                    shape = CircleShape,
-                                    colors = IconButtonDefaults.outlinedIconButtonColors(
-                                        contentColor = MaterialTheme.colorScheme.primary,
-                                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
-                                    ),
-                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                                    shape = CircleShape
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.ic_round_add_24),
@@ -270,16 +244,18 @@ fun StandardUserMediaListItem(
                         }
                     }//:Row
 
-                    LinearProgressIndicator(
-                        progress = { item.calculateProgressBarValue() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(6.dp)
-                            .padding(bottom = 2.dp),
-                        color = progressBarColor,
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                        strokeCap = StrokeCap.Round
-                    )
+                    if (totalProgress != null && totalProgress > 0) {
+                        LinearProgressIndicator(
+                            progress = { item.calculateProgressBarValue() },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(6.dp)
+                                .padding(bottom = 2.dp),
+                            color = progressBarColor,
+                            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                            strokeCap = StrokeCap.Round
+                        )
+                    }
                 }//:Column
             }//:Column
         }//:Row
@@ -292,7 +268,7 @@ fun StandardUserMediaListItemPlaceholder() {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )
@@ -309,7 +285,7 @@ fun StandardUserMediaListItemPlaceholder() {
                         width = MEDIA_POSTER_SMALL_WIDTH.dp,
                         height = MEDIA_POSTER_SMALL_HEIGHT.dp
                     )
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(MaterialTheme.shapes.medium)
                     .defaultPlaceholder(visible = true)
             )
 

@@ -100,7 +100,7 @@ fun MediaDetailsTopAppBar(
     val collapsedFraction = scrollBehavior.state.collapsedFraction
     val isScrolled = collapsedFraction > 0.5f
     val contentColor by animateColorAsState(
-        targetValue = if (isScrolled) MaterialTheme.colorScheme.onSurface else Color.White,
+        targetValue = if (isScrolled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface,
         label = "appBarContentColor"
     )
 

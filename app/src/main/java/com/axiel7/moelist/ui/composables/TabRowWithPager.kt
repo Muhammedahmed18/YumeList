@@ -32,7 +32,7 @@ fun <T> TabRowWithPager(
     beyondBoundsPageCount: Int = 0,
     isTabScrollable: Boolean = false,
     isPrimaryTab: Boolean = true,
-    pageContent: @Composable (Int) -> Unit,
+    pageContent: @Composable (page: Int, currentPage: Int) -> Unit,
 ) {
     val state = rememberPagerState(initialPage = initialPage) { tabs.size }
     val scope = rememberCoroutineScope()
@@ -104,7 +104,7 @@ fun <T> TabRowWithPager(
                 // To make sure only X offscreen pages are being composed
                 return@HorizontalPager
             }
-            pageContent(page)
+            pageContent(page, state.currentPage)
         }
     }//: Column
 }

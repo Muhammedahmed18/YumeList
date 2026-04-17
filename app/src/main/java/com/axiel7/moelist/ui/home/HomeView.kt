@@ -44,6 +44,7 @@ import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.base.navigation.NavActionManager.Companion.rememberNavActionManager
+import com.axiel7.moelist.ui.composables.ErrorState
 import com.axiel7.moelist.ui.composables.HeaderHorizontalList
 import com.axiel7.moelist.ui.composables.media.MEDIA_ITEM_VERTICAL_HEIGHT
 import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_SMALL_HEIGHT
@@ -260,41 +261,49 @@ private fun HomeViewContent(
             text = stringResource(R.string.this_season),
             onClick = dropUnlessResumed { navActionManager.toSeasonChart() }
         )
-        LazyRow(
-            modifier = Modifier
-                .padding(top = 4.dp)
-                .sizeIn(minHeight = MEDIA_ITEM_VERTICAL_HEIGHT.dp),
-            state = seasonalListState,
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            flingBehavior = rememberSnapFlingBehavior(lazyListState = seasonalListState),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            items(
-                items = uiState.seasonalAnimes,
-                key = { it.node.id },
-                contentType = { it.node }
+        if (uiState.message != null && uiState.seasonalAnimes.isEmpty()) {
+            ErrorState(
+                modifier = Modifier.height(MEDIA_ITEM_VERTICAL_HEIGHT.dp),
+                message = uiState.message,
+                onAction = { event?.initRequestChain(isLoggedIn) }
+            )
+        } else {
+            LazyRow(
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .sizeIn(minHeight = MEDIA_ITEM_VERTICAL_HEIGHT.dp),
+                state = seasonalListState,
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                flingBehavior = rememberSnapFlingBehavior(lazyListState = seasonalListState),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                MediaItemVertical(
-                    imageUrl = it.node.mainPicture?.large,
-                    title = it.node.userPreferredTitle(),
-                    modifier = Modifier,
-                    subtitle = if (!uiState.hideScore) {
-                        {
-                            SmallScoreIndicator(
-                                score = it.node.mean,
-                                fontSize = 13.sp
-                            )
+                items(
+                    items = uiState.seasonalAnimes,
+                    key = { it.node.id },
+                    contentType = { it.node }
+                ) {
+                    MediaItemVertical(
+                        imageUrl = it.node.mainPicture?.large,
+                        title = it.node.userPreferredTitle(),
+                        modifier = Modifier,
+                        subtitle = if (!uiState.hideScore) {
+                            {
+                                SmallScoreIndicator(
+                                    score = it.node.mean,
+                                    fontSize = 13.sp
+                                )
+                            }
+                        } else null,
+                        minLines = 2,
+                        onClick = dropUnlessResumed {
+                            navActionManager.toMediaDetails(MediaType.ANIME, it.node.id)
                         }
-                    } else null,
-                    minLines = 2,
-                    onClick = dropUnlessResumed {
-                        navActionManager.toMediaDetails(MediaType.ANIME, it.node.id)
+                    )
+                }
+                if (uiState.isLoading) {
+                    items(10) {
+                        MediaItemVerticalPlaceholder()
                     }
-                )
-            }
-            if (uiState.isLoading) {
-                items(10) {
-                    MediaItemVerticalPlaceholder()
                 }
             }
         }

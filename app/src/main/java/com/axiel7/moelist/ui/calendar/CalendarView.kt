@@ -88,7 +88,7 @@ private fun CalendarContent(
                 .padding(padding),
             initialPage = SeasonCalendar.currentWeekday.ordinal,
             isTabScrollable = true
-        ) { page ->
+        ) { page, _ ->
             val weekday = page + 1
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = MEDIA_POSTER_SMALL_WIDTH.dp),

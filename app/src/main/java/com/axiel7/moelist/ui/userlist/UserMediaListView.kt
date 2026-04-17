@@ -158,14 +158,14 @@ fun UserMediaListView(
 
         when {
             uiState.isLoading && uiState.mediaList.isEmpty() -> {
-                LoadingState(uiState, contentPadding)
+                LoadingPlaceholder(uiState, contentPadding)
             }
 
             uiState.message != null && uiState.mediaList.isEmpty() -> {
                 ErrorState(
                     modifier = Modifier.padding(contentPadding),
                     message = uiState.message,
-                    onRetry = { event?.refreshList() }
+                    onAction = { event?.refreshList() }
                 )
             }
 
@@ -412,14 +412,14 @@ fun UserMediaListView(
 
             else -> {
                 // Fallback to loading state instead of empty while state is uncertain
-                LoadingState(uiState, contentPadding)
+                LoadingPlaceholder(uiState, contentPadding)
             }
         }
     }//:Box
 }
 
 @Composable
-fun LoadingState(
+fun LoadingPlaceholder(
     uiState: UserMediaListUiState,
     contentPadding: PaddingValues
 ) {

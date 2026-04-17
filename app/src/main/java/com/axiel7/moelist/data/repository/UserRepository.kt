@@ -8,9 +8,8 @@ import com.axiel7.moelist.data.network.JikanApi
 
 class UserRepository(
     private val api: Api,
-    private val jikanApi: JikanApi,
-    defaultPreferencesRepository: DefaultPreferencesRepository
-) : BaseRepository(api, defaultPreferencesRepository) {
+    private val jikanApi: JikanApi
+) {
 
     companion object {
         private const val USER_FIELDS = "id,name,gender,location,joined_at,anime_statistics"
@@ -18,9 +17,7 @@ class UserRepository(
 
     suspend fun getMyUser(): User? {
         return try {
-            val result = api.getUser(USER_FIELDS)
-            result.error?.let { handleResponseError(it) }
-            return result
+            api.getUser(USER_FIELDS)
         } catch (e: Exception) {
             null
         }
