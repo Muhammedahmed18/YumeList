@@ -46,10 +46,16 @@ class UserMediaListViewModel(
         MediaType.MANGA -> ListStatus.READING
     }
 
+    private val defaultSort = when (mediaType) {
+        MediaType.ANIME -> MediaSort.ANIME_TITLE
+        MediaType.MANGA -> MediaSort.MANGA_TITLE
+    }
+
     override val mutableUiState = MutableStateFlow(
         UserMediaListUiState(
             mediaType = mediaType,
-            listStatus = initialListStatus
+            listStatus = initialListStatus,
+            listSort = defaultSort
         )
     )
 
@@ -119,6 +125,7 @@ class UserMediaListViewModel(
             setLoading(true)
             val nowDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
             var newStatus: ListStatus? = null
+            var success = false
             when (item) {
                 is UserAnimeList -> {
                     val maxProgress = item.node.numEpisodes.takeIf { it != 0 }
@@ -138,8 +145,11 @@ class UserMediaListViewModel(
                         },
                         endDate = nowDate.takeIf { isCompleted }
                     )
-                    if (result != null && newStatus == ListStatus.COMPLETED && result.score == 0) {
-                        viewModelScope.launch { toggleSetScoreDialog(true) }
+                    if (result != null) {
+                        success = true
+                        if (newStatus == ListStatus.COMPLETED && result.score == 0) {
+                            viewModelScope.launch { toggleSetScoreDialog(true) }
+                        }
                     }
                 }
 
@@ -155,7 +165,7 @@ class UserMediaListViewModel(
                         isPlanning -> ListStatus.READING
                         else -> null
                     }
-                    mangaRepository.updateMangaEntry(
+                    val result = mangaRepository.updateMangaEntry(
                         mangaId = item.node.id,
                         chaptersRead = progress.takeIf { !isVolumeProgress },
                         volumesRead = progress.takeIf { isVolumeProgress },
@@ -165,6 +175,12 @@ class UserMediaListViewModel(
                         },
                         endDate = nowDate.takeIf { isCompleted }
                     )
+                    if (result != null) success = true
+                }
+            }
+            if (success) {
+                mutableUiState.update { 
+                    it.copy(message = "Updated ${item.node.userPreferredTitle()}") 
                 }
             }
             setLoading(false)
@@ -291,8 +307,9 @@ class UserMediaListViewModel(
             MediaType.MANGA -> defaultPreferencesRepository.mangaListSort
         }
         viewModelScope.launch {
+            val sort = listSortFlow.first() ?: defaultSort
             mutableUiState.update {
-                it.copy(listSort = listSortFlow.first())
+                it.copy(listSort = sort)
             }
         }
 

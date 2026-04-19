@@ -98,11 +98,13 @@ fun SearchHostView(
             inputField = {
                 SearchBarDefaults.InputField(
                     query = query,
-                    onQueryChange = { query = it },
-                    onSearch = {
-                        active = false
-                        keyboardController?.hide()
+                    onQueryChange = { 
+                        query = it
                         viewModel.search(it)
+                    },
+                    onSearch = {
+                        viewModel.onSaveSearchHistory(it)
+                        keyboardController?.hide()
                     },
                     expanded = active,
                     onExpandedChange = { active = it },
@@ -120,7 +122,10 @@ fun SearchHostView(
                                 contentDescription = "clear",
                                 modifier = Modifier.combinedClickable(
                                     onClick = {
-                                        if (query.isNotEmpty()) query = ""
+                                        if (query.isNotEmpty()) {
+                                            query = ""
+                                            viewModel.search("")
+                                        }
                                         else active = false
                                     }
                                 )
@@ -139,27 +144,19 @@ fun SearchHostView(
             ),
             shape = if (active) SearchBarDefaults.fullScreenShape else MaterialTheme.shapes.extraLarge
         ) {
-            SearchHistoryList(
-                history = uiState.searchHistoryList,
+            SearchViewContent(
+                uiState = uiState,
+                event = viewModel,
+                query = query,
+                isCompactScreen = isCompactScreen,
+                navActionManager = navActionManager,
+                showHistory = query.isEmpty(),
                 onHistoryItemClick = {
                     query = it
-                    active = false
                     viewModel.search(it)
-                },
-                onHistoryItemRemove = { viewModel.onRemoveSearchHistory(it) }
+                }
             )
         }
-
-        SearchViewContent(
-            uiState = uiState,
-            event = viewModel,
-            query = query,
-            isCompactScreen = isCompactScreen,
-            navActionManager = navActionManager,
-            contentPadding = PaddingValues(
-                bottom = padding.calculateBottomPadding() + 80.dp
-            ),
-        )
     }
 }
 
@@ -211,6 +208,8 @@ private fun SearchViewContent(
     isCompactScreen: Boolean,
     navActionManager: NavActionManager,
     contentPadding: PaddingValues = PaddingValues(),
+    showHistory: Boolean = false,
+    onHistoryItemClick: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
 
@@ -328,53 +327,61 @@ private fun SearchViewContent(
         FilterRow()
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
-        when {
-            uiState.isLoading && uiState.mediaList.isEmpty() -> {
-                LoadingState()
-            }
-            uiState.message != null && uiState.mediaList.isEmpty() -> {
-                ErrorState(
-                    message = uiState.message,
-                    onAction = { event?.search(query) }
-                )
-            }
-            uiState.noResults -> {
-                EmptyState()
-            }
-            uiState.mediaList.isNotEmpty() -> {
-                if (!isCompactScreen) {
-                    val gridState = rememberLazyGridState()
-                    gridState.OnBottomReached(buffer = 4) { event?.loadMore() }
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        modifier = Modifier.fillMaxSize(),
-                        state = gridState,
-                        contentPadding = contentPadding
-                    ) {
-                        items(
-                            items = uiState.mediaList,
-                            contentType = { it.node }
+        if (showHistory) {
+            SearchHistoryList(
+                history = uiState.searchHistoryList,
+                onHistoryItemClick = onHistoryItemClick,
+                onHistoryItemRemove = { event?.onRemoveSearchHistory(it) }
+            )
+        } else {
+            when {
+                uiState.isLoading && uiState.mediaList.isEmpty() -> {
+                    LoadingState()
+                }
+                uiState.message != null && uiState.mediaList.isEmpty() -> {
+                    ErrorState(
+                        message = uiState.message,
+                        onAction = { event?.search(query) }
+                    )
+                }
+                uiState.noResults -> {
+                    EmptyState()
+                }
+                uiState.mediaList.isNotEmpty() -> {
+                    if (!isCompactScreen) {
+                        val gridState = rememberLazyGridState()
+                        gridState.OnBottomReached(buffer = 4) { event?.loadMore() }
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            modifier = Modifier.fillMaxSize(),
+                            state = gridState,
+                            contentPadding = contentPadding
                         ) {
-                            ItemView(item = it)
+                            items(
+                                items = uiState.mediaList,
+                                contentType = { it.node }
+                            ) {
+                                ItemView(item = it)
+                            }
                         }
-                    }
-                } else {
-                    val listState = rememberLazyListState()
-                    listState.OnBottomReached(buffer = 3) { event?.loadMore() }
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        state = listState,
-                        contentPadding = contentPadding
-                    ) {
-                        items(
-                            items = uiState.mediaList,
-                            contentType = { it.node }
+                    } else {
+                        val listState = rememberLazyListState()
+                        listState.OnBottomReached(buffer = 3) { event?.loadMore() }
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            state = listState,
+                            contentPadding = contentPadding
                         ) {
-                            ItemView(item = it)
-                        }
-                        if (uiState.isLoading) {
-                            items(5) {
-                                MediaItemDetailedPlaceholder()
+                            items(
+                                items = uiState.mediaList,
+                                contentType = { it.node }
+                            ) {
+                                ItemView(item = it)
+                            }
+                            if (uiState.isLoading) {
+                                items(5) {
+                                    MediaItemDetailedPlaceholder()
+                                }
                             }
                         }
                     }

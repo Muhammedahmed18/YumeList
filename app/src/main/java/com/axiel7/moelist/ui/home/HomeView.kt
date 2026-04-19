@@ -16,9 +16,7 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material3.Icon
@@ -86,7 +84,6 @@ private fun HomeViewContent(
     padding: PaddingValues = PaddingValues(),
 ) {
     val context = LocalContext.current
-    val scrollState = rememberScrollState()
     val airingListState = rememberLazyListState()
     val seasonalListState = rememberLazyListState()
 
@@ -104,23 +101,22 @@ private fun HomeViewContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(scrollState)
             .padding(padding)
     ) {
         // Hero Section Header
         Column(
             modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(horizontal = 16.dp, vertical = 4.dp)
         ) {
             Text(
                 text = "Discover",
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = "What will you watch today?",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -133,7 +129,7 @@ private fun HomeViewContent(
             HomeCard(
                 text = stringResource(R.string.anime_ranking),
                 icon = R.drawable.ic_round_movie_24,
-                modifier = Modifier.weight(1f).height(72.dp),
+                modifier = Modifier.weight(1f).height(60.dp),
                 onClick = dropUnlessResumed {
                     navActionManager.toMediaRanking(MediaType.ANIME)
                 },
@@ -142,7 +138,7 @@ private fun HomeViewContent(
             HomeCard(
                 text = stringResource(R.string.seasonal_chart),
                 icon = SeasonCalendar.currentSeason.icon,
-                modifier = Modifier.weight(1f).height(72.dp),
+                modifier = Modifier.weight(1f).height(60.dp),
                 onClick = dropUnlessResumed {
                     navActionManager.toSeasonChart()
                 },
@@ -156,7 +152,7 @@ private fun HomeViewContent(
             HomeCard(
                 text = stringResource(R.string.manga_ranking),
                 icon = R.drawable.ic_round_menu_book_24,
-                modifier = Modifier.weight(1f).height(72.dp),
+                modifier = Modifier.weight(1f).height(60.dp),
                 onClick = dropUnlessResumed {
                     navActionManager.toMediaRanking(MediaType.MANGA)
                 },
@@ -165,14 +161,14 @@ private fun HomeViewContent(
             HomeCard(
                 text = stringResource(R.string.calendar),
                 icon = R.drawable.ic_round_event_24,
-                modifier = Modifier.weight(1f).height(72.dp),
+                modifier = Modifier.weight(1f).height(60.dp),
                 onClick = dropUnlessResumed {
                     navActionManager.toCalendar()
                 },
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         // Airing Today
         HeaderHorizontalList(
@@ -183,26 +179,26 @@ private fun HomeViewContent(
             OutlinedCard(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                    .padding(horizontal = 16.dp),
                 onClick = dropUnlessResumed { navActionManager.toLogin() },
-                shape = RoundedCornerShape(24.dp),
+                shape = RoundedCornerShape(16.dp),
             ) {
                 Row(
                     modifier = Modifier
-                        .padding(16.dp)
+                        .padding(8.dp)
                         .fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.AccountCircle,
                         contentDescription = null,
-                        modifier = Modifier.size(32.dp),
+                        modifier = Modifier.size(20.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
-                    Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+                    Spacer(modifier = Modifier.padding(horizontal = 4.dp))
                     Text(
                         text = stringResource(R.string.please_login_to_use_this_feature),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -212,21 +208,21 @@ private fun HomeViewContent(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(MEDIA_POSTER_SMALL_HEIGHT.dp),
+                        .height(60.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = stringResource(R.string.nothing_today),
                         textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.outline
                     )
                 }
             } else {
                 LazyRow(
                     modifier = Modifier
-                        .padding(top = 4.dp)
-                        .sizeIn(minHeight = MEDIA_POSTER_SMALL_HEIGHT.dp),
+                        .padding(top = 2.dp)
+                        .height(MEDIA_POSTER_SMALL_HEIGHT.dp),
                     state = airingListState,
                     contentPadding = PaddingValues(horizontal = 16.dp),
                     flingBehavior = rememberSnapFlingBehavior(lazyListState = airingListState),
@@ -254,7 +250,7 @@ private fun HomeViewContent(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         // This Season
         HeaderHorizontalList(
@@ -270,7 +266,8 @@ private fun HomeViewContent(
         } else {
             LazyRow(
                 modifier = Modifier
-                    .padding(top = 4.dp)
+                    .padding(top = 2.dp)
+                    .weight(1f)
                     .sizeIn(minHeight = MEDIA_ITEM_VERTICAL_HEIGHT.dp),
                 state = seasonalListState,
                 contentPadding = PaddingValues(horizontal = 16.dp),

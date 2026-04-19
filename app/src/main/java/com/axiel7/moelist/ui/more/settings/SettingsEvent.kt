@@ -11,6 +11,7 @@ import com.axiel7.moelist.ui.base.event.UiEvent
 interface SettingsEvent : UiEvent {
     fun setTheme(value: ThemeStyle)
     fun setUseBlackColors(value: Boolean)
+    fun setUseMonochrome(value: Boolean)
     fun setShowNsfw(value: Boolean)
     fun setHideScores(value: Boolean)
     fun setUseGeneralListStyle(value: Boolean)

@@ -12,6 +12,8 @@ import org.apache.commons.text.StringEscapeUtils
 data class Character(
     val node: Node,
     val role: Role? = null,
+    @SerialName("voice_actors")
+    val voiceActors: List<VoiceActor> = emptyList(),
 ) {
     @Serializable
     data class Node(
@@ -27,6 +29,12 @@ data class Character(
         val mainPicture: MainPicture? = null,
         @SerialName("biography")
         val biography: String? = null,
+    )
+
+    @Serializable
+    data class VoiceActor(
+        val node: Node,
+        val language: String? = null,
     )
 
     @Serializable
@@ -48,6 +56,13 @@ data class Character(
         // MAL API returns special characters escaped
         val firstNameUnescaped = StringEscapeUtils.unescapeHtml4(node.firstName.orEmpty())
         val lastNameUnescaped = StringEscapeUtils.unescapeHtml4(node.lastName.orEmpty())
+        return "$firstNameUnescaped $lastNameUnescaped"
+    }
+
+    fun vaFullName(index: Int = 0): String {
+        val vaNode = voiceActors.getOrNull(index)?.node ?: return ""
+        val firstNameUnescaped = StringEscapeUtils.unescapeHtml4(vaNode.firstName.orEmpty())
+        val lastNameUnescaped = StringEscapeUtils.unescapeHtml4(vaNode.lastName.orEmpty())
         return "$firstNameUnescaped $lastNameUnescaped"
     }
 }

@@ -9,7 +9,10 @@ import com.axiel7.moelist.data.model.manga.RelatedManga
 import com.axiel7.moelist.data.model.media.BaseMediaDetails
 import com.axiel7.moelist.data.model.media.BaseMediaNode
 import com.axiel7.moelist.data.model.media.BaseMyListStatus
+import com.axiel7.moelist.data.model.media.BaseRelated
 import com.axiel7.moelist.data.model.media.Character
+import com.axiel7.moelist.data.model.media.MediaFormat
+import com.axiel7.moelist.data.model.media.RelationType
 import com.axiel7.moelist.ui.base.state.UiState
 
 @Immutable
@@ -46,4 +49,18 @@ data class MediaDetailsUiState(
 
     val serializationJoined =
         (mediaDetails as? MangaDetails)?.serialization?.joinToString { it.node.name }
+
+    val allRelatedMedia: List<BaseRelated>
+        get() = relatedAnime + relatedManga
+
+    val coreRelatedMedia: List<BaseRelated>
+        get() = allRelatedMedia.filter {
+            it.relationType == RelationType.PREQUEL || it.relationType == RelationType.SEQUEL
+        }
+
+    val categorizedRelatedMedia: Map<MediaFormat, List<BaseRelated>>
+        get() = allRelatedMedia
+            .filter { it.relationType != RelationType.PREQUEL && it.relationType != RelationType.SEQUEL }
+            .groupBy { it.node.mediaFormat ?: MediaFormat.UNKNOWN }
+            .filter { it.value.isNotEmpty() }
 }

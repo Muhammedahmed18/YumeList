@@ -2,6 +2,7 @@ package com.axiel7.moelist.ui.home
 
 import androidx.lifecycle.viewModelScope
 import com.axiel7.moelist.data.model.anime.AnimeRanking
+import com.axiel7.moelist.data.model.media.BasicMyListStatus
 import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.MediaSort
 import com.axiel7.moelist.data.model.media.MediaStatus
@@ -79,6 +80,36 @@ class HomeViewModel(
         defaultPreferencesRepository.hideScores
             .onEach { value ->
                 mutableUiState.update { it.copy(hideScore = value) }
+            }
+            .launchIn(viewModelScope)
+
+        // Sync home lists with local list status
+        animeRepository.userAnimeList
+            .onEach { userAnimes ->
+                mutableUiState.update { state ->
+                    state.copy(
+                        todayAnimes = state.todayAnimes.map { item ->
+                            val localStatus = userAnimes.find { it.node.id == item.node.id }?.listStatus?.status
+                            if (localStatus != item.node.myListStatus?.status) {
+                                item.copy(
+                                    node = item.node.copy(
+                                        myListStatus = localStatus?.let { BasicMyListStatus(it) }
+                                    )
+                                )
+                            } else item
+                        },
+                        seasonalAnimes = state.seasonalAnimes.map { item ->
+                            val localStatus = userAnimes.find { it.node.id == item.node.id }?.listStatus?.status
+                            if (localStatus != item.node.myListStatus?.status) {
+                                item.copy(
+                                    node = item.node.copy(
+                                        myListStatus = localStatus?.let { BasicMyListStatus(it) }
+                                    )
+                                )
+                            } else item
+                        }
+                    )
+                }
             }
             .launchIn(viewModelScope)
     }

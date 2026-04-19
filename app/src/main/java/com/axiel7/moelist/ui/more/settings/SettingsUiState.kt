@@ -11,6 +11,7 @@ import com.axiel7.moelist.ui.base.state.UiState
 data class SettingsUiState(
     val theme: ThemeStyle = ThemeStyle.FOLLOW_SYSTEM,
     val useBlackColors: Boolean = false,
+    val useMonochrome: Boolean = false,
     val showNsfw: Boolean = false,
     val hideScores: Boolean = false,
     val useGeneralListStyle: Boolean = true,

@@ -5,7 +5,6 @@ import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -48,8 +46,6 @@ import com.axiel7.moelist.ui.userlist.composables.GridUserMediaListItem
 import com.axiel7.moelist.ui.userlist.composables.GridUserMediaListItemPlaceholder
 import com.axiel7.moelist.ui.userlist.composables.MinimalUserMediaListItem
 import com.axiel7.moelist.ui.userlist.composables.MinimalUserMediaListItemPlaceholder
-import com.axiel7.moelist.ui.userlist.composables.RandomChip
-import com.axiel7.moelist.ui.userlist.composables.SortChip
 import com.axiel7.moelist.ui.userlist.composables.StandardUserMediaListItem
 import com.axiel7.moelist.ui.userlist.composables.StandardUserMediaListItemPlaceholder
 import com.axiel7.moelist.utils.ContextExtensions.showToast
@@ -188,28 +184,13 @@ fun UserMediaListView(
                         state = listState,
                         contentPadding = PaddingValues(
                             start = contentPadding.calculateStartPadding(layoutDirection) + 8.dp,
-                            top = contentPadding.calculateTopPadding() + 8.dp,
+                            top = contentPadding.calculateTopPadding(),
                             end = contentPadding.calculateEndPadding(layoutDirection) + 8.dp,
                             bottom = contentPadding.calculateBottomPadding() + 8.dp
                         ),
                         verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Bottom),
                         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
                     ) {
-                        item(
-                            span = { GridItemSpan(maxCurrentLineSpan) }
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                SortChip(uiState, event)
-                                if (uiState.showRandomButton) {
-                                    RandomChip(
-                                        onClick = { event?.getRandomIdOfList() }
-                                    )
-                                }
-                            }
-                        }
                         items(
                             items = uiState.mediaList,
                             key = { it.node.id },
@@ -252,24 +233,11 @@ fun UserMediaListView(
                         state = listState,
                         contentPadding = PaddingValues(
                             start = contentPadding.calculateStartPadding(layoutDirection),
-                            top = contentPadding.calculateTopPadding() + 8.dp,
+                            top = contentPadding.calculateTopPadding(),
                             end = contentPadding.calculateEndPadding(layoutDirection),
                             bottom = contentPadding.calculateBottomPadding() + 8.dp
                         ),
                     ) {
-                        item {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                SortChip(uiState, event)
-                                if (uiState.showRandomButton) {
-                                    RandomChip(
-                                        onClick = { event?.getRandomIdOfList() }
-                                    )
-                                }
-                            }
-                        }
                         when (uiState.listStyle) {
                             ListStyle.STANDARD -> {
                                 items(
@@ -324,26 +292,11 @@ fun UserMediaListView(
                         columns = GridCells.Fixed(2),
                         contentPadding = PaddingValues(
                             start = contentPadding.calculateStartPadding(layoutDirection),
-                            top = contentPadding.calculateTopPadding() + 8.dp,
+                            top = contentPadding.calculateTopPadding(),
                             end = contentPadding.calculateEndPadding(layoutDirection),
                             bottom = contentPadding.calculateBottomPadding() + 8.dp
                         ),
                     ) {
-                        item(
-                            span = { GridItemSpan(maxLineSpan) }
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                SortChip(uiState, event)
-                                if (uiState.showRandomButton) {
-                                    RandomChip(
-                                        onClick = { event?.getRandomIdOfList() }
-                                    )
-                                }
-                            }
-                        }
                         when (uiState.listStyle) {
                             ListStyle.STANDARD -> {
                                 items(
@@ -430,7 +383,7 @@ fun LoadingPlaceholder(
             else GridCells.Adaptive(minSize = (MEDIA_POSTER_MEDIUM_WIDTH + 8).dp),
             contentPadding = PaddingValues(
                 start = contentPadding.calculateStartPadding(layoutDirection) + 8.dp,
-                top = contentPadding.calculateTopPadding() + 8.dp,
+                top = contentPadding.calculateTopPadding(),
                 end = contentPadding.calculateEndPadding(layoutDirection) + 8.dp,
                 bottom = contentPadding.calculateBottomPadding() + 8.dp
             ),
@@ -446,7 +399,7 @@ fun LoadingPlaceholder(
         LazyColumn(
             contentPadding = PaddingValues(
                 start = contentPadding.calculateStartPadding(layoutDirection),
-                top = contentPadding.calculateTopPadding() + 8.dp,
+                top = contentPadding.calculateTopPadding(),
                 end = contentPadding.calculateEndPadding(layoutDirection),
                 bottom = contentPadding.calculateBottomPadding() + 8.dp
             ),

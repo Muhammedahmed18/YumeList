@@ -1,6 +1,11 @@
 package com.axiel7.moelist.ui.more.settings
 
 import android.os.Build
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -81,6 +86,18 @@ private fun SettingsViewContent(
                 value = uiState.useBlackColors,
                 onValueChange = { event?.setUseBlackColors(it) }
             )
+
+            AnimatedVisibility(
+                visible = uiState.useBlackColors,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                SwitchPreferenceView(
+                    title = stringResource(R.string.monochrome_theme),
+                    value = uiState.useMonochrome,
+                    onValueChange = { event?.setUseMonochrome(it) }
+                )
+            }
 
             ListPreferenceView(
                 title = stringResource(R.string.title_language),

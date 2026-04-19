@@ -85,26 +85,52 @@ private fun ColorScheme.toBlack() = this.copy(
     surfaceVariant = surfaceVariant.copy(alpha = 0.4f).compositeOver(Color.Black),
 )
 
+private fun ColorScheme.toMonochrome(): ColorScheme {
+    return this.copy(
+        primary = onSurface,
+        onPrimary = surface,
+        primaryContainer = onSurface.copy(alpha = 0.12f).compositeOver(surface),
+        onPrimaryContainer = onSurface,
+        secondary = onSurfaceVariant,
+        onSecondary = surface,
+        secondaryContainer = onSurfaceVariant.copy(alpha = 0.12f).compositeOver(surface),
+        onSecondaryContainer = onSurfaceVariant,
+        tertiary = outline,
+        onTertiary = surface,
+        tertiaryContainer = outline.copy(alpha = 0.12f).compositeOver(surface),
+        onTertiaryContainer = outline,
+    )
+}
+
 @Composable
 fun MoeListTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
     useBlackColors: Boolean = false,
+    useMonochrome: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
-    val colorScheme = remember(dynamicColor, darkTheme, useBlackColors) {
-        when {
+    val colorScheme = remember(dynamicColor, darkTheme, useBlackColors, useMonochrome) {
+        var scheme = when {
             dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-                if (darkTheme) dynamicDarkColorScheme(context).let {
-                    if (useBlackColors) it.toBlack() else it
-                }
+                if (darkTheme) dynamicDarkColorScheme(context)
                 else dynamicLightColorScheme(context)
             }
 
-            darkTheme -> if (useBlackColors) DarkColors.toBlack() else DarkColors
+            darkTheme -> DarkColors
             else -> LightColors
         }
+
+        if (darkTheme) {
+            if (useMonochrome) {
+                scheme = scheme.toMonochrome()
+            }
+            if (useBlackColors) {
+                scheme = scheme.toBlack()
+            }
+        }
+        scheme
     }
 
     MaterialTheme(

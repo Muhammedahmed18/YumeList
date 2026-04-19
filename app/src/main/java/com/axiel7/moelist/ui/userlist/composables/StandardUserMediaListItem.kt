@@ -1,8 +1,19 @@
 package com.axiel7.moelist.ui.userlist.composables
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -20,7 +31,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
@@ -33,7 +43,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
@@ -71,34 +80,37 @@ fun StandardUserMediaListItem(
     val broadcast = remember { (item.node as? AnimeNode)?.broadcast }
     val isAiring = remember { item.isAiring }
     val currentStatus = item.listStatus?.status
-    val progressBarColor = if (currentStatus == ListStatus.DROPPED) {
-        currentStatus.primaryColor()
-    } else {
-        MaterialTheme.colorScheme.primary
-    }
 
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(if (isPressed) 0.98f else 1f, label = "scale")
+    val scale by animateFloatAsState(if (isPressed) 0.96f else 1f, animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessLow), label = "scale")
+    
+    val plusButtonContainerColor by animateColorAsState(
+        targetValue = if (isPressed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
+        animationSpec = tween(durationMillis = 200),
+        label = "plusButtonColor"
+    )
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
             }
             .combinedClickable(
                 interactionSource = interactionSource,
-                indication = null,
+                indication = androidx.compose.material3.ripple(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
                 onLongClick = onLongClick,
                 onClick = onClick
             ),
-        shape = MaterialTheme.shapes.large,
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Row(
             modifier = Modifier
@@ -110,40 +122,14 @@ fun StandardUserMediaListItem(
                 modifier = Modifier
                     .fillMaxHeight()
                     .width(MEDIA_POSTER_SMALL_WIDTH.dp)
-                    .clip(MaterialTheme.shapes.medium),
-                contentAlignment = Alignment.TopStart
+                    .clip(RoundedCornerShape(16.dp)),
+                contentAlignment = Alignment.BottomStart
             ) {
                 MediaPoster(
                     url = item.node.mainPicture?.large,
                     showShadow = false,
                     modifier = Modifier.fillMaxHeight()
                 )
-
-                // Integrated Tonal Score Tab
-                Surface(
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                    shape = RoundedCornerShape(bottomEnd = 12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_round_star_16),
-                            contentDescription = "star",
-                            modifier = Modifier.size(10.dp),
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                        Text(
-                            text = if ((item.listStatus?.score ?: 0) == 0) UNKNOWN_CHAR
-                            else "${item.listStatus?.score}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                    }
-                }
             }//:Box
 
             Column(
@@ -156,7 +142,7 @@ fun StandardUserMediaListItem(
                     Text(
                         text = item.node.userPreferredTitle(),
                         modifier = Modifier.padding(top = 4.dp),
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
                         overflow = TextOverflow.Ellipsis,
@@ -169,19 +155,25 @@ fun StandardUserMediaListItem(
                             color = MaterialTheme.colorScheme.tertiaryContainer,
                             shape = CircleShape
                         ) {
-                            Text(
-                                text = broadcast?.airingInString() ?: stringResource(R.string.airing),
+                            Row(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                fontWeight = FontWeight.Bold
-                            )
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Box(modifier = Modifier.size(4.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onTertiaryContainer))
+                                Text(
+                                    text = broadcast?.airingInString() ?: stringResource(R.string.airing),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     } else {
                         Text(
                             text = item.node.mediaFormat?.localized().orEmpty(),
                             modifier = Modifier.padding(top = 2.dp),
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -197,29 +189,82 @@ fun StandardUserMediaListItem(
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.padding(bottom = 4.dp)
                         ) {
-                            Text(
-                                text = "${userProgress ?: 0}",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Text(
-                                text = "/${totalProgress.toStringPositiveValueOrUnknown()}",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(start = 2.dp)
-                            )
-                            if ((item as? UserMangaList)?.listStatus?.isUsingVolumeProgress() == true) {
-                                Icon(
-                                    painter = painterResource(R.drawable.round_bookmark_24),
-                                    contentDescription = stringResource(R.string.volumes),
-                                    modifier = Modifier
-                                        .padding(start = 6.dp)
-                                        .size(14.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                            // Episode Progress Pill
+                            Surface(
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                shape = CircleShape,
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    AnimatedContent(
+                                        targetState = userProgress ?: 0,
+                                        transitionSpec = {
+                                            if (targetState > initialState) {
+                                                (slideInVertically { height -> height } + fadeIn())
+                                                    .togetherWith(slideOutVertically { height -> -height } + fadeOut())
+                                            } else {
+                                                (slideInVertically { height -> -height } + fadeIn())
+                                                    .togetherWith(slideOutVertically { height -> height } + fadeOut())
+                                            }
+                                        },
+                                        label = "progressAnimation"
+                                    ) { targetProgress ->
+                                        Text(
+                                            text = "$targetProgress",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                                        )
+                                    }
+                                    Text(
+                                        text = "/${totalProgress.toStringPositiveValueOrUnknown()}",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
+                                        modifier = Modifier.padding(start = 2.dp)
+                                    )
+
+                                    if ((item as? UserMangaList)?.listStatus?.isUsingVolumeProgress() == true) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.round_bookmark_24),
+                                            contentDescription = stringResource(R.string.volumes),
+                                            modifier = Modifier
+                                                .padding(start = 4.dp)
+                                                .size(14.dp),
+                                            tint = MaterialTheme.colorScheme.onSecondaryContainer
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Rating Pill
+                            val score = item.listStatus?.score ?: 0
+                            Surface(
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                shape = CircleShape,
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_round_star_16),
+                                        contentDescription = "star",
+                                        modifier = Modifier.size(12.dp),
+                                        tint = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
+                                    Text(
+                                        text = if (score == 0) UNKNOWN_CHAR else "$score",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         }
 
@@ -229,15 +274,20 @@ fun StandardUserMediaListItem(
                         ) {
 
                             if (listStatus?.isCurrent() == true) {
-                                FilledTonalIconButton(
+                                val plusScale by animateFloatAsState(if (isPressed) 0.88f else 1f, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy), label = "plusScale")
+                                androidx.compose.material3.FilledIconButton(
                                     onClick = onClickPlus,
-                                    modifier = Modifier.size(36.dp),
-                                    shape = CircleShape
+                                    modifier = Modifier.size(40.dp).graphicsLayer { scaleX = plusScale; scaleY = plusScale },
+                                    shape = CircleShape,
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = plusButtonContainerColor,
+                                        contentColor = if (isPressed) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.ic_round_add_24),
                                         contentDescription = stringResource(R.string.plus_one),
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(20.dp)
                                     )
                                 }
                             }
@@ -245,13 +295,31 @@ fun StandardUserMediaListItem(
                     }//:Row
 
                     if (totalProgress != null && totalProgress > 0) {
+                        val progressValue by animateFloatAsState(
+                            targetValue = item.calculateProgressBarValue(),
+                            animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy),
+                            label = "progressBarAnimation"
+                        )
+                        
+                        val progressRatio = if (totalProgress > 0) (userProgress?.toFloat() ?: 0f) / totalProgress.toFloat() else 0f
+                        val dynamicProgressColor by animateColorAsState(
+                            targetValue = when {
+                                currentStatus == ListStatus.DROPPED -> currentStatus.primaryColor()
+                                progressRatio >= 0.9f -> MaterialTheme.colorScheme.tertiary
+                                else -> MaterialTheme.colorScheme.primary
+                            },
+                            animationSpec = tween(500),
+                            label = "progressColor"
+                        )
+
                         LinearProgressIndicator(
-                            progress = { item.calculateProgressBarValue() },
+                            progress = { progressValue },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(6.dp)
-                                .padding(bottom = 2.dp),
-                            color = progressBarColor,
+                                .height(8.dp)
+                                .padding(bottom = 2.dp)
+                                .clip(CircleShape),
+                            color = dynamicProgressColor,
                             trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                             strokeCap = StrokeCap.Round
                         )
@@ -267,11 +335,13 @@ fun StandardUserMediaListItemPlaceholder() {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
-        shape = MaterialTheme.shapes.large,
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Row(
             modifier = Modifier
@@ -285,7 +355,7 @@ fun StandardUserMediaListItemPlaceholder() {
                         width = MEDIA_POSTER_SMALL_WIDTH.dp,
                         height = MEDIA_POSTER_SMALL_HEIGHT.dp
                     )
-                    .clip(MaterialTheme.shapes.medium)
+                    .clip(RoundedCornerShape(16.dp))
                     .defaultPlaceholder(visible = true)
             )
 
@@ -301,7 +371,7 @@ fun StandardUserMediaListItemPlaceholder() {
                         modifier = Modifier
                             .padding(top = 4.dp)
                             .defaultPlaceholder(visible = true),
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.bodyLarge,
                         maxLines = 2
                     )
                     Text(
@@ -309,7 +379,7 @@ fun StandardUserMediaListItemPlaceholder() {
                         modifier = Modifier
                             .padding(top = 4.dp)
                             .defaultPlaceholder(visible = true),
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.labelMedium,
                     )
                 }
 
@@ -326,12 +396,12 @@ fun StandardUserMediaListItemPlaceholder() {
                             modifier = Modifier
                                 .padding(bottom = 4.dp)
                                 .defaultPlaceholder(visible = true),
-                            style = MaterialTheme.typography.labelLarge
+                            style = MaterialTheme.typography.titleLarge
                         )
 
                         Box(
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(40.dp)
                                 .clip(CircleShape)
                                 .defaultPlaceholder(visible = true)
                         )
@@ -340,8 +410,9 @@ fun StandardUserMediaListItemPlaceholder() {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(6.dp)
+                            .height(8.dp)
                             .padding(bottom = 2.dp)
+                            .clip(CircleShape)
                             .defaultPlaceholder(visible = true)
                     )
                 }

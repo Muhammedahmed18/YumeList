@@ -3,7 +3,6 @@ package com.axiel7.moelist.ui.details
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,8 +32,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -60,7 +59,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -71,19 +69,24 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
+import androidx.navigation.compose.rememberNavController
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.anime.AnimeDetails
+import com.axiel7.moelist.data.model.anime.AnimeNode
 import com.axiel7.moelist.data.model.anime.RelatedAnime
 import com.axiel7.moelist.data.model.manga.MangaDetails
+import com.axiel7.moelist.data.model.media.BaseRelated
+import com.axiel7.moelist.data.model.media.MediaFormat
+import com.axiel7.moelist.data.model.media.MediaStatus
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.data.model.media.RelationType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.InfoTitle
-import com.axiel7.moelist.ui.composables.TextIconHorizontal
 import com.axiel7.moelist.ui.composables.defaultPlaceholder
 import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_BIG_HEIGHT
 import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_BIG_WIDTH
@@ -886,45 +889,153 @@ private fun MediaRelatedMediaSection(
     uiState: MediaDetailsUiState,
     navActionManager: NavActionManager,
 ) {
-    val relatedMedia = (uiState.relatedAnime + uiState.relatedManga)
-        .filter { it.relationType == RelationType.PREQUEL || it.relationType == RelationType.SEQUEL }
+    val coreRelated = uiState.coreRelatedMedia
+    val categorizedRelated = uiState.categorizedRelatedMedia
+    var selectedFormat by remember { mutableStateOf<MediaFormat?>(null) }
+    var showSheet by remember { mutableStateOf(false) }
 
-    if (relatedMedia.isNotEmpty()) {
+    if (coreRelated.isNotEmpty() || categorizedRelated.isNotEmpty()) {
         InfoTitle(
             text = stringResource(
                 if (uiState.isAnime) R.string.related_anime
                 else R.string.related_manga
             )
         )
-        LazyRow(
-            modifier = Modifier.padding(top = 8.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(relatedMedia) { item ->
-                val mediaType = if (item is RelatedAnime) MediaType.ANIME else MediaType.MANGA
-                MediaItemVertical(
-                    imageUrl = item.node.mainPicture?.medium,
-                    title = item.node.title,
-                    subtitle = {
-                        Surface(
-                            modifier = Modifier.padding(top = 4.dp),
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primary
-                        ) {
-                            Text(
-                                text = item.relationType.localized(),
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                        }
-                    },
-                    onClick = {
-                        navActionManager.toMediaDetails(mediaType, item.node.id)
+
+        Column(modifier = Modifier.fillMaxWidth()) {
+            if (coreRelated.isNotEmpty()) {
+                LazyRow(
+                    modifier = Modifier.padding(top = 8.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(coreRelated) { item ->
+                        val mediaType = if (item is RelatedAnime) MediaType.ANIME else MediaType.MANGA
+                        MediaItemVertical(
+                            imageUrl = item.node.mainPicture?.medium,
+                            title = item.node.title,
+                            subtitle = {
+                                Surface(
+                                    modifier = Modifier.padding(top = 4.dp),
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.primary
+                                ) {
+                                    Text(
+                                        text = item.relationType.localized(),
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                }
+                            },
+                            onClick = {
+                                navActionManager.toMediaDetails(mediaType, item.node.id)
+                            }
+                        )
                     }
-                )
+                }
+            }
+
+            if (categorizedRelated.isNotEmpty()) {
+                LazyRow(
+                    modifier = Modifier.padding(top = 12.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(categorizedRelated.keys.toList()) { format ->
+                        AssistChip(
+                            onClick = {
+                                selectedFormat = format
+                                showSheet = true
+                            },
+                            label = {
+                                Text(text = "${format.localized()} (${categorizedRelated[format]?.size ?: 0})")
+                            },
+                            shape = CircleShape,
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                            ),
+                            border = null,
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    if (showSheet && selectedFormat != null) {
+        RelatedMediaListSheet(
+            title = selectedFormat?.localized().orEmpty(),
+            relatedMedia = categorizedRelated[selectedFormat].orEmpty(),
+            onDismiss = {
+                showSheet = false
+                selectedFormat = null
+            },
+            onItemClick = { item ->
+                val mediaType = if (item is RelatedAnime) MediaType.ANIME else MediaType.MANGA
+                navActionManager.toMediaDetails(mediaType, item.node.id)
+                showSheet = false
+                selectedFormat = null
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RelatedMediaListSheet(
+    title: String,
+    relatedMedia: List<BaseRelated>,
+    onDismiss: () -> Unit,
+    onItemClick: (BaseRelated) -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false),
+        contentWindowInsets = { WindowInsets.statusBars },
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp)
+        ) {
+            Text(
+                text = title,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold
+            )
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(relatedMedia) { item ->
+                    MediaItemVertical(
+                        imageUrl = item.node.mainPicture?.medium,
+                        title = item.node.title,
+                        subtitle = {
+                            Surface(
+                                modifier = Modifier.padding(top = 4.dp),
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primary
+                            ) {
+                                Text(
+                                    text = item.relationType.localized(),
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
+                        },
+                        onClick = {
+                            onItemClick(item)
+                        }
+                    )
+                }
             }
         }
     }
@@ -1038,7 +1149,7 @@ fun StatCard(
 ) {
     ElevatedCard(
         modifier = modifier,
-        colors = androidx.compose.material3.CardDefaults.elevatedCardColors(
+        colors = CardDefaults.elevatedCardColors(
             containerColor = containerColor
         ),
         shape = RoundedCornerShape(20.dp)
@@ -1071,5 +1182,72 @@ fun StatCard(
                 fontWeight = FontWeight.Bold
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun MediaDetailsPreview() {
+    val mockAnime = AnimeDetails(
+        id = 1,
+        title = "Frieren: Beyond Journey's End",
+        mainPicture = null,
+        alternativeTitles = null,
+        startDate = "2023-09-29",
+        endDate = "2024-03-22",
+        synopsis = "The adventure is over but life goes on for an elf mage beginning to learn what life is all about.",
+        mean = 9.39f,
+        rank = 1,
+        popularity = 10,
+        numListUsers = 1000000,
+        numScoringUsers = 800000,
+        nsfw = "white",
+        genres = emptyList(),
+        mediaFormat = MediaFormat.TV,
+        status = MediaStatus.FINISHED_AIRING,
+        numEpisodes = 28,
+        startSeason = null,
+        broadcast = null,
+        source = null,
+        averageEpisodeDuration = 1440,
+        rating = "pg_13",
+        studios = emptyList()
+    )
+
+    val mockCoreRelated = listOf(
+        RelatedAnime(
+            node = AnimeNode(id = 2, title = "Frieren Prequel", mainPicture = null),
+            relationType = RelationType.PREQUEL
+        ),
+        RelatedAnime(
+            node = AnimeNode(id = 3, title = "Frieren Sequel", mainPicture = null),
+            relationType = RelationType.SEQUEL
+        )
+    )
+
+    val mockCategorizedRelated = listOf(
+        RelatedAnime(
+            node = AnimeNode(id = 4, title = "Frieren Movie", mainPicture = null, mediaFormat = MediaFormat.MOVIE),
+            relationType = RelationType.SIDE_STORY
+        ),
+        RelatedAnime(
+            node = AnimeNode(id = 5, title = "Frieren OVA", mainPicture = null, mediaFormat = MediaFormat.OVA),
+            relationType = RelationType.SIDE_STORY
+        )
+    )
+
+    val uiState = MediaDetailsUiState(
+        mediaDetails = mockAnime,
+        relatedAnime = mockCoreRelated + mockCategorizedRelated,
+        isLoading = false
+    )
+
+    MaterialTheme {
+        MediaDetailsContent(
+            uiState = uiState,
+            event = null,
+            isLoggedIn = true,
+            navActionManager = NavActionManager.rememberNavActionManager(rememberNavController())
+        )
     }
 }

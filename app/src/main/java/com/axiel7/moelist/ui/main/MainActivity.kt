@@ -57,6 +57,7 @@ import com.axiel7.moelist.ui.base.navigation.NavActionManager.Companion.remember
 import com.axiel7.moelist.ui.main.composables.MainBottomNavBar
 import com.axiel7.moelist.ui.main.composables.MainNavigationRail
 import com.axiel7.moelist.ui.main.composables.MainTopAppBar
+import com.axiel7.moelist.ui.onboarding.OnboardingView
 import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.utils.ContextExtensions.openLink
 import com.axiel7.moelist.utils.MOELIST_PAGELINK
@@ -89,19 +90,26 @@ class MainActivity : AppCompatActivity() {
         val lastTabOpened = findLastTabOpened()
         val initialTheme = runBlocking { viewModel.theme.first() }
         val initialUseBlackColors = runBlocking { viewModel.useBlackColors.first() }
+        val initialUseMonochrome = runBlocking { viewModel.useMonochrome.first() }
         val initialTabletMode = runBlocking { viewModel.tabletMode.first() }
+        val initialOnboardingCompleted = runBlocking { viewModel.isOnboardingCompleted.first() }
 
         setContent {
             val theme by viewModel.theme.collectAsStateWithLifecycle(initialValue = initialTheme)
             val useBlackColors by viewModel.useBlackColors.collectAsStateWithLifecycle(
                 initialValue = initialUseBlackColors
             )
+            val useMonochrome by viewModel.useMonochrome.collectAsStateWithLifecycle(
+                initialValue = initialUseMonochrome
+            )
+            val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsStateWithLifecycle(
+                initialValue = initialOnboardingCompleted
+            )
             val isDark = if (theme == ThemeStyle.FOLLOW_SYSTEM) isSystemInDarkTheme()
             else theme == ThemeStyle.DARK
 
             val navController = rememberNavController()
             val navActionManager = rememberNavActionManager(navController)
-            val navBackStackEntry by navController.currentBackStackEntryAsState()
 
             val tabletMode by viewModel.tabletMode.collectAsStateWithLifecycle(initialTabletMode)
             val windowSizeClass = calculateWindowSizeClass(this)
@@ -120,23 +128,31 @@ class MainActivity : AppCompatActivity() {
 
             MoeListTheme(
                 darkTheme = isDark,
-                useBlackColors = useBlackColors
+                useBlackColors = useBlackColors,
+                useMonochrome = useMonochrome
             ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainView(
-                        isCompactScreen = isCompactScreen,
-                        isLoggedIn = isLoggedIn,
-                        useListTabs = useListTabs,
-                        navController = navController,
-                        navActionManager = navActionManager,
-                        lastTabOpened = lastTabOpened,
-                        saveLastTab = viewModel::saveLastTab,
-                        pinnedNavBar = pinnedNavBar,
-                        profilePicture = profilePicture,
-                    )
+                    if (!isOnboardingCompleted) {
+                        OnboardingView(
+                            viewModel = viewModel,
+                            onFinished = viewModel::completeOnboarding
+                        )
+                    } else {
+                        MainView(
+                            isCompactScreen = isCompactScreen,
+                            isLoggedIn = isLoggedIn,
+                            useListTabs = useListTabs,
+                            navController = navController,
+                            navActionManager = navActionManager,
+                            lastTabOpened = lastTabOpened,
+                            saveLastTab = viewModel::saveLastTab,
+                            pinnedNavBar = pinnedNavBar,
+                            profilePicture = profilePicture,
+                        )
+                    }
 
                     DisposableEffect(isDark) {
                         this@MainActivity.enableEdgeToEdge(

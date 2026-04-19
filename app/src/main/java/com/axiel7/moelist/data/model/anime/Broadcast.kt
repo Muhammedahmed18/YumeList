@@ -79,6 +79,14 @@ data class Broadcast(
     } else ""
 
     @Composable
+    fun airingInWithTime() = buildString {
+        append(airingInString())
+        localStartTime()?.let {
+            append(" ($it)")
+        }
+    }
+
+    @Composable
     fun airingInShortString() = if (startTime != null && dayOfTheWeek != null) {
         val remaining = remaining()
         if (remaining > 0) remaining.secondsToLegibleText()

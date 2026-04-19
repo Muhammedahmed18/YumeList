@@ -12,8 +12,11 @@ import com.axiel7.moelist.data.model.media.MediaSort
 import com.axiel7.moelist.data.model.media.RankingType
 import com.axiel7.moelist.data.network.Api
 import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 class MangaRepository(
@@ -41,6 +44,12 @@ class MangaRepository(
                     "my_list_status{status}"
         private const val RANKING_FIELDS =
             "alternative_titles{en,ja},mean,media_type,num_chapters,num_list_users,my_list_status{status}"
+    }
+
+    fun getStatusForManga(id: Int): Flow<MyMangaListStatus?> {
+        return userMangaList.map { list ->
+            list.find { it.node.id == id }?.listStatus
+        }.distinctUntilChanged()
     }
 
     suspend fun getMangaDetails(

@@ -47,6 +47,7 @@ class DefaultPreferencesRepository(
             it.remove(ACCESS_TOKEN_KEY)
             it.remove(REFRESH_TOKEN_KEY)
             it.remove(PROFILE_PICTURE_KEY)
+            it.remove(USERNAME_KEY)
         }
     }
 
@@ -86,6 +87,16 @@ class DefaultPreferencesRepository(
         dataStore.setValue(USE_BLACK_COLORS_KEY, value)
     }
 
+    val useMonochrome = dataStore.getValue(USE_MONOCHROME_KEY, false)
+    suspend fun setUseMonochrome(value: Boolean) {
+        dataStore.setValue(USE_MONOCHROME_KEY, value)
+    }
+
+    val isOnboardingCompleted = dataStore.getValue(ONBOARDING_COMPLETED_KEY, false)
+    suspend fun setOnboardingCompleted(value: Boolean) {
+        dataStore.setValue(ONBOARDING_COMPLETED_KEY, value)
+    }
+
     val lastTab = dataStore.getValue(LAST_TAB_KEY, 0)
     suspend fun setLastTab(value: Int) {
         dataStore.setValue(LAST_TAB_KEY, value)
@@ -99,6 +110,11 @@ class DefaultPreferencesRepository(
     val profilePicture = dataStore.getValue(PROFILE_PICTURE_KEY)
     suspend fun setProfilePicture(value: String) {
         dataStore.setValue(PROFILE_PICTURE_KEY, value)
+    }
+
+    val username = dataStore.getValue(USERNAME_KEY)
+    suspend fun setUsername(value: String) {
+        dataStore.setValue(USERNAME_KEY, value)
     }
 
     val animeListStatus = dataStore.getValue(ANIME_LIST_STATUS_KEY, ListStatus.WATCHING.name)
@@ -273,9 +289,12 @@ class DefaultPreferencesRepository(
         private val HIDE_SCORES_KEY = booleanPreferencesKey("hide_scores")
         private val THEME_KEY = stringPreferencesKey("theme")
         private val USE_BLACK_COLORS_KEY = booleanPreferencesKey("use_black_colors")
+        private val USE_MONOCHROME_KEY = booleanPreferencesKey("use_monochrome")
+        private val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
         private val LAST_TAB_KEY = intPreferencesKey("last_tab")
         private val PINNED_NAV_BAR_KEY = booleanPreferencesKey("pinned_nav_bar")
         private val PROFILE_PICTURE_KEY = stringPreferencesKey("profile_picture")
+        private val USERNAME_KEY = stringPreferencesKey("username")
 
         private val ANIME_LIST_STATUS_KEY = stringPreferencesKey("anime_list_status")
         private val MANGA_LIST_STATUS_KEY = stringPreferencesKey("manga_list_status")

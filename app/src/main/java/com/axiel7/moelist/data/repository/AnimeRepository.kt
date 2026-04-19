@@ -17,8 +17,11 @@ import com.axiel7.moelist.data.model.media.MediaStatus
 import com.axiel7.moelist.data.model.media.RankingType
 import com.axiel7.moelist.data.network.Api
 import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 class AnimeRepository(
@@ -59,7 +62,13 @@ class AnimeRepository(
 
         // https://myanimelist.net/forum/?topicid=2111811
         private const val CHARACTERS_FIELDS =
-            "id,first_name,last_name,alternative_name,main_picture,role"
+            "id,first_name,last_name,alternative_name,main_picture,role,voice_actors{first_name,last_name,main_picture}"
+    }
+
+    fun getStatusForAnime(id: Int): Flow<MyAnimeListStatus?> {
+        return userAnimeList.map { list ->
+            list.find { it.node.id == id }?.listStatus
+        }.distinctUntilChanged()
     }
 
     suspend fun getSeasonalAnimes(

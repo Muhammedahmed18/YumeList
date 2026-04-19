@@ -262,6 +262,7 @@
         <item quantity="one">%d month</item>
         <item quantity="other">%d months</item>
     </plurals>
+    <string name="monochrome_theme">Monochrome theme</string>
     <plurals name="num_weeks">
         <item quantity="one">%d week</item>
         <item quantity="other">%d weeks</item>

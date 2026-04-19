@@ -31,6 +31,15 @@ class SettingsViewModel(
     override fun setUseBlackColors(value: Boolean) {
         viewModelScope.launch {
             defaultPreferencesRepository.setUseBlackColors(value)
+            if (!value) {
+                defaultPreferencesRepository.setUseMonochrome(false)
+            }
+        }
+    }
+
+    override fun setUseMonochrome(value: Boolean) {
+        viewModelScope.launch {
+            defaultPreferencesRepository.setUseMonochrome(value)
         }
     }
 
@@ -116,6 +125,12 @@ class SettingsViewModel(
         defaultPreferencesRepository.useBlackColors
             .onEach { value ->
                 mutableUiState.update { it.copy(useBlackColors = value) }
+            }
+            .launchIn(viewModelScope)
+
+        defaultPreferencesRepository.useMonochrome
+            .onEach { value ->
+                mutableUiState.update { it.copy(useMonochrome = value) }
             }
             .launchIn(viewModelScope)
 
