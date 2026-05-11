@@ -73,7 +73,7 @@ class MangaRepository(
             val result = if (page == null) api.getUserMangaList(
                 status = status,
                 sort = sort,
-                limit = null,
+                limit = 1000,
                 nsfw = defaultPreferencesRepository.nsfwInt(),
                 fields = USER_MANGA_LIST_FIELDS,
             )

@@ -88,9 +88,9 @@ fun UserMediaListView(
 
     // Scroll to top when the trigger changes from the ViewModel
     var lastScrollToTopTrigger by remember { mutableIntStateOf(uiState.scrollToTopTrigger) }
-    LaunchedEffect(uiState.scrollToTopTrigger) {
-        if (uiState.scrollToTopTrigger > lastScrollToTopTrigger) {
-            // Trigger scroll IMMEDIATELY even if loading, to prevent the "jump"
+    LaunchedEffect(uiState.scrollToTopTrigger, uiState.isLoading) {
+        if (uiState.scrollToTopTrigger > lastScrollToTopTrigger && !uiState.isLoading) {
+            // Wait until loading is finished to prevent Compose from anchoring to items that move down
             listState.scrollToItem(0)
             gridState.scrollToItem(0)
             tabletGridState.scrollToItem(0)

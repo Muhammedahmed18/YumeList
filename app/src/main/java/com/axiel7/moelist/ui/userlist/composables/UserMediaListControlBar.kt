@@ -1,76 +1,63 @@
 package com.axiel7.moelist.ui.userlist.composables
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
-import androidx.compose.material.icons.rounded.FilterList
+import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.axiel7.moelist.R
-import com.axiel7.moelist.data.model.media.MediaFormat
 import com.axiel7.moelist.ui.userlist.UserMediaListEvent
 import com.axiel7.moelist.ui.userlist.UserMediaListUiState
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun UserMediaListControlBar(
     uiState: UserMediaListUiState,
     event: UserMediaListEvent?,
     modifier: Modifier = Modifier
 ) {
+    val haptic = LocalHapticFeedback.current
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Left: Format Selector
-        IconButton(
-            onClick = { event?.toggleFormatSheet(true) },
-            modifier = Modifier
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.FilterList,
-                contentDescription = "Format",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        // Center: Active State Pill
+        // Center: Format Pill (Main Interaction)
         Surface(
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 12.dp)
                 .height(48.dp)
                 .clip(CircleShape)
-                .clickable { /* Could trigger something or just be informational */ },
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                .clickable { 
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    event?.toggleFormatSheet(true) 
+                },
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
             shape = CircleShape
         ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxSize()
+            Row(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
             ) {
                 AnimatedContent(
                     targetState = uiState.selectedFormat to (uiState.formatCounts[uiState.selectedFormat] ?: 0),
@@ -87,15 +74,25 @@ fun UserMediaListControlBar(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.5.sp
                         ),
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                
+                Icon(
+                    imageVector = Icons.Rounded.ArrowDropDown,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
             }
         }
 
-        // Right: Sort Button
+        // Right: Sort Button (Pill Shape)
         Surface(
-            onClick = { event?.toggleSortDialog(true) },
+            onClick = { 
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                event?.toggleSortDialog(true) 
+            },
             modifier = Modifier
                 .height(48.dp)
                 .clip(CircleShape),

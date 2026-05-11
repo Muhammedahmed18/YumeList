@@ -8,10 +8,11 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -21,6 +22,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,8 +32,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
@@ -54,17 +55,13 @@ import androidx.compose.ui.unit.dp
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.anime.AnimeNode
 import com.axiel7.moelist.data.model.anime.exampleUserAnimeList
-import com.axiel7.moelist.data.model.manga.UserMangaList
 import com.axiel7.moelist.data.model.media.BaseMediaNode
 import com.axiel7.moelist.data.model.media.BaseUserMediaList
 import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.ui.composables.defaultPlaceholder
-import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_SMALL_HEIGHT
-import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_SMALL_WIDTH
 import com.axiel7.moelist.ui.composables.media.MediaPoster
 import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrUnknown
-import com.axiel7.moelist.utils.UNKNOWN_CHAR
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -74,350 +71,347 @@ fun StandardUserMediaListItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     onClickPlus: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val totalProgress = remember { item.totalProgress() }
     val userProgress = item.userProgress()
     val broadcast = remember { (item.node as? AnimeNode)?.broadcast }
     val isAiring = remember { item.isAiring }
     val currentStatus = item.listStatus?.status
+    val progressRatio = remember(userProgress, totalProgress) {
+        if (totalProgress != null && totalProgress > 0) (userProgress?.toFloat() ?: 0f) / totalProgress.toFloat() else 0f
+    }
 
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(if (isPressed) 0.96f else 1f, animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessLow), label = "scale")
-    
-    val plusButtonContainerColor by animateColorAsState(
-        targetValue = if (isPressed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
-        animationSpec = tween(durationMillis = 200),
-        label = "plusButtonColor"
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.98f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "scale"
     )
 
-    Card(
-        modifier = Modifier
+    Surface(
+        modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .padding(horizontal = 12.dp, vertical = 6.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
             }
+            .clip(RoundedCornerShape(16.dp))
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = androidx.compose.material3.ripple(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
                 onLongClick = onLongClick,
                 onClick = onClick
             ),
+        color = MaterialTheme.colorScheme.surfaceContainer,
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Row(
-            modifier = Modifier
-                .padding(8.dp)
-                .height(MEDIA_POSTER_SMALL_HEIGHT.dp),
+            modifier = Modifier.height(110.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Status Strip
             Box(
                 modifier = Modifier
+                    .width(4.dp)
                     .fillMaxHeight()
-                    .width(MEDIA_POSTER_SMALL_WIDTH.dp)
-                    .clip(RoundedCornerShape(16.dp)),
-                contentAlignment = Alignment.BottomStart
+                    .background(currentStatus?.primaryColor() ?: MaterialTheme.colorScheme.outlineVariant)
+            )
+
+            // Poster
+            Box(
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxHeight()
+                    .aspectRatio(2f / 3f)
+                    .clip(RoundedCornerShape(12.dp))
             ) {
                 MediaPoster(
                     url = item.node.mainPicture?.large,
                     showShadow = false,
                     modifier = Modifier.fillMaxHeight()
                 )
-            }//:Box
+            }
 
+            // Info Column
             Column(
                 modifier = Modifier
+                    .weight(1f)
                     .fillMaxHeight()
-                    .padding(start = 12.dp, end = 4.dp),
+                    .padding(vertical = 10.dp, horizontal = 4.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
                     Text(
                         text = item.node.userPreferredTitle(),
-                        modifier = Modifier.padding(top = 4.dp),
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
                         overflow = TextOverflow.Ellipsis,
-                        maxLines = 2
+                        maxLines = 1
                     )
 
-                    if (isAiring) {
-                        Surface(
-                            modifier = Modifier.padding(top = 4.dp),
-                            color = MaterialTheme.colorScheme.tertiaryContainer,
-                            shape = CircleShape
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Box(modifier = Modifier.size(4.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onTertiaryContainer))
-                                Text(
-                                    text = broadcast?.airingInString() ?: stringResource(R.string.airing),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                    } else {
+                    Row(
+                        modifier = Modifier.padding(top = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
                         Text(
                             text = item.node.mediaFormat?.localized().orEmpty(),
-                            modifier = Modifier.padding(top = 2.dp),
-                            style = MaterialTheme.typography.labelMedium,
+                            style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        Text(
+                            text = "•",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (isAiring) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.tertiary)
+                            )
+                            Text(
+                                text = broadcast?.airingInString() ?: stringResource(R.string.airing),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.tertiary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        } else {
+                            Text(
+                                text = item.node.status?.localized().orEmpty(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
-                }//:Column
+                }
 
                 Column {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 6.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Bottom
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.Bottom,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.padding(bottom = 4.dp)
+                            verticalAlignment = Alignment.Bottom,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            // Episode Progress Pill
-                            Surface(
-                                color = MaterialTheme.colorScheme.secondaryContainer,
-                                shape = CircleShape,
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    AnimatedContent(
-                                        targetState = userProgress ?: 0,
-                                        transitionSpec = {
-                                            if (targetState > initialState) {
-                                                (slideInVertically { height -> height } + fadeIn())
-                                                    .togetherWith(slideOutVertically { height -> -height } + fadeOut())
-                                            } else {
-                                                (slideInVertically { height -> -height } + fadeIn())
-                                                    .togetherWith(slideOutVertically { height -> height } + fadeOut())
-                                            }
-                                        },
-                                        label = "progressAnimation"
-                                    ) { targetProgress ->
-                                        Text(
-                                            text = "$targetProgress",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                                        )
+                            AnimatedContent(
+                                targetState = userProgress ?: 0,
+                                transitionSpec = {
+                                    if (targetState > initialState) {
+                                        (slideInVertically { height -> height } + fadeIn())
+                                            .togetherWith(slideOutVertically { height -> -height } + fadeOut())
+                                    } else {
+                                        (slideInVertically { height -> -height } + fadeIn())
+                                            .togetherWith(slideOutVertically { height -> height } + fadeOut())
                                     }
-                                    Text(
-                                        text = "/${totalProgress.toStringPositiveValueOrUnknown()}",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
-                                        modifier = Modifier.padding(start = 2.dp)
-                                    )
-
-                                    if ((item as? UserMangaList)?.listStatus?.isUsingVolumeProgress() == true) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.round_bookmark_24),
-                                            contentDescription = stringResource(R.string.volumes),
-                                            modifier = Modifier
-                                                .padding(start = 4.dp)
-                                                .size(14.dp),
-                                            tint = MaterialTheme.colorScheme.onSecondaryContainer
-                                        )
-                                    }
-                                }
+                                },
+                                label = "progressAnimation"
+                            ) { targetProgress ->
+                                Text(
+                                    text = "$targetProgress",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
                             }
-
-                            // Rating Pill
-                            val score = item.listStatus?.score ?: 0
-                            Surface(
-                                color = MaterialTheme.colorScheme.secondaryContainer,
-                                shape = CircleShape,
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_round_star_16),
-                                        contentDescription = "star",
-                                        modifier = Modifier.size(12.dp),
-                                        tint = MaterialTheme.colorScheme.onSecondaryContainer
-                                    )
-                                    Text(
-                                        text = if (score == 0) UNKNOWN_CHAR else "$score",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
+                            Text(
+                                text = "/ ${totalProgress.toStringPositiveValueOrUnknown()}",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = 3.dp)
+                            )
                         }
 
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-
-                            if (listStatus?.isCurrent() == true) {
-                                val plusScale by animateFloatAsState(if (isPressed) 0.88f else 1f, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy), label = "plusScale")
-                                androidx.compose.material3.FilledIconButton(
-                                    onClick = onClickPlus,
-                                    modifier = Modifier.size(40.dp).graphicsLayer { scaleX = plusScale; scaleY = plusScale },
-                                    shape = CircleShape,
-                                    colors = IconButtonDefaults.filledIconButtonColors(
-                                        containerColor = plusButtonContainerColor,
-                                        contentColor = if (isPressed) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_round_add_24),
-                                        contentDescription = stringResource(R.string.plus_one),
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
+                        // Rating
+                        val score = item.listStatus?.score ?: 0
+                        if (score > 0) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                modifier = Modifier.padding(bottom = 3.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_round_star_16),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = "$score",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
                             }
                         }
-                    }//:Row
-
-                    if (totalProgress != null && totalProgress > 0) {
-                        val progressValue by animateFloatAsState(
-                            targetValue = item.calculateProgressBarValue(),
-                            animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy),
-                            label = "progressBarAnimation"
-                        )
-                        
-                        val progressRatio = if (totalProgress > 0) (userProgress?.toFloat() ?: 0f) / totalProgress.toFloat() else 0f
-                        val dynamicProgressColor by animateColorAsState(
-                            targetValue = when {
-                                currentStatus == ListStatus.DROPPED -> currentStatus.primaryColor()
-                                progressRatio >= 0.9f -> MaterialTheme.colorScheme.tertiary
-                                else -> MaterialTheme.colorScheme.primary
-                            },
-                            animationSpec = tween(500),
-                            label = "progressColor"
-                        )
-
-                        LinearProgressIndicator(
-                            progress = { progressValue },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(8.dp)
-                                .padding(bottom = 2.dp)
-                                .clip(CircleShape),
-                            color = dynamicProgressColor,
-                            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                            strokeCap = StrokeCap.Round
-                        )
                     }
-                }//:Column
-            }//:Column
-        }//:Row
-    }//:Card
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    val progressValue by animateFloatAsState(
+                        targetValue = item.calculateProgressBarValue(),
+                        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy),
+                        label = "progressBarAnimation"
+                    )
+                    val dynamicProgressColor by animateColorAsState(
+                        targetValue = when {
+                            currentStatus == ListStatus.DROPPED -> currentStatus.primaryColor()
+                            progressRatio >= 0.9f -> MaterialTheme.colorScheme.tertiary
+                            else -> MaterialTheme.colorScheme.primary
+                        },
+                        animationSpec = tween(500),
+                        label = "progressColor"
+                    )
+
+                    LinearProgressIndicator(
+                        progress = { progressValue },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(6.dp)
+                            .clip(CircleShape),
+                        color = dynamicProgressColor,
+                        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        strokeCap = StrokeCap.Round
+                    )
+                }
+            }
+
+            // Quick Add Action
+            if (listStatus?.isCurrent() == true) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(60.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val plusScale by animateFloatAsState(if (isPressed) 0.85f else 1f, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy), label = "plusScale")
+                    androidx.compose.material3.FilledIconButton(
+                        onClick = onClickPlus,
+                        modifier = Modifier
+                            .size(42.dp)
+                            .graphicsLayer {
+                                scaleX = plusScale
+                                scaleY = plusScale
+                            },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    ) {
+                        AnimatedContent(
+                            targetState = progressRatio >= 1f && totalProgress != null && totalProgress > 0,
+                            transitionSpec = {
+                                (scaleIn() + fadeIn()).togetherWith(scaleOut() + fadeOut())
+                            },
+                            label = "iconAnimation"
+                        ) { isCompleted ->
+                            Icon(
+                                painter = if (isCompleted) painterResource(R.drawable.round_check_24)
+                                else painterResource(R.drawable.ic_round_add_24),
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                }
+            } else {
+                Spacer(modifier = Modifier.width(12.dp))
+            }
+        }
+    }
 }
 
 @Composable
 fun StandardUserMediaListItemPlaceholder() {
-    Card(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Row(
-            modifier = Modifier
-                .padding(8.dp)
-                .height(MEDIA_POSTER_SMALL_HEIGHT.dp),
+            modifier = Modifier.height(110.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(
-                        width = MEDIA_POSTER_SMALL_WIDTH.dp,
-                        height = MEDIA_POSTER_SMALL_HEIGHT.dp
-                    )
-                    .clip(RoundedCornerShape(16.dp))
+                    .width(4.dp)
+                    .fillMaxHeight()
+                    .background(MaterialTheme.colorScheme.outlineVariant)
+            )
+
+            Box(
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxHeight()
+                    .aspectRatio(2f / 3f)
+                    .clip(RoundedCornerShape(12.dp))
                     .defaultPlaceholder(visible = true)
             )
 
             Column(
                 modifier = Modifier
+                    .weight(1f)
                     .fillMaxHeight()
-                    .padding(start = 12.dp, end = 4.dp),
+                    .padding(vertical = 10.dp, horizontal = 4.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text(
-                        text = "This is a loading placeholder for long titles",
+                    Box(
                         modifier = Modifier
-                            .padding(top = 4.dp)
-                            .defaultPlaceholder(visible = true),
-                        style = MaterialTheme.typography.bodyLarge,
-                        maxLines = 2
+                            .fillMaxWidth(0.7f)
+                            .height(20.dp)
+                            .defaultPlaceholder(visible = true)
                     )
-                    Text(
-                        text = "Placeholder Format",
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box(
                         modifier = Modifier
-                            .padding(top = 4.dp)
-                            .defaultPlaceholder(visible = true),
-                        style = MaterialTheme.typography.labelMedium,
+                            .fillMaxWidth(0.4f)
+                            .height(12.dp)
+                            .defaultPlaceholder(visible = true)
                     )
                 }
 
                 Column {
-                    Row(
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 6.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Bottom
-                    ) {
-                        Text(
-                            text = "??/??",
-                            modifier = Modifier
-                                .padding(bottom = 4.dp)
-                                .defaultPlaceholder(visible = true),
-                            style = MaterialTheme.typography.titleLarge
-                        )
-
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .defaultPlaceholder(visible = true)
-                        )
-                    }
-
+                            .width(60.dp)
+                            .height(24.dp)
+                            .defaultPlaceholder(visible = true)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(8.dp)
-                            .padding(bottom = 2.dp)
+                            .height(6.dp)
                             .clip(CircleShape)
                             .defaultPlaceholder(visible = true)
                     )
                 }
-            }//:Column
-        }//:Row
+            }
+
+            Box(
+                modifier = Modifier
+                    .size(60.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .defaultPlaceholder(visible = true)
+                )
+            }
+        }
     }
 }
 

@@ -125,11 +125,7 @@ class UserMediaListViewModel(
     }
 
     override fun loadMore() {
-        mutableUiState.value.run {
-            if (canLoadMore && !isLoadingMore) {
-                mutableUiState.update { state -> state.copy(loadMore = true) }
-            }
-        }
+        // Removed as we are loading everything at once now
     }
 
     override fun onUpdateProgress(item: BaseUserMediaList<out BaseMediaNode>) {
@@ -469,43 +465,52 @@ class UserMediaListViewModel(
                             isError = false
                         )
                     }
-                    val result = if (uiState.mediaType == MediaType.ANIME) {
-                        animeRepository.getUserAnimeList(
-                            status = uiState.listStatus!!,
-                            sort = uiState.listSort!!,
-                            page = uiState.nextPage
-                        )
-                    } else {
-                        mangaRepository.getUserMangaList(
-                            status = uiState.listStatus!!,
-                            sort = uiState.listSort!!,
-                            page = uiState.nextPage
-                        )
-                    }
+                    
+                    var nextPage: String? = null
+                    do {
+                        val result = if (uiState.mediaType == MediaType.ANIME) {
+                            animeRepository.getUserAnimeList(
+                                status = uiState.listStatus!!,
+                                sort = uiState.listSort!!,
+                                page = nextPage
+                            )
+                        } else {
+                            mangaRepository.getUserMangaList(
+                                status = uiState.listStatus!!,
+                                sort = uiState.listSort!!,
+                                page = nextPage
+                            )
+                        }
+
+                        if (result.data != null) {
+                            nextPage = result.paging?.next
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                mutableUiState.update { state ->
+                                    state.copy(
+                                        loadMore = false,
+                                        isLoadingMore = false,
+                                        isLoading = false,
+                                        isError = state.mediaList.isEmpty(),
+                                        message = result.message ?: result.error,
+                                        loadedStatuses = state.loadedStatuses + uiState.listStatus!!
+                                    )
+                                }
+                            }
+                            break
+                        }
+                    } while (nextPage != null)
 
                     withContext(Dispatchers.Main) {
-                        if (result.data != null) {
-                            mutableUiState.update { state ->
-                                state.copy(
-                                    loadMore = false,
-                                    nextPage = result.paging?.next,
-                                    isLoadingMore = false,
-                                    isLoading = false,
-                                    isError = false,
-                                    loadedStatuses = state.loadedStatuses + uiState.listStatus!!
-                                )
-                            }
-                        } else {
-                            mutableUiState.update { state ->
-                                state.copy(
-                                    loadMore = false,
-                                    isLoadingMore = false,
-                                    isLoading = false,
-                                    isError = state.mediaList.isEmpty(),
-                                    message = result.message ?: result.error,
-                                    loadedStatuses = state.loadedStatuses + uiState.listStatus!!
-                                )
-                            }
+                        mutableUiState.update { state ->
+                            state.copy(
+                                loadMore = false,
+                                nextPage = null,
+                                isLoadingMore = false,
+                                isLoading = false,
+                                isError = false,
+                                loadedStatuses = state.loadedStatuses + uiState.listStatus!!
+                            )
                         }
                     }
                 }

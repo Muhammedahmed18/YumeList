@@ -141,7 +141,7 @@ class AnimeRepository(
             val result = if (page == null) api.getUserAnimeList(
                 status = status,
                 sort = sort,
-                limit = null,
+                limit = 1000,
                 nsfw = defaultPreferencesRepository.nsfwInt(),
                 fields = USER_ANIME_LIST_FIELDS
             )
