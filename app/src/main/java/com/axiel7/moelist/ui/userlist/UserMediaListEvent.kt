@@ -4,12 +4,14 @@ import com.axiel7.moelist.data.model.media.BaseMediaNode
 import com.axiel7.moelist.data.model.media.BaseMyListStatus
 import com.axiel7.moelist.data.model.media.BaseUserMediaList
 import com.axiel7.moelist.data.model.media.ListStatus
+import com.axiel7.moelist.data.model.media.MediaFormat
 import com.axiel7.moelist.data.model.media.MediaSort
 import com.axiel7.moelist.ui.base.event.PagedUiEvent
 
 interface UserMediaListEvent : PagedUiEvent {
     fun onChangeStatus(value: ListStatus)
     fun onChangeSort(value: MediaSort)
+    fun onChangeFormat(value: MediaFormat?)
     fun onUpdateProgress(item: BaseUserMediaList<out BaseMediaNode>)
     fun onUpdateProgress(item: BaseUserMediaList<out BaseMediaNode>, progress: Int)
     fun onUpdateStatus(item: BaseUserMediaList<out BaseMediaNode>, status: ListStatus)
@@ -19,6 +21,7 @@ interface UserMediaListEvent : PagedUiEvent {
     fun setScore(item: BaseUserMediaList<*>, score: Int)
     fun refreshList()
     fun toggleSortDialog(open: Boolean)
+    fun toggleFormatSheet(open: Boolean)
     fun toggleSetScoreDialog(open: Boolean)
     fun toggleActionSheet(open: Boolean)
     fun getRandomIdOfList()

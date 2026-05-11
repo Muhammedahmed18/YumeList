@@ -146,6 +146,7 @@ fun SeasonChartFilterSheet(
             ) {
                 SortChip(
                     text = uiState.sort.localized(),
+                    isActive = uiState.sort != MediaSort.ANIME_NUM_USERS, // Use active logic for season chart
                     onClick = {
                         if (uiState.sort == MediaSort.ANIME_NUM_USERS) {
                             event?.onChangeSort(MediaSort.ANIME_SCORE)

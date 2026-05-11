@@ -142,8 +142,11 @@ private fun MediaDetailsContent(
 
     val sheetState = rememberModalBottomSheetState()
     var showSheet by remember { mutableStateOf(false) }
-    fun hideSheet() {
-        scope.launch { sheetState.hide() }.invokeOnCompletion { showSheet = false }
+    fun hideSheet(onComplete: () -> Unit = {}) {
+        scope.launch { sheetState.hide() }.invokeOnCompletion { 
+            showSheet = false 
+            onComplete()
+        }
     }
 
     val bottomBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -160,8 +163,9 @@ private fun MediaDetailsContent(
             myListStatus = uiState.myListStatus,
             bottomPadding = bottomBarPadding,
             onEdited = { status, removed ->
-                hideSheet()
-                event?.onChangedMyListStatus(status, removed)
+                hideSheet {
+                    event?.onChangedMyListStatus(status, removed)
+                }
             },
             onDismissed = { hideSheet() }
         )
@@ -253,7 +257,7 @@ private fun MediaDetailsSections(
         navActionManager = navActionManager,
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(8.dp))
 
     MediaGenresSection(uiState = uiState)
 
@@ -299,7 +303,8 @@ private fun MediaHeaderSection(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = topPadding + 72.dp, start = 16.dp, end = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.Top
     ) {
         ElevatedCard(
             modifier = Modifier
@@ -327,14 +332,17 @@ private fun MediaHeaderSection(
 
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
                 text = uiState.mediaDetails?.userPreferredTitle().orEmpty(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .defaultPlaceholder(visible = uiState.isLoading),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 3,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
 
@@ -350,6 +358,7 @@ private fun MediaHeaderSection(
             ) {
                 AssistChip(
                     onClick = { },
+                    modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading),
                     label = { Text(text = uiState.mediaDetails?.mediaFormat?.localized() ?: "??") },
                     colors = AssistChipDefaults.assistChipColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
@@ -359,6 +368,7 @@ private fun MediaHeaderSection(
 
                 AssistChip(
                     onClick = { },
+                    modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading),
                     label = {
                         val countLabel = if (uiState.isAnime) {
                             stringResource(if (totalCount == "1") R.string.episode else R.string.episodes)
@@ -376,45 +386,59 @@ private fun MediaHeaderSection(
                 )
             }
 
-            if (!uiState.hideScore) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_round_details_star_24),
-                        contentDescription = null,
-                        tint = Color(0xFFFFB300),
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(
-                        text = uiState.mediaDetails?.mean.toStringOrNull() ?: "??",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(start = 4.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (!uiState.hideScore) {
+                    AssistChip(
+                        onClick = { },
+                        modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading),
+                        label = {
+                            Text(
+                                text = uiState.mediaDetails?.mean.toStringOrNull() ?: "??",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_round_details_star_24),
+                                contentDescription = null,
+                                tint = Color(0xFFFFB300),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        border = null
                     )
                 }
-            }
 
-            AssistChip(
-                onClick = { },
-                modifier = Modifier.align(Alignment.Start),
-                label = { Text(text = uiState.mediaDetails?.status?.localized() ?: "Loading") },
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(
-                            if (uiState.isAnime) R.drawable.ic_round_rss_feed_24
-                            else R.drawable.round_drive_file_rename_outline_24
-                        ),
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                },
-                colors = AssistChipDefaults.assistChipColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    labelColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                    leadingIconContentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                ),
-                border = null,
-            )
+                AssistChip(
+                    onClick = { },
+                    modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading),
+                    label = { Text(text = uiState.mediaDetails?.status?.localized() ?: "Loading") },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(
+                                if (uiState.isAnime) R.drawable.ic_round_rss_feed_24
+                                else R.drawable.round_drive_file_rename_outline_24
+                            ),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        labelColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        leadingIconContentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    ),
+                    border = null,
+                )
+            }
         }
     }
 }
@@ -1021,7 +1045,7 @@ private fun RelatedMediaListSheet(
                                 modifier = Modifier.padding(top = 4.dp),
                                 shape = CircleShape,
                                 color = MaterialTheme.colorScheme.primary
-                            ) {
+                              ) {
                                 Text(
                                     text = item.relationType.localized(),
                                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),

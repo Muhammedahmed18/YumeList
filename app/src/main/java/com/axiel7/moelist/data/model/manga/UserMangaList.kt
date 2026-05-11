@@ -10,4 +10,13 @@ data class UserMangaList(
     override val node: MangaNode,
     @SerialName("list_status")
     override val listStatus: MyMangaListStatus? = null,
-) : BaseUserMediaList<MangaNode>()
+) : BaseUserMediaList<MangaNode>() {
+
+    override fun copyProgress(progress: Int): UserMangaList {
+        return if (listStatus?.isUsingVolumeProgress() == true) {
+            copy(listStatus = listStatus.copy(numVolumesRead = progress))
+        } else {
+            copy(listStatus = listStatus?.copy(progress = progress))
+        }
+    }
+}

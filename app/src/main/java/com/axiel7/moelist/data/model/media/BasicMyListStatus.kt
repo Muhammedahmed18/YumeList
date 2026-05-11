@@ -6,5 +6,6 @@ import kotlinx.serialization.Serializable
 @Immutable
 @Serializable
 data class BasicMyListStatus(
-    val status: ListStatus
+    val status: ListStatus,
+    val score: Int = 0
 )

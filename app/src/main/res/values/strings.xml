@@ -407,4 +407,6 @@
     <string name="something_went_wrong">Something went wrong</string>
     <string name="retry">Retry</string>
     <string name="music_themes">Music Themes</string>
+    <string name="format">Format</string>
+    <string name="all">All</string>
 </resources>

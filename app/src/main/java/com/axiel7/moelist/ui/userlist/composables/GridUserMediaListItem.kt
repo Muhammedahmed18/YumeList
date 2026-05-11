@@ -53,11 +53,12 @@ fun GridUserMediaListItem(
     item: BaseUserMediaList<out BaseMediaNode>,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val userProgress = item.userProgress()
-    val totalProgress = remember { item.totalProgress() }
-    val broadcast = remember { (item.node as? AnimeNode)?.broadcast }
-    val isAiring = remember { item.isAiring }
+    val totalProgress = remember(item) { item.totalProgress() }
+    val broadcast = remember(item) { (item.node as? AnimeNode)?.broadcast }
+    val isAiring = remember(item) { item.isAiring }
     val currentStatus = item.listStatus?.status
     val progressTextColor = if (currentStatus == ListStatus.DROPPED) {
         currentStatus.primaryColor()
@@ -66,7 +67,7 @@ fun GridUserMediaListItem(
     }
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .combinedClickable(onLongClick = onLongClick, onClick = onClick),
     ) {

@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import java.time.Instant
 
 class AnimeRepository(
     private val api: Api,
@@ -56,7 +57,7 @@ class AnimeRepository(
             "alternative_titles{en,ja},list_status{$LIST_STATUS_FIELDS},num_episodes,media_type,status,broadcast,mean"
         private const val SEARCH_FIELDS =
             "id,title,alternative_titles{en,ja},main_picture,mean,media_type,num_episodes,start_season," +
-                    "my_list_status{status}"
+                    "my_list_status{status,score}"
         const val RANKING_FIELDS =
             "alternative_titles{en,ja},mean,media_type,num_episodes,num_list_users,my_list_status{status}"
 
@@ -150,12 +151,11 @@ class AnimeRepository(
                 _userAnimeList.update { currentList ->
                     val newList = currentList.toMutableList()
                     if (page == null) {
-                        // If it's a fresh request for a status, remove existing ones for that status to sync
-                        newList.removeAll { it.listStatus?.status == status }
+                        // Maintain existing items until we have the new result to avoid list clearing
+                        val newNodeIds = result.data.map { it.node.id }.toSet()
+                        newList.removeAll { it.listStatus?.status == status && it.node.id !in newNodeIds }
                     }
                     result.data.forEach { newItem ->
-                        // Remove item if it exists anywhere in the list (even with different status)
-                        // to ensure it takes the new position provided by the API sort
                         newList.removeAll { it.node.id == newItem.node.id }
                         newList.add(newItem)
                     }
@@ -199,7 +199,8 @@ class AnimeRepository(
                             repeatValue = rewatchValue ?: it.listStatus.repeatValue,
                             priority = priority ?: it.listStatus.priority,
                             tags = tags?.split(",") ?: it.listStatus.tags,
-                            comments = comments ?: it.listStatus.comments
+                            comments = comments ?: it.listStatus.comments,
+                            updatedAt = Instant.now().toString()
                         )
                     )
                 } else it
@@ -221,10 +222,32 @@ class AnimeRepository(
                 tags,
                 comments
             )
+            
+            // Fetch updated entry info to ensure we have full node data
+            val fullDetails = try { api.getAnimeDetails(animeId, USER_ANIME_LIST_FIELDS) } catch (_: Exception) { null }
+            
             _userAnimeList.update { currentList ->
-                currentList.map {
-                    if (it.node.id == animeId) it.copy(listStatus = result) else it
+                val newList = currentList.toMutableList()
+                newList.removeAll { it.node.id == animeId }
+                if (fullDetails != null) {
+                    newList.add(
+                        UserAnimeList(
+                            node = AnimeNode(
+                                id = fullDetails.id,
+                                title = fullDetails.title.orEmpty(),
+                                mainPicture = fullDetails.mainPicture,
+                                alternativeTitles = fullDetails.alternativeTitles,
+                                numEpisodes = fullDetails.numEpisodes ?: 0,
+                                mediaFormat = fullDetails.mediaFormat,
+                                status = fullDetails.status,
+                                broadcast = fullDetails.broadcast,
+                                mean = fullDetails.mean ?: 0f
+                            ),
+                            listStatus = result ?: fullDetails.myListStatus
+                        )
+                    )
                 }
+                newList
             }
             result
         } catch (_: Exception) {

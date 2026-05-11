@@ -59,6 +59,7 @@ fun MainNavigation(
     padding: PaddingValues,
     topBarHeightPx: Float,
     topBarOffsetY: Animatable<Float, AnimationVector1D>,
+    onSortClickTrigger: (() -> Unit) -> Unit = {}, // Added
 ) {
     NavHost(
         navController = navController,
@@ -114,7 +115,8 @@ fun MainNavigation(
                     mediaType = MediaType.ANIME,
                     isCompactScreen = isCompactScreen,
                     navActionManager = navActionManager,
-                    padding = padding
+                    padding = padding,
+                    onSortClickTrigger = onSortClickTrigger // Pass down
                 )
             }
         }
@@ -133,7 +135,8 @@ fun MainNavigation(
                     mediaType = MediaType.MANGA,
                     isCompactScreen = isCompactScreen,
                     navActionManager = navActionManager,
-                    padding = padding
+                    padding = padding,
+                    onSortClickTrigger = onSortClickTrigger // Pass down
                 )
             }
         }
@@ -231,7 +234,8 @@ fun MainNavigation(
                 mediaType = args.mediaType,
                 isCompactScreen = isCompactScreen,
                 navActionManager = navActionManager,
-                padding = padding
+                padding = padding,
+                onSortClickTrigger = onSortClickTrigger // Pass down
             )
         }
 

@@ -69,13 +69,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.axiel7.moelist.R
-import com.axiel7.moelist.data.model.anime.AnimeNode
 import com.axiel7.moelist.data.model.media.BaseMediaNode
 import com.axiel7.moelist.data.model.media.BaseMyListStatus
 import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.ListStatus.Companion.listStatusValues
-import com.axiel7.moelist.data.model.media.MediaFormat
 import com.axiel7.moelist.data.model.media.MediaType
+import com.axiel7.moelist.ui.composables.RollingNumberText
 import com.axiel7.moelist.ui.composables.media.MediaPoster
 import com.axiel7.moelist.ui.composables.score.ScoreSlider
 import com.axiel7.moelist.ui.editmedia.composables.DeleteMediaEntryDialog
@@ -87,7 +86,6 @@ import com.axiel7.moelist.utils.DateUtils.toEpochMillis
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrUnknown
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
-import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -354,8 +352,8 @@ private fun EditMediaSheetContent(
                         }
 
                         Row(verticalAlignment = Alignment.Bottom) {
-                            Text(
-                                text = current.toString(),
+                            RollingNumberText(
+                                targetValue = current,
                                 style = MaterialTheme.typography.displaySmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -429,8 +427,8 @@ private fun EditMediaSheetContent(
                             }
 
                             Row(verticalAlignment = Alignment.Bottom) {
-                                Text(
-                                    text = currentVolumes.toString(),
+                                RollingNumberText(
+                                    targetValue = currentVolumes,
                                     style = MaterialTheme.typography.displaySmall,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSurface

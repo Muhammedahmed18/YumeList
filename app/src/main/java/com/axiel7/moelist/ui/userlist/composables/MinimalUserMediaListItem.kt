@@ -1,7 +1,9 @@
 package com.axiel7.moelist.ui.userlist.composables
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,14 +14,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -47,11 +52,12 @@ fun MinimalUserMediaListItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     onClickPlus: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val totalProgress = remember { item.totalProgress() }
+    val totalProgress = remember(item) { item.totalProgress() }
     val userProgress = item.userProgress()
-    val broadcast = remember { (item.node as? AnimeNode)?.broadcast }
-    val isAiring = remember { item.node.status == MediaStatus.AIRING }
+    val broadcast = remember(item) { (item.node as? AnimeNode)?.broadcast }
+    val isAiring = remember(item) { item.node.status == MediaStatus.AIRING }
     val currentStatus = item.listStatus?.status
     val progressTextColor = if (currentStatus == ListStatus.DROPPED) {
         currentStatus.primaryColor()
@@ -59,11 +65,33 @@ fun MinimalUserMediaListItem(
         MaterialTheme.colorScheme.onSurface
     }
 
+    val interactionSource = remember { MutableInteractionSource() }
+
+    val statusColor = currentStatus?.primaryColor() ?: Color.Transparent
+    val borderStroke = if (currentStatus != null) {
+        BorderStroke(
+            width = 1.dp,
+            color = statusColor.copy(alpha = 0.3f)
+        )
+    } else null
+
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
-            .combinedClickable(onLongClick = onLongClick, onClick = onClick),
+            .combinedClickable(
+                onLongClick = onLongClick,
+                onClick = onClick,
+                interactionSource = interactionSource,
+                indication = ripple()
+            ),
+        shape = RoundedCornerShape(12.dp),
+        border = borderStroke,
+        colors = CardDefaults.cardColors(
+            containerColor = if (currentStatus != null) {
+                statusColor.copy(alpha = 0.05f)
+            } else MaterialTheme.colorScheme.surface
+        )
     ) {
         Row(
             modifier = Modifier
@@ -107,7 +135,12 @@ fun MinimalUserMediaListItem(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "${userProgress ?: 0}/${totalProgress.toStringPositiveValueOrUnknown()}",
+                            text = "${userProgress ?: 0}",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = progressTextColor
+                        )
+                        Text(
+                            text = "/${totalProgress.toStringPositiveValueOrUnknown()}",
                             style = MaterialTheme.typography.labelLarge,
                             color = progressTextColor
                         )

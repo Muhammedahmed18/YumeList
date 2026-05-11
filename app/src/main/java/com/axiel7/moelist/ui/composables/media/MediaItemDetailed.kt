@@ -13,12 +13,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -73,9 +75,6 @@ fun MediaItemDetailed(
                 if (topBadgeContent != null) {
                     Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(bottomEnd = 8.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer)
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
                             .align(Alignment.TopStart),
                         verticalAlignment = Alignment.CenterVertically,
                         content = topBadgeContent
@@ -187,8 +186,39 @@ fun MediaItemDetailedPreview() {
             MediaItemDetailed(
                 title = "Boku no Hero Academia and a very very large title to preview how it wraps to two lines",
                 imageUrl = "https://cdn.myanimelist.net/images/anime/1170/124312l.jpg",
+                topBadgeContent = {
+                    Box(
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.9f))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "9",
+                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                            Icon(
+                                painter = painterResource(R.drawable.ic_round_star_16),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .padding(start = 2.dp)
+                                    .size(10.dp),
+                                tint = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+                    }
+                },
                 badgeContent = {
-                    Text(text = "#12", style = MaterialTheme.typography.labelSmall)
+                    Icon(
+                        painter = painterResource(R.drawable.play_circle_outline_24),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 },
                 subtitle1 = {
                     Text(text = "TV (13 Episodes)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

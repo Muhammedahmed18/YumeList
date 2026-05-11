@@ -14,7 +14,12 @@ data class UserAnimeList(
     override val node: AnimeNode,
     @SerialName("list_status")
     override val listStatus: MyAnimeListStatus? = null,
-) : BaseUserMediaList<AnimeNode>()
+) : BaseUserMediaList<AnimeNode>() {
+
+    override fun copyProgress(progress: Int): UserAnimeList {
+        return copy(listStatus = listStatus?.copy(progress = progress))
+    }
+}
 
 val exampleUserAnimeList = UserAnimeList(
     node = AnimeNode(

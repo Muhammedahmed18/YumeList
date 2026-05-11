@@ -4,7 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import io.github.fornewid.placeholder.foundation.PlaceholderHighlight
-import io.github.fornewid.placeholder.material3.fade
+import io.github.fornewid.placeholder.material3.shimmer
 import io.github.fornewid.placeholder.material3.placeholder
 
 fun Modifier.defaultPlaceholder(
@@ -12,7 +12,7 @@ fun Modifier.defaultPlaceholder(
 ) = composed {
     placeholder(
         visible = visible,
-        color = MaterialTheme.colorScheme.outline,
-        highlight = PlaceholderHighlight.fade()
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        highlight = PlaceholderHighlight.shimmer()
     )
 }

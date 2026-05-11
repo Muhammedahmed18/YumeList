@@ -1,6 +1,10 @@
 package com.axiel7.moelist.ui.main.composables
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
@@ -18,15 +22,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
@@ -40,7 +47,34 @@ fun MainTopAppBar(
     isVisible: Boolean,
     navController: NavController,
     modifier: Modifier = Modifier,
+    showSort: Boolean = false,
+    onSortClick: (() -> Unit)? = null,
+    topBarOffsetY: Animatable<Float, AnimationVector1D>? = null,
+    topBarHeightPx: Float = 0f,
 ) {
+    val collapseFraction = if (topBarHeightPx > 0 && topBarOffsetY != null) {
+        (topBarOffsetY.value / -topBarHeightPx).coerceIn(0f, 1f)
+    } else {
+        0f
+    }
+
+    val horizontalPadding by animateDpAsState(
+        targetValue = lerp(16.dp, 0.dp, collapseFraction),
+        label = "TopBarPadding"
+    )
+    val bottomPadding by animateDpAsState(
+        targetValue = lerp(4.dp, 0.dp, collapseFraction),
+        label = "TopBarBottomPadding"
+    )
+    val cornerRadius by animateDpAsState(
+        targetValue = lerp(28.dp, 0.dp, collapseFraction),
+        label = "TopBarCorner"
+    )
+    val elevation by animateDpAsState(
+        targetValue = lerp(2.dp, 0.dp, collapseFraction),
+        label = "TopBarElevation"
+    )
+
     AnimatedContent(
         targetState = isVisible,
         transitionSpec = {
@@ -54,12 +88,26 @@ fun MainTopAppBar(
                 onClick = dropUnlessResumed { navController.navigate(Route.Search()) },
                 modifier = modifier
                     .statusBarsPadding()
+                    .graphicsLayer {
+                        translationY = if (topBarOffsetY != null) {
+                             // Limit translationY to avoid sliding out completely if needed, 
+                             // but we already use 0.99f in collapsable.
+                             // To make it look "pinned", we can just NOT translate it or translate less.
+                             // If we want it to morph AND stay at the top, we should use translationY = 0.
+                             // But the current logic uses translationY in MainActivity.
+                             0f 
+                        } else 0f
+                    }
                     .fillMaxWidth()
                     .height(56.dp)
-                    .padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
-                shape = RoundedCornerShape(50),
+                    .padding(horizontal = horizontalPadding)
+                    .padding(bottom = bottomPadding),
+                shape = RoundedCornerShape(cornerRadius),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = elevation
                 )
             ) {
                 Row(
@@ -79,6 +127,20 @@ fun MainTopAppBar(
                         modifier = Modifier.weight(1f),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    
+                    if (showSort) {
+                        IconButton(
+                            onClick = { onSortClick?.invoke() },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_round_sort_24),
+                                contentDescription = "sort",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+
                     if (isLoggedIn) {
                         AsyncImage(
                             model = profilePicture,

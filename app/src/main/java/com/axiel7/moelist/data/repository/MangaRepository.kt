@@ -4,6 +4,7 @@ import androidx.annotation.IntRange
 import com.axiel7.moelist.data.model.Response
 import com.axiel7.moelist.data.model.manga.MangaDetails
 import com.axiel7.moelist.data.model.manga.MangaList
+import com.axiel7.moelist.data.model.manga.MangaNode
 import com.axiel7.moelist.data.model.manga.MangaRanking
 import com.axiel7.moelist.data.model.manga.MyMangaListStatus
 import com.axiel7.moelist.data.model.manga.UserMangaList
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import java.time.Instant
 
 class MangaRepository(
     private val api: Api,
@@ -41,7 +43,7 @@ class MangaRepository(
             "alternative_titles{en,ja},list_status{$LIST_STATUS_FIELDS},num_chapters,num_volumes,media_type,status"
         private const val SEARCH_FIELDS =
             "id,title,alternative_titles{en,ja},main_picture,mean,media_type,num_chapters,start_date," +
-                    "my_list_status{status}"
+                    "my_list_status{status,score}"
         private const val RANKING_FIELDS =
             "alternative_titles{en,ja},mean,media_type,num_chapters,num_list_users,my_list_status{status}"
     }
@@ -81,11 +83,11 @@ class MangaRepository(
                 _userMangaList.update { currentList ->
                     val newList = currentList.toMutableList()
                     if (page == null) {
-                        newList.removeAll { it.listStatus?.status == status }
+                        // Maintain existing items until we have the new result to avoid list clearing
+                        val newNodeIds = result.data.map { it.node.id }.toSet()
+                        newList.removeAll { it.listStatus?.status == status && it.node.id !in newNodeIds }
                     }
                     result.data.forEach { newItem ->
-                        // Remove item if it exists anywhere in the list (even with different status)
-                        // to ensure it takes the new position provided by the API sort
                         newList.removeAll { it.node.id == newItem.node.id }
                         newList.add(newItem)
                     }
@@ -131,7 +133,8 @@ class MangaRepository(
                             repeatValue = rereadValue ?: it.listStatus.repeatValue,
                             priority = priority ?: it.listStatus.priority,
                             tags = tags?.split(",") ?: it.listStatus.tags,
-                            comments = comments ?: it.listStatus.comments
+                            comments = comments ?: it.listStatus.comments,
+                            updatedAt = Instant.now().toString()
                         )
                     )
                 } else it
@@ -154,10 +157,32 @@ class MangaRepository(
                 tags,
                 comments
             )
+            
+            // Fetch updated info to ensure full node data is available
+            val fullDetails = try { api.getMangaDetails(mangaId, USER_MANGA_LIST_FIELDS) } catch (_: Exception) { null }
+
             _userMangaList.update { currentList ->
-                currentList.map {
-                    if (it.node.id == mangaId) it.copy(listStatus = result) else it
+                val newList = currentList.toMutableList()
+                newList.removeAll { it.node.id == mangaId }
+                if (fullDetails != null) {
+                    newList.add(
+                        UserMangaList(
+                            node = MangaNode(
+                                id = fullDetails.id,
+                                title = fullDetails.title.orEmpty(),
+                                mainPicture = fullDetails.mainPicture,
+                                alternativeTitles = fullDetails.alternativeTitles,
+                                numVolumes = fullDetails.numVolumes ?: 0,
+                                numChapters = fullDetails.numChapters ?: 0,
+                                mediaFormat = fullDetails.mediaFormat,
+                                status = fullDetails.status,
+                                mean = fullDetails.mean ?: 0f
+                            ),
+                            listStatus = result ?: fullDetails.myListStatus
+                        )
+                    )
                 }
+                newList
             }
             result
         } catch (_: Exception) {

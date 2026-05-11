@@ -6,26 +6,12 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -34,20 +20,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.axiel7.moelist.R
-import com.axiel7.moelist.data.model.media.MediaSort
-import com.axiel7.moelist.data.model.media.MediaSort.Companion.animeListSortItems
-import com.axiel7.moelist.data.model.media.MediaSort.Companion.mangaListSortItems
+import com.axiel7.moelist.data.model.media.MediaFormat
 import com.axiel7.moelist.data.model.media.MediaType
-import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.ui.userlist.UserMediaListEvent
 import com.axiel7.moelist.ui.userlist.UserMediaListUiState
 
@@ -55,39 +35,60 @@ private val ItemPillShape = RoundedCornerShape(20.dp)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MediaListSortDialog(
+fun MediaListFormatSheet(
     uiState: UserMediaListUiState,
     event: UserMediaListEvent?,
 ) {
-    val sortOptions = remember(uiState.mediaType) {
-        if (uiState.mediaType == MediaType.ANIME) animeListSortItems.toList()
-        else mangaListSortItems.toList()
+    val formatOptions = remember(uiState.mediaType) {
+        if (uiState.mediaType == MediaType.ANIME) {
+            listOf(
+                null, // All
+                MediaFormat.TV,
+                MediaFormat.OVA,
+                MediaFormat.ONA,
+                MediaFormat.MOVIE,
+                MediaFormat.TV_SPECIAL,
+                MediaFormat.SPECIAL
+            )
+        } else {
+            listOf(
+                null, // All
+                MediaFormat.MANGA,
+                MediaFormat.ONE_SHOT,
+                MediaFormat.MANHWA,
+                MediaFormat.MANHUA,
+                MediaFormat.NOVEL,
+                MediaFormat.LIGHT_NOVEL
+            )
+        }
     }
     val sheetState = rememberModalBottomSheetState()
 
     ModalBottomSheet(
-        onDismissRequest = { event?.toggleSortDialog(false) },
+        onDismissRequest = { event?.toggleFormatSheet(false) },
         sheetState = sheetState,
         dragHandle = { BottomSheetDefaults.DragHandle() },
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         shape = RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp),
     ) {
-        MediaListSortContent(
-            sortOptions = sortOptions,
-            selectedSort = uiState.listSort,
-            onSortClick = {
-                event?.onChangeSort(it)
-                event?.toggleSortDialog(false)
+        MediaListFormatContent(
+            formatOptions = formatOptions,
+            selectedFormat = uiState.selectedFormat,
+            formatCounts = uiState.formatCounts,
+            onFormatClick = {
+                event?.onChangeFormat(it)
+                event?.toggleFormatSheet(false)
             }
         )
     }
 }
 
 @Composable
-fun MediaListSortContent(
-    sortOptions: List<MediaSort>,
-    selectedSort: MediaSort?,
-    onSortClick: (MediaSort) -> Unit,
+fun MediaListFormatContent(
+    formatOptions: List<MediaFormat?>,
+    selectedFormat: MediaFormat?,
+    formatCounts: Map<MediaFormat?, Int>,
+    onFormatClick: (MediaFormat?) -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
 
@@ -98,15 +99,16 @@ fun MediaListSortContent(
             .padding(bottom = 32.dp)
     ) {
         Text(
-            text = stringResource(R.string.sort_by),
+            text = stringResource(R.string.format),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp)
         )
 
-        sortOptions.forEach { sort ->
-            val isSelected = selectedSort == sort
+        formatOptions.forEach { format ->
+            val isSelected = selectedFormat == format
+            val count = formatCounts[format] ?: 0
 
             val checkScale by animateFloatAsState(
                 targetValue = if (isSelected) 1f else 0.6f,
@@ -141,26 +143,24 @@ fun MediaListSortContent(
                     .background(backgroundColor)
                     .clickable {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onSortClick(sort)
+                        onFormatClick(format)
                     }
                     .padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    painter = sort.getIconPainter(),
-                    contentDescription = null,
-                    tint = contentColor,
-                    modifier = Modifier.size(22.dp)
-                )
-
-                Spacer(modifier = Modifier.width(16.dp))
-
                 Text(
-                    text = sort.localized(),
+                    text = format?.localized() ?: stringResource(R.string.all),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                     color = if (isSelected) MaterialTheme.colorScheme.onSurface else contentColor,
                     modifier = Modifier.weight(1f)
+                )
+
+                Text(
+                    text = count.toString(),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else contentColor,
+                    modifier = Modifier.padding(horizontal = 8.dp)
                 )
 
                 if (isSelected) {
@@ -181,33 +181,17 @@ fun MediaListSortContent(
                             modifier = Modifier.size(16.dp)
                         )
                     }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                                shape = CircleShape
+                            )
+                    )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun MediaSort.getIconPainter(): Painter {
-    return when (this) {
-        MediaSort.ANIME_TITLE, MediaSort.MANGA_TITLE -> painterResource(R.drawable.round_title_24)
-        MediaSort.SCORE, MediaSort.ANIME_SCORE -> painterResource(R.drawable.ic_round_details_star_24)
-        MediaSort.UPDATED -> painterResource(R.drawable.ic_history_24)
-        MediaSort.ANIME_START_DATE, MediaSort.MANGA_START_DATE -> painterResource(R.drawable.round_calendar_today_24)
-        MediaSort.ANIME_NUM_USERS -> painterResource(R.drawable.ic_round_group_24)
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MediaListSortDialogPreview() {
-    MoeListTheme {
-        Surface {
-            MediaListSortContent(
-                sortOptions = animeListSortItems.toList(),
-                selectedSort = MediaSort.SCORE,
-                onSortClick = {}
-            )
         }
     }
 }

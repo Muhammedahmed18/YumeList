@@ -23,12 +23,12 @@ fun Modifier.collapsable(
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(key1 = state.isScrollInProgress) {
-        if (!state.isScrollInProgress && topBarOffsetY.value != 0f && topBarOffsetY.value != -topBarHeightPx) {
+        if (!state.isScrollInProgress && topBarOffsetY.value != 0f && topBarOffsetY.value > -topBarHeightPx * 0.99f) {
             val half = topBarHeightPx / 2
             val oldOffsetY = topBarOffsetY.value
 
             val targetOffsetY = when {
-                abs(topBarOffsetY.value) >= half -> -topBarHeightPx
+                abs(topBarOffsetY.value) >= half -> -topBarHeightPx * 0.99f // Keep it slightly visible to maintain fraction
                 else -> 0f
             }
 
@@ -49,7 +49,7 @@ fun Modifier.collapsable(
                     if (state.canScrollForward) {
                         topBarOffsetY.snapTo(
                             targetValue = (topBarOffsetY.value + available.y).coerceIn(
-                                minimumValue = -topBarHeightPx,
+                                minimumValue = -topBarHeightPx * 0.99f,
                                 maximumValue = 0f,
                             )
                         )

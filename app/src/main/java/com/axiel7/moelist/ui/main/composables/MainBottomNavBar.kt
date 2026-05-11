@@ -1,8 +1,12 @@
 package com.axiel7.moelist.ui.main.composables
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
@@ -10,15 +14,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -57,8 +67,31 @@ fun MainBottomNavBar(
                     val isSelected = navBackStackEntry?.destination?.hierarchy?.any {
                         it.hasRoute(dest.route::class)
                     } == true
+                    
+                    val animatedScale by animateFloatAsState(
+                        targetValue = if (isSelected) 1.15f else 1.0f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        ),
+                        label = "IconScale"
+                    )
+
+                    val indicatorColor by animateColorAsState(
+                        targetValue = if (isSelected) {
+                            MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            Color.Transparent
+                        },
+                        label = "IndicatorColor"
+                    )
+
                     NavigationBarItem(
-                        icon = { dest.Icon(selected = isSelected) },
+                        icon = { 
+                            Box(modifier = Modifier.scale(animatedScale)) {
+                                dest.Icon(selected = isSelected) 
+                            }
+                        },
                         label = { 
                             Text(
                                 text = stringResource(dest.title),
@@ -67,6 +100,9 @@ fun MainBottomNavBar(
                             ) 
                         },
                         selected = isSelected,
+                        colors = NavigationBarItemDefaults.colors(
+                            indicatorColor = indicatorColor
+                        ),
                         onClick = {
                             if (isSelected) {
                                 when (dest) {

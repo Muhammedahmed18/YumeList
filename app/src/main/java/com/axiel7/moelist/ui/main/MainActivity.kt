@@ -33,6 +33,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -46,6 +47,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavDestination.Companion.hasRoute
 import com.axiel7.moelist.App
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.BottomDestination.Companion.isBottomDestination
@@ -54,6 +56,7 @@ import com.axiel7.moelist.ui.base.TabletMode
 import com.axiel7.moelist.ui.base.ThemeStyle
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.base.navigation.NavActionManager.Companion.rememberNavActionManager
+import com.axiel7.moelist.ui.base.navigation.Route
 import com.axiel7.moelist.ui.main.composables.MainBottomNavBar
 import com.axiel7.moelist.ui.main.composables.MainNavigationRail
 import com.axiel7.moelist.ui.main.composables.MainTopAppBar
@@ -254,6 +257,16 @@ fun MainView(
     val isBottomDestination by remember {
         derivedStateOf { navBackStackEntry?.isBottomDestination() == true }
     }
+    
+    // Step 1: Logic to show sort icon and handle clicks
+    val isUserListTab by remember {
+        derivedStateOf {
+            navBackStackEntry?.destination?.run {
+                hasRoute<Route.Tab.Anime>() || hasRoute<Route.Tab.Manga>() || hasRoute<Route.UserList>()
+            } == true
+        }
+    }
+    var sortTrigger by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     Scaffold(
         topBar = {
@@ -261,8 +274,12 @@ fun MainView(
                 MainTopAppBar(
                     isLoggedIn = isLoggedIn,
                     profilePicture = profilePicture,
-                    isVisible = isBottomDestination,
+                    isVisible = isBottomDestination && !isUserListTab,
                     navController = navController,
+                    showSort = isUserListTab,
+                    onSortClick = { sortTrigger?.invoke() },
+                    topBarOffsetY = topBarOffsetY,
+                    topBarHeightPx = topBarHeightPx,
                     modifier = Modifier
                         .graphicsLayer {
                             translationY = topBarOffsetY.value
@@ -306,6 +323,7 @@ fun MainView(
                     padding = PaddingValues(),
                     topBarHeightPx = topBarHeightPx,
                     topBarOffsetY = topBarOffsetY,
+                    onSortClickTrigger = { sortTrigger = it }
                 )
             }
         } else {
@@ -327,11 +345,12 @@ fun MainView(
                 padding = PaddingValues(
                     start = padding.calculateStartPadding(LocalLayoutDirection.current),
                     end = padding.calculateEndPadding(LocalLayoutDirection.current),
-                    top = padding.calculateTopPadding(),
+                    top = if (isUserListTab) 0.dp else padding.calculateTopPadding(),
                     bottom = padding.calculateBottomPadding()
                 ),
-                topBarHeightPx = topBarHeightPx,
+                topBarHeightPx = if (isUserListTab) 0f else topBarHeightPx,
                 topBarOffsetY = topBarOffsetY,
+                onSortClickTrigger = { sortTrigger = it }
             )
         }
     }

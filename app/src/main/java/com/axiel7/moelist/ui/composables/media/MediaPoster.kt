@@ -1,5 +1,6 @@
 package com.axiel7.moelist.ui.composables.media
 
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -13,17 +14,19 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.axiel7.moelist.ui.theme.MoeListTheme
 
-const val MEDIA_POSTER_COMPACT_HEIGHT = 100
+const val MEDIA_POSTER_RATIO = 2f / 3f
+
 const val MEDIA_POSTER_COMPACT_WIDTH = 100
+const val MEDIA_POSTER_COMPACT_HEIGHT = 150
 
-const val MEDIA_POSTER_SMALL_HEIGHT = 140
 const val MEDIA_POSTER_SMALL_WIDTH = 100
+const val MEDIA_POSTER_SMALL_HEIGHT = 150
 
-const val MEDIA_POSTER_MEDIUM_HEIGHT = 156
 const val MEDIA_POSTER_MEDIUM_WIDTH = 110
+const val MEDIA_POSTER_MEDIUM_HEIGHT = 165
 
-const val MEDIA_POSTER_BIG_HEIGHT = 213
 const val MEDIA_POSTER_BIG_WIDTH = 150
+const val MEDIA_POSTER_BIG_HEIGHT = 225
 
 @Composable
 fun MediaPoster(

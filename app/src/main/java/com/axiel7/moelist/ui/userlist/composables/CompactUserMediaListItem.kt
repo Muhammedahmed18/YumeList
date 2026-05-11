@@ -1,5 +1,6 @@
 package com.axiel7.moelist.ui.userlist.composables
 
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -19,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,11 +55,16 @@ fun CompactUserMediaListItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     onClickPlus: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val totalProgress = remember { item.totalProgress() }
-    val userProgress = item.userProgress()
-    val broadcast = remember { (item.node as? AnimeNode)?.broadcast }
-    val isAiring = remember { item.isAiring }
+    val totalProgress = remember(item) { item.totalProgress() }
+    val userProgress = item.userProgress() ?: 0
+    val animatedUserProgress by animateIntAsState(
+        targetValue = userProgress,
+        label = "progress_number_animation"
+    )
+    val broadcast = remember(item) { (item.node as? AnimeNode)?.broadcast }
+    val isAiring = remember(item) { item.isAiring }
     val currentStatus = item.listStatus?.status
     val progressTextColor = if (currentStatus == ListStatus.DROPPED) {
         currentStatus.primaryColor()
@@ -66,7 +73,7 @@ fun CompactUserMediaListItem(
     }
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
             .combinedClickable(onLongClick = onLongClick, onClick = onClick),
@@ -159,7 +166,7 @@ fun CompactUserMediaListItem(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "${userProgress ?: 0}/${totalProgress.toStringPositiveValueOrUnknown()}",
+                            text = "$animatedUserProgress/${totalProgress.toStringPositiveValueOrUnknown()}",
                             style = MaterialTheme.typography.labelLarge,
                             color = progressTextColor
                         )

@@ -166,24 +166,24 @@ class SearchViewModel(
             val currentList = mutableUiState.value.mediaList
             currentList.forEachIndexed { index, item ->
                 val id = item.node.id
-                val localStatus = if (currentMediaType == MediaType.ANIME) {
-                    userAnimes.find { it.node.id == id }?.listStatus?.status
+                val localMyListStatus = if (currentMediaType == MediaType.ANIME) {
+                    userAnimes.find { it.node.id == id }?.listStatus
                 } else {
-                    userMangas.find { it.node.id == id }?.listStatus?.status
+                    userMangas.find { it.node.id == id }?.listStatus
                 }
 
-                val currentStatus = item.node.myListStatus?.status
-                if (localStatus != currentStatus) {
+                val currentMyListStatus = item.node.myListStatus
+                if (localMyListStatus?.status != currentMyListStatus?.status || localMyListStatus?.score != currentMyListStatus?.score) {
                     val newItem = when (item) {
                         is AnimeList -> {
                             val newNode = item.node.copy(
-                                myListStatus = localStatus?.let { BasicMyListStatus(it) }
+                                myListStatus = localMyListStatus?.let { BasicMyListStatus(it.status, it.score) }
                             )
                             item.copy(node = newNode)
                         }
                         is MangaList -> {
                             val newNode = item.node.copy(
-                                myListStatus = localStatus?.let { BasicMyListStatus(it) }
+                                myListStatus = localMyListStatus?.let { BasicMyListStatus(it.status, it.score) }
                             )
                             item.copy(node = newNode)
                         }

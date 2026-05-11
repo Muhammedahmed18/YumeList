@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -29,8 +30,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -45,7 +49,36 @@ fun LoadingState(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        CircularProgressIndicator()
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Surface(
+                modifier = Modifier.size(112.dp),
+                shape = RoundedCornerShape(32.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                tonalElevation = 2.dp
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(48.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        strokeWidth = 5.dp,
+                        strokeCap = StrokeCap.Round
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = stringResource(R.string.loading),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
 
@@ -58,8 +91,11 @@ fun EmptyState(
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null,
 ) {
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { visible = true }
+    val isPreview = LocalInspectionMode.current
+    var visible by remember { mutableStateOf(isPreview) }
+    LaunchedEffect(Unit) {
+        if (!isPreview) visible = true
+    }
 
     AnimatedVisibility(
         visible = visible,
@@ -131,8 +167,11 @@ fun ErrorState(
     actionLabel: String = stringResource(R.string.retry),
     onAction: () -> Unit
 ) {
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { visible = true }
+    val isPreview = LocalInspectionMode.current
+    var visible by remember { mutableStateOf(isPreview) }
+    LaunchedEffect(Unit) {
+        if (!isPreview) visible = true
+    }
 
     AnimatedVisibility(
         visible = visible,
@@ -191,6 +230,14 @@ fun ErrorState(
 
             Spacer(modifier = Modifier.weight(2f))
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LoadingStatePreview() {
+    MoeListTheme {
+        LoadingState()
     }
 }
 

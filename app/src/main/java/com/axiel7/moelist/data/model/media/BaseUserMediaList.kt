@@ -45,4 +45,6 @@ abstract class BaseUserMediaList<T : BaseMediaNode> {
     val isAiring
         get() = node.status == MediaStatus.AIRING
                 || ((node as? AnimeNode)?.broadcast != null && node.status == MediaStatus.AIRING)
+
+    abstract fun copyProgress(progress: Int): BaseUserMediaList<T>
 }
