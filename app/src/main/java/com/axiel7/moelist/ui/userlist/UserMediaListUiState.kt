@@ -7,12 +7,12 @@ import com.axiel7.moelist.data.model.media.BaseMediaNode
 import com.axiel7.moelist.data.model.media.BaseMyListStatus
 import com.axiel7.moelist.data.model.media.BaseUserMediaList
 import com.axiel7.moelist.data.model.media.ListStatus
+import com.axiel7.moelist.ui.base.ListStyle
 import com.axiel7.moelist.data.model.media.MediaFormat
 import com.axiel7.moelist.data.model.media.MediaSort
 import com.axiel7.moelist.data.model.media.MediaType
-import com.axiel7.moelist.ui.base.ItemsPerRow
-import com.axiel7.moelist.ui.base.ListStyle
 import com.axiel7.moelist.ui.base.state.PagedUiState
+import com.axiel7.moelist.ui.base.ItemsPerRow
 
 @Stable
 data class UserMediaListUiState(
@@ -37,6 +37,10 @@ data class UserMediaListUiState(
     val isLoadingRandom: Boolean = false,
     val scrollToTopTrigger: Int = 0,
     val isError: Boolean = false,
+    val isReindexing: Boolean = false,
+    val reindexProgress: Float = 0f,
+    val reindexPercentageText: String = "",
+    val reindexProgressText: String = "",
     override val nextPage: String? = null,
     override val loadMore: Boolean = true,
     override val isLoading: Boolean = true,
