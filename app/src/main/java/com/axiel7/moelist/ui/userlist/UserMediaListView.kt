@@ -236,7 +236,7 @@ fun UserMediaListView(
                         ) { item ->
                             GridItemView(
                                 item = item,
-                                modifier = Modifier
+                                modifier = Modifier.animateItem()
                             )
                         }
                         if (uiState.isLoadingMore) {
@@ -289,7 +289,7 @@ fun UserMediaListView(
                                 ) { item ->
                                     StandardItemView(
                                         item = item,
-                                        modifier = Modifier
+                                        modifier = Modifier.animateItem()
                                     )
                                 }
                                 if (uiState.isLoadingMore) {
@@ -307,7 +307,7 @@ fun UserMediaListView(
                                 ) { item ->
                                     CompactItemView(
                                         item = item,
-                                        modifier = Modifier
+                                        modifier = Modifier.animateItem()
                                     )
                                 }
                                 if (uiState.isLoadingMore) {
@@ -325,7 +325,7 @@ fun UserMediaListView(
                                 ) { item ->
                                     MinimalItemView(
                                         item = item,
-                                        modifier = Modifier
+                                        modifier = Modifier.animateItem()
                                     )
                                 }
                                 if (uiState.isLoadingMore) {
@@ -369,7 +369,7 @@ fun UserMediaListView(
                                 ) { item ->
                                     StandardItemView(
                                         item = item,
-                                        modifier = Modifier
+                                        modifier = Modifier.animateItem()
                                     )
                                 }
                                 if (uiState.isLoadingMore) {
@@ -387,7 +387,7 @@ fun UserMediaListView(
                                 ) { item ->
                                     CompactItemView(
                                         item = item,
-                                        modifier = Modifier
+                                        modifier = Modifier.animateItem()
                                     )
                                 }
                                 if (uiState.isLoadingMore) {
@@ -405,7 +405,7 @@ fun UserMediaListView(
                                 ) { item ->
                                     MinimalItemView(
                                         item = item,
-                                        modifier = Modifier
+                                        modifier = Modifier.animateItem()
                                     )
                                 }
                                 if (uiState.isLoadingMore) {
