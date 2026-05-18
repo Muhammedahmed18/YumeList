@@ -1,14 +1,22 @@
 package com.axiel7.moelist.ui.ranking
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MediumTopAppBar
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.media.MediaType
@@ -16,10 +24,11 @@ import com.axiel7.moelist.data.model.media.RankingType.Companion.rankingAnimeVal
 import com.axiel7.moelist.data.model.media.RankingType.Companion.rankingMangaValues
 import com.axiel7.moelist.ui.base.TabRowItem
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
-import com.axiel7.moelist.ui.composables.DefaultScaffoldWithTopAppBar
+import com.axiel7.moelist.ui.composables.BackIconButton
 import com.axiel7.moelist.ui.composables.TabRowWithPager
 import com.axiel7.moelist.ui.ranking.list.MediaRankingListView
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MediaRankingView(
     mediaType: MediaType,
@@ -33,28 +42,46 @@ fun MediaRankingView(
             }.toTypedArray()
     }
 
-    DefaultScaffoldWithTopAppBar(
-        title = stringResource(
-            if (mediaType == MediaType.ANIME) R.string.anime_ranking
-            else R.string.manga_ranking
-        ),
-        navigateBack = navActionManager::goBack,
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            MediumTopAppBar(
+                title = {
+                    Text(
+                        text = stringResource(
+                            if (mediaType == MediaType.ANIME) R.string.anime_ranking
+                            else R.string.manga_ranking
+                        )
+                    )
+                },
+                navigationIcon = {
+                    BackIconButton(onClick = navActionManager::goBack)
+                },
+                scrollBehavior = scrollBehavior
+            )
+        },
         contentWindowInsets = WindowInsets.systemBars
             .only(WindowInsetsSides.Horizontal)
     ) { padding ->
-        TabRowWithPager(
-            tabs = tabRowItems,
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
-            isTabScrollable = true
-        ) { page, _ ->
-            MediaRankingListView(
-                mediaType = mediaType,
-                rankingType = tabRowItems[page].value,
-                isCompactScreen = isCompactScreen,
-                navActionManager = navActionManager,
-            )
+                .padding(padding)
+        ) {
+            TabRowWithPager(
+                tabs = tabRowItems,
+                modifier = Modifier.fillMaxSize(),
+                isTabScrollable = true
+            ) { page, _ ->
+                MediaRankingListView(
+                    mediaType = mediaType,
+                    rankingType = tabRowItems[page].value,
+                    isCompactScreen = isCompactScreen,
+                    navActionManager = navActionManager,
+                )
+            }
         }
     }
 }

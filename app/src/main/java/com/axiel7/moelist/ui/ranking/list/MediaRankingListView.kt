@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -23,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -96,7 +98,8 @@ private fun MediaRankingListViewContent(
             topBadgeContent = {
                 Text(
                     text = "#${item.ranking?.rank}",
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
             badgeContent = item.node.myListStatus?.status?.let { status ->
@@ -104,7 +107,8 @@ private fun MediaRankingListViewContent(
                     Icon(
                         painter = painterResource(status.icon),
                         contentDescription = status.localized(),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             },
@@ -116,6 +120,7 @@ private fun MediaRankingListViewContent(
                             append(" (${item.node.durationText()})")
                         }
                     },
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
@@ -124,7 +129,9 @@ private fun MediaRankingListViewContent(
                     TextIconHorizontal(
                         text = item.node.mean.toStringPositiveValueOrUnknown(),
                         icon = R.drawable.ic_round_details_star_24,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
+                        iconSize = 16.dp
                     )
                 }
             },
@@ -132,7 +139,9 @@ private fun MediaRankingListViewContent(
                 TextIconHorizontal(
                     text = item.node.numListUsers?.format() ?: UNKNOWN_CHAR,
                     icon = R.drawable.ic_round_group_24,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                    iconSize = 16.dp
                 )
             },
             onClick = dropUnlessResumed {

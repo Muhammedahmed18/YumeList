@@ -1,11 +1,18 @@
 package com.axiel7.moelist.ui.composables.media
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -14,7 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -23,15 +29,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.axiel7.moelist.R
-import com.axiel7.moelist.ui.composables.defaultPlaceholder
 import com.axiel7.moelist.ui.theme.MoeListTheme
 
 const val MEDIA_ITEM_VERTICAL_HEIGHT = 210
@@ -41,6 +47,7 @@ fun MediaItemVertical(
     title: String,
     imageUrl: String?,
     modifier: Modifier = Modifier,
+    posterOverlay: @Composable (BoxScope.() -> Unit)? = null,
     badgeContent: @Composable (RowScope.() -> Unit)? = null,
     subtitle: @Composable (() -> Unit)? = null,
     subtitle2: @Composable (() -> Unit)? = null,
@@ -54,14 +61,12 @@ fun MediaItemVertical(
     Column(
         modifier = modifier
             .width(MEDIA_POSTER_SMALL_WIDTH.dp)
-            .sizeIn(
-                minHeight = MEDIA_ITEM_VERTICAL_HEIGHT.dp
-            )
+            .sizeIn(minHeight = MEDIA_ITEM_VERTICAL_HEIGHT.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
             }
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(24.dp))
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -81,17 +86,26 @@ fun MediaItemVertical(
                         width = MEDIA_POSTER_SMALL_WIDTH.dp,
                         height = MEDIA_POSTER_SMALL_HEIGHT.dp
                     )
+                    .clip(RoundedCornerShape(20.dp))
             )
 
+            posterOverlay?.invoke(this)
+
             if (badgeContent != null) {
-                Row(
+                Surface(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(topEnd = 12.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer)
-                        .padding(horizontal = 6.dp, vertical = 2.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    content = badgeContent
-                )
+                        .padding(8.dp)
+                        .align(Alignment.TopEnd),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.85f),
+                    tonalElevation = 4.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        content = badgeContent
+                    )
+                }
             }
         }
 
@@ -117,16 +131,39 @@ fun MediaItemVertical(
     }
 }
 
+fun Modifier.shimmerEffect(): Modifier = composed {
+    val transition = rememberInfiniteTransition(label = "shimmer")
+    val translateAnim by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "shimmerTranslate"
+    )
+
+    val shimmerColors = listOf(
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+    )
+
+    val brush = Brush.linearGradient(
+        colors = shimmerColors,
+        start = Offset.Zero,
+        end = Offset(x = translateAnim, y = translateAnim)
+    )
+    background(brush)
+}
+
 @Composable
 fun MediaItemVerticalPlaceholder(
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
-            .size(
-                width = MEDIA_POSTER_SMALL_WIDTH.dp,
-                height = MEDIA_ITEM_VERTICAL_HEIGHT.dp
-            ),
+            .width(MEDIA_POSTER_SMALL_WIDTH.dp),
         horizontalAlignment = Alignment.Start
     ) {
         Box(
@@ -135,19 +172,25 @@ fun MediaItemVerticalPlaceholder(
                     width = MEDIA_POSTER_SMALL_WIDTH.dp,
                     height = MEDIA_POSTER_SMALL_HEIGHT.dp
                 )
-                .clip(RoundedCornerShape(16.dp))
-                .defaultPlaceholder(visible = true)
+                .clip(RoundedCornerShape(20.dp))
+                .shimmerEffect()
         )
 
-        Text(
-            text = "Loading Title",
+        Box(
             modifier = Modifier
                 .padding(top = 8.dp, start = 4.dp)
-                .defaultPlaceholder(visible = true),
-            style = MaterialTheme.typography.titleSmall,
-            maxLines = 2
+                .size(width = 80.dp, height = 16.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .shimmerEffect()
         )
     }
+}
+
+@Composable
+fun MediaItemDetailedPlaceholder(
+    modifier: Modifier = Modifier
+) {
+    MediaItemVerticalPlaceholder(modifier = modifier)
 }
 
 @Preview
@@ -158,28 +201,7 @@ fun MediaItemVerticalPreview() {
             Row(modifier = Modifier.padding(16.dp)) {
                 MediaItemVertical(
                     imageUrl = null,
-                    title = "This is a very large anime title that should serve as a preview example",
-                    badgeContent = {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_round_star_16),
-                            contentDescription = null,
-                            modifier = Modifier.size(12.dp),
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Text(
-                            text = "8.34",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.padding(start = 2.dp)
-                        )
-                    },
-                    subtitle = {
-                        Text(
-                            text = "TV • 12 Eps",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    },
+                    title = "Modern Anime Title",
                     onClick = {}
                 )
             }

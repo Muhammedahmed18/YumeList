@@ -248,6 +248,7 @@
     <string name="chinese_simplified_native" translatable="false">简体中文</string>
     <string name="related_anime">Related Anime</string>
     <string name="related_manga">Related Manga</string>
+    <string name="franchise_timeline">Franchise Timeline</string>
     <string name="content">Content</string>
     <string name="list_mode_standard">Standard</string>
     <string name="list_mode_compact">Compact</string>
@@ -409,4 +410,5 @@
     <string name="music_themes">Music Themes</string>
     <string name="format">Format</string>
     <string name="all">All</string>
+    <string name="reindexing_media_list">Reindexing %s List…</string>
 </resources>

@@ -6,6 +6,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.axiel7.moelist.data.model.anime.AnimeSeasonal
 import com.axiel7.moelist.data.model.anime.SeasonType
 import com.axiel7.moelist.data.model.anime.StartSeason
+import com.axiel7.moelist.data.model.media.MediaFormat
 import com.axiel7.moelist.data.model.media.MediaSort
 import com.axiel7.moelist.ui.base.state.PagedUiState
 import com.axiel7.moelist.utils.SeasonCalendar
@@ -15,6 +16,7 @@ data class SeasonChartUiState(
     val season: StartSeason = SeasonCalendar.currentStartSeason,
     val sort: MediaSort = MediaSort.ANIME_NUM_USERS,
     val isNew: Boolean = true,
+    val selectedFormat: MediaFormat? = null,
     val seasonType: SeasonType? = SeasonType.CURRENT,
     val animes: SnapshotStateList<AnimeSeasonal> = mutableStateListOf(),
     val hideScore: Boolean = false,
@@ -25,6 +27,21 @@ data class SeasonChartUiState(
 ) : PagedUiState() {
     override fun setLoading(value: Boolean) = copy(isLoading = value)
     override fun setMessage(value: String?) = copy(message = value)
+
+    val filteredAnimes: List<AnimeSeasonal>
+        get() = if (selectedFormat == null) animes
+        else animes.filter { it.node.mediaFormat == selectedFormat }
+
+    val formatCounts: Map<MediaFormat?, Int>
+        get() {
+            val counts = mutableMapOf<MediaFormat?, Int>()
+            counts[null] = animes.size
+            animes.forEach {
+                val format = it.node.mediaFormat
+                counts[format] = (counts[format] ?: 0) + 1
+            }
+            return counts
+        }
 
     companion object {
         private const val BASE_YEAR = 1917

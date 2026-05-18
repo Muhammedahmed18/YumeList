@@ -12,7 +12,7 @@ class UserRepository(
 ) {
 
     companion object {
-        private const val USER_FIELDS = "id,name,gender,location,joined_at,anime_statistics"
+        private const val USER_FIELDS = "id,name,gender,location,joined_at,anime_statistics,manga_statistics"
     }
 
     suspend fun getMyUser(): User? {

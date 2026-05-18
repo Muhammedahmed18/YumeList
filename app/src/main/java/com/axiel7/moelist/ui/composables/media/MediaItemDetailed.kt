@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -43,9 +44,13 @@ fun MediaItemDetailed(
 ) {
     Card(
         onClick = onClick,
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 6.dp)
     ) {
         Row(
             modifier = Modifier.height(MEDIA_POSTER_SMALL_HEIGHT.dp)
@@ -64,8 +69,8 @@ fun MediaItemDetailed(
                 if (badgeContent != null) {
                     Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(topEnd = 8.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer)
+                            .clip(RoundedCornerShape(topEnd = 12.dp))
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f))
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                             .align(Alignment.BottomStart),
                         verticalAlignment = Alignment.CenterVertically,
@@ -75,6 +80,9 @@ fun MediaItemDetailed(
                 if (topBadgeContent != null) {
                     Row(
                         modifier = Modifier
+                            .clip(RoundedCornerShape(bottomEnd = 12.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
                             .align(Alignment.TopStart),
                         verticalAlignment = Alignment.CenterVertically,
                         content = topBadgeContent
@@ -85,20 +93,20 @@ fun MediaItemDetailed(
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 2
                 )
 
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -121,9 +129,13 @@ fun MediaItemDetailed(
 @Composable
 fun MediaItemDetailedPlaceholder() {
     Card(
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 6.dp)
     ) {
         Row(
             modifier = Modifier.height(MEDIA_POSTER_SMALL_HEIGHT.dp)
@@ -134,14 +146,13 @@ fun MediaItemDetailedPlaceholder() {
                         width = MEDIA_POSTER_SMALL_WIDTH.dp,
                         height = MEDIA_POSTER_SMALL_HEIGHT.dp
                     )
-                    .clip(RoundedCornerShape(8.dp))
                     .defaultPlaceholder(visible = true)
             )
 
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
@@ -187,37 +198,18 @@ fun MediaItemDetailedPreview() {
                 title = "Boku no Hero Academia and a very very large title to preview how it wraps to two lines",
                 imageUrl = "https://cdn.myanimelist.net/images/anime/1170/124312l.jpg",
                 topBadgeContent = {
-                    Box(
-                        modifier = Modifier
-                            .padding(4.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.9f))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "9",
-                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
-                            Icon(
-                                painter = painterResource(R.drawable.ic_round_star_16),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .padding(start = 2.dp)
-                                    .size(10.dp),
-                                tint = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
-                        }
-                    }
+                    Text(
+                        text = "#1",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 },
                 badgeContent = {
                     Icon(
                         painter = painterResource(R.drawable.play_circle_outline_24),
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
                     )
                 },
                 subtitle1 = {

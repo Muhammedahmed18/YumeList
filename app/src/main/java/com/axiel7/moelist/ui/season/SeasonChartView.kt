@@ -1,8 +1,13 @@
 package com.axiel7.moelist.ui.season
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
@@ -12,16 +17,26 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,9 +46,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,7 +60,7 @@ import androidx.lifecycle.compose.dropUnlessResumed
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
-import com.axiel7.moelist.ui.composables.DefaultScaffoldWithTopAppBar
+import com.axiel7.moelist.ui.composables.BackIconButton
 import com.axiel7.moelist.ui.composables.EmptyState
 import com.axiel7.moelist.ui.composables.ErrorState
 import com.axiel7.moelist.ui.composables.LoadingState
@@ -52,6 +70,7 @@ import com.axiel7.moelist.ui.composables.media.MediaItemDetailedPlaceholder
 import com.axiel7.moelist.ui.composables.media.MediaItemVertical
 import com.axiel7.moelist.ui.composables.score.SmallScoreIndicator
 import com.axiel7.moelist.ui.season.composables.SeasonChartFilterSheet
+import com.axiel7.moelist.ui.season.composables.SeasonChartFormatSheet
 import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.utils.ContextExtensions.showToast
 import com.axiel7.moelist.utils.NumExtensions.format
@@ -82,25 +101,41 @@ private fun SeasonChartViewContent(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val sheetState = rememberModalBottomSheetState()
-    var showSheet by remember { mutableStateOf(false) }
-    fun hideSheet() {
-        scope.launch { sheetState.hide() }.invokeOnCompletion { showSheet = false }
+    val filterSheetState = rememberModalBottomSheetState()
+    var showFilterSheet by remember { mutableStateOf(false) }
+    fun hideFilterSheet() {
+        scope.launch { filterSheetState.hide() }.invokeOnCompletion { showFilterSheet = false }
+    }
+
+    val formatSheetState = rememberModalBottomSheetState()
+    var showFormatSheet by remember { mutableStateOf(false) }
+    fun hideFormatSheet() {
+        scope.launch { formatSheetState.hide() }.invokeOnCompletion { showFormatSheet = false }
     }
 
     val bottomBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
-    if (showSheet) {
+    if (showFilterSheet) {
         SeasonChartFilterSheet(
             uiState = uiState,
             event = event,
             onApply = {
-                hideSheet()
+                hideFilterSheet()
                 event?.onApplyFilters()
             },
-            onDismiss = { hideSheet() },
-            sheetState = sheetState,
+            onDismiss = { hideFilterSheet() },
+            sheetState = filterSheetState,
             bottomPadding = bottomBarPadding
+        )
+    }
+
+    if (showFormatSheet) {
+        SeasonChartFormatSheet(
+            uiState = uiState,
+            event = event,
+            onDismiss = { hideFormatSheet() },
+            sheetState = formatSheetState
         )
     }
 
@@ -111,89 +146,163 @@ private fun SeasonChartViewContent(
         }
     }
 
-    DefaultScaffoldWithTopAppBar(
-        title = uiState.season.seasonYearText(),
-        navigateBack = navActionManager::goBack,
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showSheet = true },
-                modifier = Modifier.padding(WindowInsets.navigationBars.asPaddingValues())
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_round_filter_list_24),
-                    contentDescription = stringResource(R.string.filters)
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            Column {
+                TopAppBar(
+                    title = { Text(text = uiState.season.seasonYearText()) },
+                    navigationIcon = {
+                        BackIconButton(onClick = navActionManager::goBack)
+                    },
+                    scrollBehavior = scrollBehavior
                 )
+                
+                // Control Bar with Pills
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Left Pill: Format
+                    val selectedFormatText = uiState.selectedFormat?.localized() ?: stringResource(R.string.all)
+                    val count = uiState.formatCounts[uiState.selectedFormat] ?: 0
+                    
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                            .clickable { showFormatSheet = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = "$selectedFormatText ($count)",
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.5.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Icon(
+                                imageVector = Icons.Rounded.ArrowDropDown,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(start = 4.dp)
+                            )
+                        }
+                    }
+
+                    // Right Pill: Filter
+                    Surface(
+                        onClick = { showFilterSheet = true },
+                        modifier = Modifier
+                            .height(48.dp)
+                            .clip(CircleShape),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
+                        shape = CircleShape
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_round_filter_list_24),
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.filters),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+                }
             }
         },
-        contentWindowInsets = WindowInsets.systemBars
-            .only(WindowInsetsSides.Horizontal)
+        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal)
     ) { padding ->
-        when {
-            uiState.isLoading && uiState.animes.isEmpty() -> {
-                LoadingState(modifier = Modifier.padding(padding))
-            }
-            uiState.message != null && uiState.animes.isEmpty() -> {
-                ErrorState(
-                    modifier = Modifier.padding(padding),
-                    message = uiState.message,
-                    onAction = { event?.onApplyFilters() }
-                )
-            }
-            !uiState.isLoading && uiState.animes.isEmpty() -> {
-                EmptyState(modifier = Modifier.padding(padding))
-            }
-            else -> {
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = MEDIA_POSTER_SMALL_WIDTH.dp),
-                    modifier = Modifier
-                        .padding(padding)
-                        .fillMaxSize(),
-                    contentPadding = PaddingValues(
-                        start = 8.dp,
-                        top = 8.dp,
-                        end = 8.dp,
-                        bottom = bottomBarPadding
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
-                ) {
-                    items(
-                        items = uiState.animes,
-                        key = { it.node.id },
-                        contentType = { it.node }
-                    ) { item ->
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.TopCenter
-                        ) {
+        Box(modifier = Modifier.padding(padding)) {
+            when {
+                uiState.isLoading && uiState.animes.isEmpty() -> {
+                    LoadingState(modifier = Modifier.fillMaxSize())
+                }
+                uiState.message != null && uiState.animes.isEmpty() -> {
+                    ErrorState(
+                        modifier = Modifier.fillMaxSize(),
+                        message = uiState.message,
+                        onAction = { event?.onApplyFilters() }
+                    )
+                }
+                !uiState.isLoading && uiState.animes.isEmpty() -> {
+                    EmptyState(modifier = Modifier.fillMaxSize())
+                }
+                else -> {
+                    LazyVerticalStaggeredGrid(
+                        columns = StaggeredGridCells.Adaptive(minSize = MEDIA_POSTER_SMALL_WIDTH.dp),
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(
+                            start = 12.dp,
+                            top = 8.dp,
+                            end = 12.dp,
+                            bottom = bottomBarPadding + 16.dp
+                        ),
+                        verticalItemSpacing = 16.dp,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(
+                            items = uiState.filteredAnimes,
+                            key = { it.node.id }
+                        ) { item ->
                             MediaItemVertical(
                                 imageUrl = item.node.mainPicture?.large,
                                 title = item.node.userPreferredTitle(),
+                                posterOverlay = if (!uiState.hideScore) {
+                                    {
+                                        Surface(
+                                            modifier = Modifier
+                                                .align(Alignment.BottomEnd)
+                                                .padding(6.dp),
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.85f)
+                                        ) {
+                                            SmallScoreIndicator(
+                                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                                                score = item.node.mean,
+                                                fontSize = 11.sp
+                                            )
+                                        }
+                                    }
+                                } else null,
                                 badgeContent = item.node.myListStatus?.status?.let { status ->
                                     {
                                         Icon(
                                             painter = painterResource(status.icon),
                                             contentDescription = status.localized(),
-                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                            modifier = Modifier.size(16.dp),
+                                            tint = MaterialTheme.colorScheme.primary
                                         )
                                     }
                                 },
-                                subtitle = if (!uiState.hideScore) {
-                                    {
-                                        SmallScoreIndicator(
-                                            score = item.node.mean,
-                                            fontSize = 13.sp
-                                        )
-                                    }
-                                } else null,
-                                subtitle2 = {
+                                subtitle = {
                                     item.node.numListUsers?.format()?.let { users ->
                                         TextIconHorizontal(
                                             text = users,
                                             icon = R.drawable.ic_round_group_24,
                                             color = MaterialTheme.colorScheme.outline,
-                                            fontSize = 13.sp,
-                                            iconSize = 16.dp
+                                            fontSize = 12.sp,
+                                            iconSize = 14.dp
                                         )
                                     }
                                 },
@@ -203,21 +312,17 @@ private fun SeasonChartViewContent(
                                 }
                             )
                         }
-                    }
-                    if (uiState.isLoading) {
-                        items(12) {
-                            MediaItemDetailedPlaceholder()
-                        }
-                    }
-                    item(contentType = { 0 }) {
-                        LaunchedEffect(uiState.nextPage) {
-                            event?.loadMore()
+                        
+                        if (uiState.isLoading) {
+                            items(10) {
+                                MediaItemDetailedPlaceholder()
+                            }
                         }
                     }
                 }
             }
         }
-    }//:Scaffold
+    }
 }
 
 @Preview

@@ -40,6 +40,7 @@ import com.axiel7.moelist.ui.editmedia.EditMediaSheet
 import com.axiel7.moelist.ui.userlist.composables.MediaListItemShimmer
 import com.axiel7.moelist.ui.userlist.composables.MediaListFormatSheet
 import com.axiel7.moelist.ui.userlist.composables.MediaListSortDialog
+import com.axiel7.moelist.ui.userlist.composables.ReindexProgressDialog
 import com.axiel7.moelist.ui.userlist.composables.UserMediaListControlBar
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -62,11 +63,11 @@ fun UserMediaListWithTabsView(
                 TabRowItem(value = it, title = it.stringRes)
             }.toTypedArray()
     }
-    
+
     val pagerState = rememberPagerState { tabRowItems.size }
     val editSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     var showEditSheet by remember { mutableStateOf(false) }
-    
+
     fun hideEditSheet(onComplete: () -> Unit = {}) {
         scope.launch { editSheetState.hide() }.invokeOnCompletion { 
             showEditSheet = false
@@ -145,6 +146,8 @@ fun UserMediaListWithTabsView(
                     event = currentViewModel
                 )
             }
+
+            ReindexProgressDialog(uiState = currentUiState)
 
             HorizontalPager(
                 state = pagerState,

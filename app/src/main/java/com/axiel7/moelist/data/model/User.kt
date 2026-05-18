@@ -1,6 +1,7 @@
 package com.axiel7.moelist.data.model
 
 import com.axiel7.moelist.data.model.anime.UserAnimeStatistics
+import com.axiel7.moelist.data.model.manga.UserMangaStatistics
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -22,6 +23,8 @@ data class User(
     val picture: String? = null,
     @SerialName("anime_statistics")
     val animeStatistics: UserAnimeStatistics? = null,
+    @SerialName("manga_statistics")
+    val mangaStatistics: UserMangaStatistics? = null,
 
     override val message: String? = null,
     override val error: String? = null,

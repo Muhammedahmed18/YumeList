@@ -3,19 +3,29 @@ package com.axiel7.moelist.ui.details.composables
 import android.Manifest
 import android.os.Build
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.anime.AnimeDetails
 import com.axiel7.moelist.data.model.media.MediaStatus
@@ -90,22 +100,47 @@ fun MediaDetailsTopAppBar(
 
     val notificationPermission =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !isPreview) {
-        rememberPermissionState(
-            permission = Manifest.permission.POST_NOTIFICATIONS,
-            onPermissionResult = { onClickNotification(it) }
-        )
-    } else null
+            rememberPermissionState(
+                permission = Manifest.permission.POST_NOTIFICATIONS,
+                onPermissionResult = { onClickNotification(it) }
+            )
+        } else null
 
-    // Interpolate color based on scroll to ensure visibility
-    val collapsedFraction = scrollBehavior.state.collapsedFraction
-    val isScrolled = collapsedFraction > 0.5f
+    // Threshold for showing the title and changing background
+    val isScrolled by remember {
+        derivedStateOf { scrollBehavior.state.contentOffset < -120f }
+    }
+    
+    val titleAlpha by animateFloatAsState(
+        targetValue = if (isScrolled) 1f else 0f,
+        label = "titleAlpha"
+    )
+
+    // Background color transitions from transparent to surface
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isScrolled) MaterialTheme.colorScheme.surface
+        else Color.Transparent,
+        label = "appBarBackgroundColor"
+    )
+
     val contentColor by animateColorAsState(
-        targetValue = if (isScrolled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface,
+        targetValue = if (isScrolled) MaterialTheme.colorScheme.onSurface
+        else MaterialTheme.colorScheme.onSurface,
         label = "appBarContentColor"
     )
 
     TopAppBar(
-        title = { },
+        title = {
+            Text(
+                text = uiState.mediaDetails?.userPreferredTitle().orEmpty(),
+                modifier = Modifier.graphicsLayer { alpha = titleAlpha },
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        },
         navigationIcon = {
             IconButton(onClick = navigateBack) {
                 Icon(
@@ -154,7 +189,7 @@ fun MediaDetailsTopAppBar(
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
+            containerColor = backgroundColor,
             scrolledContainerColor = MaterialTheme.colorScheme.surface
         ),
         scrollBehavior = scrollBehavior
