@@ -18,6 +18,7 @@ import com.axiel7.moelist.ui.base.viewmodel.BaseViewModel
 import com.axiel7.moelist.utils.NumExtensions.isGreaterThanZero
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -117,7 +119,7 @@ class UserMediaListViewModel(
     }
 
     override fun onChangeItemMyListStatus(value: BaseMyListStatus?, removed: Boolean) {
-        // Handled reactively
+        // Handled reactively via Repository flows
     }
 
     override fun refreshList() {
@@ -139,19 +141,6 @@ class UserMediaListViewModel(
             val nowDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
             var newStatus: ListStatus? = null
             var success = false
-
-            // Optimistic update
-            withContext(Dispatchers.Main) {
-                mutableUiState.update { state ->
-                    val newList = state.mediaList.map { 
-                        if (it.node.id == item.node.id) item.copyProgress(progress) else it 
-                    }
-                    val newFiltered = state.filteredMediaList.map {
-                        if (it.node.id == item.node.id) item.copyProgress(progress) else it
-                    }
-                    state.copy(mediaList = newList, filteredMediaList = newFiltered)
-                }
-            }
 
             when (item) {
                 is UserAnimeList -> {
@@ -209,19 +198,6 @@ class UserMediaListViewModel(
                 mutableUiState.update { state ->
                     state.copy(message = "Updated ${item.node.userPreferredTitle()}") 
                 }
-            } else {
-                // Revert optimistic update on failure
-                withContext(Dispatchers.Main) {
-                    mutableUiState.update { state ->
-                        val newList = state.mediaList.map { 
-                            if (it.node.id == item.node.id) item else it 
-                        }
-                        val newFiltered = state.filteredMediaList.map {
-                            if (it.node.id == item.node.id) item else it
-                        }
-                        state.copy(mediaList = newList, filteredMediaList = newFiltered)
-                    }
-                }
             }
         }
     }
@@ -229,7 +205,7 @@ class UserMediaListViewModel(
     override fun onUpdateStatus(item: BaseUserMediaList<out BaseMediaNode>, status: ListStatus) {
         mutableUiState.update { state -> state.copy(selectedItem = item) }
         viewModelScope.launch(Dispatchers.IO) {
-            setLoading(true)
+            // Silent update to prevent UI flickering or scroll jumps
             if (mediaType == MediaType.ANIME) {
                 animeRepository.updateAnimeEntry(
                     animeId = item.node.id,
@@ -241,7 +217,6 @@ class UserMediaListViewModel(
                     status = status
                 )
             }
-            setLoading(false)
         }
     }
 
@@ -257,7 +232,7 @@ class UserMediaListViewModel(
 
     override fun setScore(item: BaseUserMediaList<*>, score: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            setLoading(true)
+            // Silent update
             if (mediaType == MediaType.ANIME) {
                 animeRepository.updateAnimeEntry(
                     animeId = item.node.id,
@@ -270,7 +245,7 @@ class UserMediaListViewModel(
                 )
             }
             mutableUiState.update { state ->
-                state.copy(openSetScoreDialog = false, isLoading = false)
+                state.copy(openSetScoreDialog = false)
             }
         }
     }
@@ -334,12 +309,51 @@ class UserMediaListViewModel(
 
     private fun sortMediaList(list: List<BaseUserMediaList<out BaseMediaNode>>, sort: MediaSort): List<BaseUserMediaList<out BaseMediaNode>> {
         return when (sort) {
-            MediaSort.ANIME_TITLE, MediaSort.MANGA_TITLE -> list.sortedBy { it.node.title }
+            MediaSort.ANIME_TITLE, MediaSort.MANGA_TITLE -> list.sortedBy { it.node.userPreferredTitle() }
             MediaSort.SCORE -> list.sortedByDescending { it.listStatus?.score ?: 0 }
-            MediaSort.UPDATED -> list.sortedByDescending { it.listStatus?.updatedAt }
+            MediaSort.UPDATED -> list.sortedByDescending { it.listStatus?.updatedAt ?: "" }
             MediaSort.ANIME_START_DATE, MediaSort.MANGA_START_DATE -> list.sortedByDescending { it.node.startDate }
             MediaSort.ANIME_NUM_USERS -> list.sortedByDescending { it.node.numListUsers }
             else -> list
+        }
+    }
+
+    private fun performReindexing(fullListSize: Int) {
+        viewModelScope.launch(Dispatchers.Default) {
+            mutableUiState.update { state ->
+                state.copy(
+                    isReindexing = true,
+                    reindexProgress = 0f,
+                    reindexPercentageText = "0%",
+                    reindexProgressText = "0/$fullListSize"
+                )
+            }
+
+            // We iterate in chunks or with a small delay to show progress
+            val step = (fullListSize / 100).coerceAtLeast(1)
+            for (i in 0..fullListSize) {
+                if (i % step == 0 || i == fullListSize) {
+                    val progress = i.toFloat() / fullListSize
+                    val percentage = (progress * 100).toInt()
+                    mutableUiState.update { state ->
+                        state.copy(
+                            reindexProgress = progress,
+                            reindexPercentageText = "$percentage%",
+                            reindexProgressText = "$i/$fullListSize"
+                        )
+                    }
+                    delay(10) // Small delay to make it visible
+                }
+            }
+
+            delay(300) // Brief pause at 100%
+
+            when (mediaType) {
+                MediaType.ANIME -> defaultPreferencesRepository.setAnimeNeedsReindex(false)
+                MediaType.MANGA -> defaultPreferencesRepository.setMangaNeedsReindex(false)
+            }
+
+            mutableUiState.update { it.copy(isReindexing = false) }
         }
     }
 
@@ -448,6 +462,23 @@ class UserMediaListViewModel(
                 }
             }
             .launchIn(viewModelScope)
+
+        // Trigger reindexing if needed
+        val needsReindexFlow = if (mediaType == MediaType.ANIME) {
+            defaultPreferencesRepository.animeNeedsReindex
+        } else {
+            defaultPreferencesRepository.mangaNeedsReindex
+        }
+
+        viewModelScope.launch {
+            val needsReindex = needsReindexFlow.first()
+            if (needsReindex) {
+                // Wait for the first emission of data to know the size
+                userListFlow.filter { it.isNotEmpty() }.take(1).collect { fullList ->
+                    performReindexing(fullList.size)
+                }
+            }
+        }
 
         viewModelScope.launch(Dispatchers.IO) {
             mutableUiState

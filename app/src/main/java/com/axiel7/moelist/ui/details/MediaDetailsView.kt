@@ -892,7 +892,7 @@ private fun TimelineItem(
             }
         }
         Text(
-            text = item.node.title,
+            text = item.node.userPreferredTitle(),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = if (isCurrent) FontWeight.SemiBold else FontWeight.Medium,
             textAlign = TextAlign.Center,

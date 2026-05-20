@@ -88,8 +88,12 @@ class MangaRepository(
                         newList.removeAll { it.listStatus?.status == status && it.node.id !in newNodeIds }
                     }
                     result.data.forEach { newItem ->
-                        newList.removeAll { it.node.id == newItem.node.id }
-                        newList.add(newItem)
+                        val existingIndex = newList.indexOfFirst { it.node.id == newItem.node.id }
+                        if (existingIndex != -1) {
+                            newList[existingIndex] = newItem
+                        } else {
+                            newList.add(newItem)
+                        }
                     }
                     newList
                 }
@@ -117,6 +121,7 @@ class MangaRepository(
     ): MyMangaListStatus? {
         // Optimistic update
         val previousList = _userMangaList.value
+        val now = Instant.now().toString()
         _userMangaList.update { currentList ->
             currentList.map {
                 if (it.node.id == mangaId) {
@@ -134,7 +139,7 @@ class MangaRepository(
                             priority = priority ?: it.listStatus.priority,
                             tags = tags?.split(",") ?: it.listStatus.tags,
                             comments = comments ?: it.listStatus.comments,
-                            updatedAt = Instant.now().toString()
+                            updatedAt = now
                         )
                     )
                 } else it
@@ -163,24 +168,27 @@ class MangaRepository(
 
             _userMangaList.update { currentList ->
                 val newList = currentList.toMutableList()
-                newList.removeAll { it.node.id == mangaId }
+                val existingIndex = newList.indexOfFirst { it.node.id == mangaId }
                 if (fullDetails != null) {
-                    newList.add(
-                        UserMangaList(
-                            node = MangaNode(
-                                id = fullDetails.id,
-                                title = fullDetails.title.orEmpty(),
-                                mainPicture = fullDetails.mainPicture,
-                                alternativeTitles = fullDetails.alternativeTitles,
-                                numVolumes = fullDetails.numVolumes ?: 0,
-                                numChapters = fullDetails.numChapters ?: 0,
-                                mediaFormat = fullDetails.mediaFormat,
-                                status = fullDetails.status,
-                                mean = fullDetails.mean ?: 0f
-                            ),
-                            listStatus = result ?: fullDetails.myListStatus
-                        )
+                    val updatedItem = UserMangaList(
+                        node = MangaNode(
+                            id = fullDetails.id,
+                            title = fullDetails.title.orEmpty(),
+                            mainPicture = fullDetails.mainPicture,
+                            alternativeTitles = fullDetails.alternativeTitles,
+                            numVolumes = fullDetails.numVolumes ?: 0,
+                            numChapters = fullDetails.numChapters ?: 0,
+                            mediaFormat = fullDetails.mediaFormat,
+                            status = fullDetails.status,
+                            mean = fullDetails.mean ?: 0f
+                        ),
+                        listStatus = result ?: fullDetails.myListStatus
                     )
+                    if (existingIndex != -1) {
+                        newList[existingIndex] = updatedItem
+                    } else {
+                        newList.add(updatedItem)
+                    }
                 }
                 newList
             }

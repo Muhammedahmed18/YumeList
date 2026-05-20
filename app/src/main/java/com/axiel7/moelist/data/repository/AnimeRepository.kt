@@ -156,8 +156,12 @@ class AnimeRepository(
                         newList.removeAll { it.listStatus?.status == status && it.node.id !in newNodeIds }
                     }
                     result.data.forEach { newItem ->
-                        newList.removeAll { it.node.id == newItem.node.id }
-                        newList.add(newItem)
+                        val existingIndex = newList.indexOfFirst { it.node.id == newItem.node.id }
+                        if (existingIndex != -1) {
+                            newList[existingIndex] = newItem
+                        } else {
+                            newList.add(newItem)
+                        }
                     }
                     newList
                 }
@@ -184,6 +188,7 @@ class AnimeRepository(
     ): MyAnimeListStatus? {
         // Optimistic update
         val previousList = _userAnimeList.value
+        val now = Instant.now().toString()
         _userAnimeList.update { currentList ->
             currentList.map { 
                 if (it.node.id == animeId) {
@@ -200,7 +205,7 @@ class AnimeRepository(
                             priority = priority ?: it.listStatus.priority,
                             tags = tags?.split(",") ?: it.listStatus.tags,
                             comments = comments ?: it.listStatus.comments,
-                            updatedAt = Instant.now().toString()
+                            updatedAt = now
                         )
                     )
                 } else it
@@ -228,24 +233,27 @@ class AnimeRepository(
             
             _userAnimeList.update { currentList ->
                 val newList = currentList.toMutableList()
-                newList.removeAll { it.node.id == animeId }
+                val existingIndex = newList.indexOfFirst { it.node.id == animeId }
                 if (fullDetails != null) {
-                    newList.add(
-                        UserAnimeList(
-                            node = AnimeNode(
-                                id = fullDetails.id,
-                                title = fullDetails.title.orEmpty(),
-                                mainPicture = fullDetails.mainPicture,
-                                alternativeTitles = fullDetails.alternativeTitles,
-                                numEpisodes = fullDetails.numEpisodes ?: 0,
-                                mediaFormat = fullDetails.mediaFormat,
-                                status = fullDetails.status,
-                                broadcast = fullDetails.broadcast,
-                                mean = fullDetails.mean ?: 0f
-                            ),
-                            listStatus = result ?: fullDetails.myListStatus
-                        )
+                    val updatedItem = UserAnimeList(
+                        node = AnimeNode(
+                            id = fullDetails.id,
+                            title = fullDetails.title.orEmpty(),
+                            mainPicture = fullDetails.mainPicture,
+                            alternativeTitles = fullDetails.alternativeTitles,
+                            numEpisodes = fullDetails.numEpisodes ?: 0,
+                            mediaFormat = fullDetails.mediaFormat,
+                            status = fullDetails.status,
+                            broadcast = fullDetails.broadcast,
+                            mean = fullDetails.mean ?: 0f
+                        ),
+                        listStatus = result ?: fullDetails.myListStatus
                     )
+                    if (existingIndex != -1) {
+                        newList[existingIndex] = updatedItem
+                    } else {
+                        newList.add(updatedItem)
+                    }
                 }
                 newList
             }
