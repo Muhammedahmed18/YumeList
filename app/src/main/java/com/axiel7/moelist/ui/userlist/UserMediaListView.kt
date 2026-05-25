@@ -22,6 +22,15 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.outlined.Bookmark
+import androidx.compose.material.icons.outlined.Cancel
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.CloudOff
+import androidx.compose.material.icons.outlined.Inbox
+import androidx.compose.material.icons.outlined.PauseCircle
+import androidx.compose.material.icons.outlined.PlayCircle
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -44,6 +53,8 @@ import androidx.lifecycle.compose.dropUnlessResumed
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.media.BaseMediaNode
 import com.axiel7.moelist.data.model.media.BaseUserMediaList
+import com.axiel7.moelist.data.model.media.ListStatus
+import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.ListStyle
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.EmptyState
@@ -203,15 +214,22 @@ fun UserMediaListView(
             when (state) {
                 1 -> ErrorState(
                     modifier = Modifier.padding(contentPadding),
+                    icon = Icons.Outlined.CloudOff,
                     message = uiState.message,
                     onAction = { event?.refreshList() }
                 )
 
-                2 -> EmptyState(
-                    modifier = Modifier.padding(contentPadding),
-                    actionLabel = stringResource(R.string.refresh),
-                    onAction = { event?.refreshList() }
-                )
+                2 -> {
+                    val empty = emptyStateFor(uiState.listStatus, uiState.mediaType)
+                    EmptyState(
+                        modifier = Modifier.padding(contentPadding),
+                        icon = empty.icon,
+                        title = stringResource(empty.titleRes),
+                        description = stringResource(empty.descRes),
+                        actionLabel = stringResource(R.string.refresh),
+                        onAction = { event?.refreshList() }
+                    )
+                }
 
                 3 -> {
                     if (uiState.listStyle == ListStyle.GRID) {
@@ -498,5 +516,64 @@ fun LoadingPlaceholder(
                 }
             }
         }
+    }
+}
+
+private data class EmptyStateSpec(
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    @androidx.annotation.StringRes val titleRes: Int,
+    @androidx.annotation.StringRes val descRes: Int,
+)
+
+private fun emptyStateFor(status: ListStatus?, mediaType: MediaType): EmptyStateSpec {
+    val isAnime = mediaType == MediaType.ANIME
+    return when (status) {
+        ListStatus.WATCHING -> EmptyStateSpec(
+            icon = Icons.Outlined.PlayCircle,
+            titleRes = R.string.empty_watching_title,
+            descRes = R.string.empty_watching_desc,
+        )
+
+        ListStatus.READING -> EmptyStateSpec(
+            icon = Icons.AutoMirrored.Outlined.MenuBook,
+            titleRes = R.string.empty_reading_title,
+            descRes = R.string.empty_reading_desc,
+        )
+
+        ListStatus.COMPLETED -> EmptyStateSpec(
+            icon = Icons.Outlined.CheckCircle,
+            titleRes = if (isAnime) R.string.empty_completed_anime_title else R.string.empty_completed_manga_title,
+            descRes = if (isAnime) R.string.empty_completed_anime_desc else R.string.empty_completed_manga_desc,
+        )
+
+        ListStatus.ON_HOLD -> EmptyStateSpec(
+            icon = Icons.Outlined.PauseCircle,
+            titleRes = if (isAnime) R.string.empty_on_hold_anime_title else R.string.empty_on_hold_manga_title,
+            descRes = if (isAnime) R.string.empty_on_hold_anime_desc else R.string.empty_on_hold_manga_desc,
+        )
+
+        ListStatus.DROPPED -> EmptyStateSpec(
+            icon = Icons.Outlined.Cancel,
+            titleRes = if (isAnime) R.string.empty_dropped_anime_title else R.string.empty_dropped_manga_title,
+            descRes = if (isAnime) R.string.empty_dropped_anime_desc else R.string.empty_dropped_manga_desc,
+        )
+
+        ListStatus.PLAN_TO_WATCH -> EmptyStateSpec(
+            icon = Icons.Outlined.Bookmark,
+            titleRes = R.string.empty_ptw_title,
+            descRes = R.string.empty_ptw_desc,
+        )
+
+        ListStatus.PLAN_TO_READ -> EmptyStateSpec(
+            icon = Icons.Outlined.Bookmark,
+            titleRes = R.string.empty_ptr_title,
+            descRes = R.string.empty_ptr_desc,
+        )
+
+        null -> EmptyStateSpec(
+            icon = Icons.Outlined.Inbox,
+            titleRes = R.string.no_results,
+            descRes = if (isAnime) R.string.empty_watching_desc else R.string.empty_reading_desc,
+        )
     }
 }

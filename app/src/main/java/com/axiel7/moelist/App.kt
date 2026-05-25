@@ -26,6 +26,11 @@ import org.koin.dsl.koinConfiguration
 @OptIn(KoinExperimentalAPI::class)
 class App : Application(), KoinComponent, KoinStartup, SingletonImageLoader.Factory {
 
+    override fun onCreate() {
+        super.onCreate()
+        instance = this
+    }
+
     override fun onKoinStartup() = koinConfiguration {
         if (BuildConfig.DEBUG) {
             androidLogger()
@@ -59,6 +64,8 @@ class App : Application(), KoinComponent, KoinStartup, SingletonImageLoader.Fact
             .build()
 
     companion object {
+        lateinit var instance: App
+            private set
         var accessToken: String? = null
         var titleLanguage = TitleLanguage.ROMAJI
     }

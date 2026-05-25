@@ -15,6 +15,9 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CloudOff
+import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -23,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -155,12 +159,16 @@ private fun MediaRankingListViewContent(
         }
         uiState.message != null && uiState.mediaList.isEmpty() -> {
             ErrorState(
+                icon = Icons.Outlined.CloudOff,
                 message = uiState.message,
                 onAction = { event?.loadMore() }
             )
         }
         !uiState.isLoading && uiState.mediaList.isEmpty() -> {
-            EmptyState()
+            EmptyState(
+                icon = Icons.Outlined.Inbox,
+                title = stringResource(R.string.no_results),
+            )
         }
         else -> {
             if (!isCompactScreen) {

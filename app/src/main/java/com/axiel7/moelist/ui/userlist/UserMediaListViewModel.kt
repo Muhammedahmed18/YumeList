@@ -315,7 +315,9 @@ class UserMediaListViewModel(
     }
 
     override fun showMessage(message: String?) {
-        mutableUiState.update { state -> state.copy(message = message) }
+        mutableUiState.update { state ->
+            state.copy(message = com.axiel7.moelist.utils.ApiErrorMapper.mapApiError(message))
+        }
     }
 
     override fun onMessageDisplayed() {

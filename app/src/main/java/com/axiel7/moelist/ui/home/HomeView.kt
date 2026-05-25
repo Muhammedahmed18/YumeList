@@ -25,6 +25,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.automirrored.rounded.TrendingUp
+import androidx.compose.material.icons.outlined.CloudOff
+import androidx.compose.material.icons.outlined.EventBusy
+import androidx.compose.material.icons.outlined.LockReset
 import androidx.compose.material.icons.rounded.AcUnit
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.CalendarMonth
@@ -69,7 +72,9 @@ import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.anime.Season
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
+import com.axiel7.moelist.ui.composables.EmptyState
 import com.axiel7.moelist.ui.composables.ErrorState
+import com.axiel7.moelist.ui.composables.isSessionExpiredMessage
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailedPlaceholder
 import com.axiel7.moelist.ui.composables.media.MediaItemVertical
 import com.axiel7.moelist.ui.composables.media.MediaItemVerticalPlaceholder
@@ -363,17 +368,29 @@ private fun HomeViewContent(
                         .padding(horizontal = 16.dp, vertical = 4.dp)
                 )
 
-                !uiState.isLoading && uiState.todayAnimes.isEmpty() -> Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(R.string.nothing_today),
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.outline
+                uiState.message != null && uiState.todayAnimes.isEmpty() && !uiState.isLoading -> {
+                    val sessionExpired = isSessionExpiredMessage(uiState.message)
+                    ErrorState(
+                        modifier = Modifier.fillMaxSize(),
+                        icon = if (sessionExpired) Icons.Outlined.LockReset else Icons.Outlined.CloudOff,
+                        message = uiState.message,
+                        actionLabel = if (sessionExpired) stringResource(R.string.sign_in_again)
+                        else stringResource(R.string.retry),
+                        onAction = {
+                            if (sessionExpired) navActionManager.toLogin()
+                            else event?.initRequestChain(isLoggedIn)
+                        },
+                        compact = true,
                     )
                 }
+
+                !uiState.isLoading && uiState.todayAnimes.isEmpty() -> EmptyState(
+                    modifier = Modifier.fillMaxSize(),
+                    icon = Icons.Outlined.EventBusy,
+                    title = stringResource(R.string.nothing_airing_today),
+                    description = stringResource(R.string.nothing_airing_today_desc),
+                    compact = true,
+                )
 
                 else -> LazyRow(
                     modifier = Modifier.fillMaxSize(),
@@ -417,16 +434,36 @@ private fun HomeViewContent(
                 .fillMaxWidth()
                 .heightIn(min = 230.dp)
         ) {
-            if (uiState.message != null && uiState.seasonalAnimes.isEmpty()) {
-                ErrorState(
+            when {
+                uiState.message != null && uiState.seasonalAnimes.isEmpty() && !uiState.isLoading -> {
+                    val sessionExpired = isSessionExpiredMessage(uiState.message)
+                    ErrorState(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(230.dp),
+                        icon = if (sessionExpired) Icons.Outlined.LockReset else Icons.Outlined.CloudOff,
+                        message = uiState.message,
+                        actionLabel = if (sessionExpired) stringResource(R.string.sign_in_again)
+                        else stringResource(R.string.retry),
+                        onAction = {
+                            if (sessionExpired) navActionManager.toLogin()
+                            else event?.initRequestChain(isLoggedIn)
+                        },
+                        compact = true,
+                    )
+                }
+
+                !uiState.isLoading && uiState.seasonalAnimes.isEmpty() -> EmptyState(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(230.dp),
-                    message = uiState.message,
-                    onAction = { event?.initRequestChain(isLoggedIn) }
+                    icon = Icons.Outlined.EventBusy,
+                    title = stringResource(R.string.no_anime_this_season),
+                    description = stringResource(R.string.no_anime_this_season_desc),
+                    compact = true,
                 )
-            } else {
-                LazyRow(
+
+                else -> LazyRow(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(230.dp),

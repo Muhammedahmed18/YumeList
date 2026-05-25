@@ -24,6 +24,8 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CloudOff
+import androidx.compose.material.icons.outlined.EventBusy
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -241,12 +243,18 @@ private fun SeasonChartViewContent(
                     state.message != null && state.animes.isEmpty() -> {
                         ErrorState(
                             modifier = Modifier.fillMaxSize(),
+                            icon = Icons.Outlined.CloudOff,
                             message = state.message,
                             onAction = { event?.onApplyFilters() }
                         )
                     }
                     !state.isLoading && state.animes.isEmpty() -> {
-                        EmptyState(modifier = Modifier.fillMaxSize())
+                        EmptyState(
+                            modifier = Modifier.fillMaxSize(),
+                            icon = Icons.Outlined.EventBusy,
+                            title = stringResource(R.string.no_anime_found),
+                            description = stringResource(R.string.no_anime_found_desc),
+                        )
                     }
                     else -> {
                         LazyVerticalStaggeredGrid(

@@ -19,6 +19,9 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CloudOff
+import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -224,12 +227,17 @@ fun SearchViewContent(
                 }
                 uiState.message != null && uiState.mediaList.isEmpty() -> {
                     ErrorState(
+                        icon = Icons.Outlined.CloudOff,
                         message = uiState.message,
                         onAction = { event?.search(query) }
                     )
                 }
                 uiState.noResults -> {
-                    EmptyState()
+                    EmptyState(
+                        icon = Icons.Outlined.SearchOff,
+                        title = stringResource(R.string.no_matches_for_query),
+                        description = stringResource(R.string.try_different_keywords, query)
+                    )
                 }
                 uiState.mediaList.isNotEmpty() -> {
                     if (!isCompactScreen) {

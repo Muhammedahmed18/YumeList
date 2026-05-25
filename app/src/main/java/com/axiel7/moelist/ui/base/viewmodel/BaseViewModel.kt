@@ -3,6 +3,7 @@ package com.axiel7.moelist.ui.base.viewmodel
 import androidx.lifecycle.ViewModel
 import com.axiel7.moelist.ui.base.event.UiEvent
 import com.axiel7.moelist.ui.base.state.UiState
+import com.axiel7.moelist.utils.ApiErrorMapper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,7 +21,9 @@ abstract class BaseViewModel<S : UiState> : ViewModel(), UiEvent {
 
     @Suppress("UNCHECKED_CAST")
     override fun showMessage(message: String?) {
-        mutableUiState.update { it.setMessage(message ?: GENERIC_ERROR) as S }
+        // Translate raw API codes / exception messages into a localized,
+        // user-friendly string before surfacing them in the UI.
+        mutableUiState.update { it.setMessage(ApiErrorMapper.mapApiError(message)) as S }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -29,7 +32,6 @@ abstract class BaseViewModel<S : UiState> : ViewModel(), UiEvent {
     }
 
     companion object {
-        private const val GENERIC_ERROR = "Generic Error"
         const val FLOW_TIMEOUT = 5_000L
     }
 }
