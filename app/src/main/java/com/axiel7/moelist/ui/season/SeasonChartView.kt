@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material.icons.rounded.Star
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -34,6 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -268,7 +270,7 @@ private fun SeasonChartViewContent(
                             ) { item ->
                                 MediaItemVertical(
                                     imageUrl = item.node.mainPicture?.large,
-                                    title = item.node.title,
+                                    title = item.node.userPreferredTitle(),
                                     badgeContent = item.node.myListStatus?.status?.let { status ->
                                         {
                                             Icon(
@@ -281,18 +283,32 @@ private fun SeasonChartViewContent(
                                     },
                                     posterOverlay = if (item.node.mean != null && item.node.mean > 0) {
                                         {
-                                            Icon(
-                                                imageVector = Icons.Rounded.Star,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(12.dp),
-                                                tint = Color(0xFFFFC107)
-                                            )
-                                            Text(
-                                                text = item.node.mean.toString(),
-                                                style = MaterialTheme.typography.labelSmall,
-                                                fontWeight = FontWeight.Bold,
-                                                modifier = Modifier.padding(start = 2.dp)
-                                            )
+                                            Surface(
+                                                modifier = Modifier
+                                                    .padding(8.dp)
+                                                    .align(Alignment.BottomStart),
+                                                shape = RoundedCornerShape(8.dp),
+                                                color = Color.Black.copy(alpha = 0.6f)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.Star,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(14.dp),
+                                                        tint = Color(0xFFFFC107)
+                                                    )
+                                                    Text(
+                                                        text = item.node.mean.toString(),
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color.White,
+                                                        modifier = Modifier.padding(start = 3.dp)
+                                                    )
+                                                }
+                                            }
                                         }
                                     } else null,
                                     onClick = dropUnlessResumed {
