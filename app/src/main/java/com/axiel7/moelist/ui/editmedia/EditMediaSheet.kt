@@ -32,6 +32,8 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.EventAvailable
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -47,6 +49,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
@@ -196,99 +199,134 @@ private fun EditMediaSheetContent(
             else onDismissed()
         }
 
-        Column(
+        Scaffold(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .imePadding()
-        ) {
-            // ===== HEADER (Sticky) =====
-            ListItem(
-                modifier = Modifier.padding(horizontal = 8.dp),
-                headlineContent = {
-                    Text(
-                        text = uiState.mediaInfo?.userPreferredTitle()
-                            ?: stringResource(R.string.edit_entry),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                },
-                supportingContent = {
-                    Row(
-                        modifier = Modifier
-                            .padding(top = 4.dp)
-                            .animateContentSize(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        uiState.mediaInfo?.mediaFormat?.let { format ->
+                .imePadding(),
+            containerColor = Color.Transparent,
+            topBar = {
+                // ===== HEADER (Sticky) =====
+                ListItem(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    headlineContent = {
+                        Text(
+                            text = uiState.mediaInfo?.userPreferredTitle()
+                                ?: stringResource(R.string.edit_entry),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
+                    supportingContent = {
+                        Row(
+                            modifier = Modifier
+                                .padding(top = 4.dp)
+                                .animateContentSize(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            uiState.mediaInfo?.mediaFormat?.let { format ->
+                                Surface(
+                                    color = MaterialTheme.colorScheme.secondaryContainer,
+                                    shape = RoundedCornerShape(50)
+                                ) {
+                                    Text(
+                                        text = format.localized(),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier.padding(
+                                            horizontal = 8.dp,
+                                            vertical = 3.dp
+                                        )
+                                    )
+                                }
+                            }
+
                             Surface(
-                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                color = MaterialTheme.colorScheme.tertiaryContainer,
                                 shape = RoundedCornerShape(50)
                             ) {
-                                Text(
-                                    text = format.localized(),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    fontWeight = FontWeight.SemiBold,
+                                Row(
                                     modifier = Modifier.padding(
                                         horizontal = 8.dp,
                                         vertical = 3.dp
+                                    ),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = uiState.status.icon,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(12.dp),
+                                        tint = MaterialTheme.colorScheme.onTertiaryContainer
                                     )
-                                )
+                                    Text(
+                                        text = uiState.status.localized(),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                        fontWeight = FontWeight.SemiBold,
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
+                                }
                             }
                         }
-
-                        Surface(
-                            color = MaterialTheme.colorScheme.tertiaryContainer,
-                            shape = RoundedCornerShape(50)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(
-                                    horizontal = 8.dp,
-                                    vertical = 3.dp
-                                ),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Icon(
-                                    imageVector = uiState.status.icon,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(12.dp),
-                                    tint = MaterialTheme.colorScheme.onTertiaryContainer
-                                )
-                                Text(
-                                    text = uiState.status.localized(),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                    fontWeight = FontWeight.SemiBold,
-                                    maxLines = 1,
-                                    softWrap = false
-                                )
-                            }
-                        }
-                    }
-                },
-                leadingContent = {
-                    MediaPoster(
-                        url = uiState.mediaInfo?.mainPicture?.medium,
-                        modifier = Modifier
-                            .size(width = 48.dp, height = 72.dp)
-                            .clip(RoundedCornerShape(12.dp))
+                    },
+                    leadingContent = {
+                        MediaPoster(
+                            url = uiState.mediaInfo?.mainPicture?.medium,
+                            modifier = Modifier
+                                .size(width = 48.dp, height = 72.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                        )
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                )
+            },
+            floatingActionButton = {
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        if (!uiState.isLoading) event?.updateListItem()
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    elevation = FloatingActionButtonDefaults.elevation(
+                        defaultElevation = 6.dp
                     )
-                },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent)
-            )
-
+                ) {
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(Modifier.size(8.dp))
+                    Text(
+                        text = stringResource(
+                            if (uiState.isNewEntry) R.string.add else R.string.apply
+                        ),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        ) { paddingValues ->
             // ===== SCROLLABLE CONTENT =====
             Column(
                 modifier = Modifier
+                    .padding(paddingValues)
                     .fillMaxWidth()
-                    .weight(1f, fill = false)
                     .verticalScroll(rememberScrollState())
-                    .padding(bottom = 16.dp)
+                    .padding(bottom = 80.dp) // Added padding to avoid FAB covering content
             ) {
                 // Status Selection (icon-only pills)
                 Row(
@@ -521,79 +559,36 @@ private fun EditMediaSheetContent(
                         )
                     }
                 }
-            }
 
-            // ===== STICKY BOTTOM ACTION BAR + FLOATING FAB =====
-            Box(modifier = Modifier.fillMaxWidth()) {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.BottomCenter),
-                    color = MaterialTheme.colorScheme.surfaceContainer,
-                    tonalElevation = 3.dp
-                ) {
-                    Row(
+                // Big Rounded Delete Button
+                if (!uiState.isNewEntry) {
+                    Button(
+                        onClick = { event?.toggleDeleteDialog(true) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            .padding(horizontal = 24.dp, vertical = 16.dp)
                             .height(56.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        ),
+                        shape = CircleShape
                     ) {
-                        if (!uiState.isNewEntry) {
-                            FilledTonalIconButton(
-                                onClick = { event?.toggleDeleteDialog(true) },
-                                modifier = Modifier.size(48.dp),
-                                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                )
-                            ) {
-                                Icon(
-                                    Icons.Rounded.Delete,
-                                    contentDescription = stringResource(R.string.delete)
-                                )
-                            }
-                        }
-                    }
-                }
-
-                ExtendedFloatingActionButton(
-                    onClick = {
-                        if (!uiState.isLoading) event?.updateListItem()
-                    },
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(end = 16.dp, bottom = 8.dp),
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    elevation = FloatingActionButtonDefaults.elevation(
-                        defaultElevation = 6.dp
-                    )
-                ) {
-                    if (uiState.isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
                         Icon(
-                            imageVector = Icons.Rounded.Check,
+                            imageVector = Icons.Rounded.Delete,
                             contentDescription = null,
                             modifier = Modifier.size(20.dp)
                         )
+                        Spacer(Modifier.size(8.dp))
+                        Text(
+                            text = stringResource(R.string.delete),
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
-                    Spacer(Modifier.size(8.dp))
-                    Text(
-                        text = stringResource(
-                            if (uiState.isNewEntry) R.string.add else R.string.apply
-                        ),
-                        fontWeight = FontWeight.SemiBold
-                    )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(bottomPadding))
+                Spacer(modifier = Modifier.height(bottomPadding))
+            }
         }
     }
 }
