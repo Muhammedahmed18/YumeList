@@ -51,8 +51,8 @@ import com.axiel7.moelist.ui.composables.OnBottomReached
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailed
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailedPlaceholder
 import com.axiel7.moelist.ui.composables.media.PosterStatusBadge
-import com.axiel7.moelist.ui.composables.score.InlineScoreIndicator
 import com.axiel7.moelist.ui.composables.score.PersonalScoreBadge
+import com.axiel7.moelist.ui.composables.score.PosterScoreChip
 import com.axiel7.moelist.utils.ContextExtensions.showToast
 import com.axiel7.moelist.utils.DateUtils.parseDateAndLocalize
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrNull
@@ -159,14 +159,20 @@ fun SearchViewContent(
     @Composable
     fun ItemView(item: BaseMediaList) {
         val userScore = item.node.myListStatus?.score ?: 0
+        val meanScore = item.node.mean
         MediaItemDetailed(
             title = item.node.userPreferredTitle(),
             imageUrl = item.node.mainPicture?.large,
             topBadgeContent = if (userScore > 0) {
                 { PersonalScoreBadge(score = userScore) }
             } else null,
-            badgeContent = item.node.myListStatus?.status?.let { status ->
-                { PosterStatusBadge(status = status, iconSize = 20.dp) }
+            badgeContent = {
+                item.node.myListStatus?.status?.let { status ->
+                    PosterStatusBadge(status = status, iconSize = 20.dp)
+                }
+                if (!uiState.hideScore && meanScore != null && meanScore > 0f) {
+                    PosterScoreChip(score = meanScore)
+                }
             },
             subtitle1 = {
                 Text(
@@ -194,11 +200,7 @@ fun SearchViewContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
-            subtitle3 = {
-                if (!uiState.hideScore) {
-                    InlineScoreIndicator(score = item.node.mean)
-                }
-            },
+            subtitle3 = {},
             onClick = dropUnlessResumed {
                 navActionManager.toMediaDetails(uiState.mediaType, item.node.id)
             }
