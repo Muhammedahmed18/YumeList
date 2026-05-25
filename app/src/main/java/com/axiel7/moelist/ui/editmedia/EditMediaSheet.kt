@@ -36,9 +36,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -283,41 +281,38 @@ private fun EditMediaSheetContent(
                                 .clip(RoundedCornerShape(12.dp))
                         )
                     },
+                    trailingContent = {
+                        Button(
+                            onClick = {
+                                if (!uiState.isLoading) event?.updateListItem()
+                            },
+                            contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+                            shape = CircleShape
+                        ) {
+                            if (uiState.isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Rounded.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Spacer(Modifier.size(8.dp))
+                            Text(
+                                text = stringResource(
+                                    if (uiState.isNewEntry) R.string.add else R.string.apply
+                                ),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                 )
-            },
-            floatingActionButton = {
-                ExtendedFloatingActionButton(
-                    onClick = {
-                        if (!uiState.isLoading) event?.updateListItem()
-                    },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    elevation = FloatingActionButtonDefaults.elevation(
-                        defaultElevation = 6.dp
-                    )
-                ) {
-                    if (uiState.isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Rounded.Check,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    Spacer(Modifier.size(8.dp))
-                    Text(
-                        text = stringResource(
-                            if (uiState.isNewEntry) R.string.add else R.string.apply
-                        ),
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
             }
         ) { paddingValues ->
             // ===== SCROLLABLE CONTENT =====
@@ -326,7 +321,6 @@ private fun EditMediaSheetContent(
                     .padding(paddingValues)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(bottom = 80.dp) // Added padding to avoid FAB covering content
             ) {
                 // Status Selection (icon-only pills)
                 Row(
