@@ -1,5 +1,6 @@
 package com.axiel7.moelist.ui.home
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,7 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -25,20 +26,34 @@ import androidx.compose.material.icons.automirrored.rounded.TrendingUp
 import androidx.compose.material.icons.rounded.AcUnit
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.FilterVintage
 import androidx.compose.material.icons.rounded.LocalFlorist
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.WbSunny
-import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -53,33 +68,189 @@ import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.ErrorState
 import com.axiel7.moelist.ui.composables.HeaderHorizontalList
 import com.axiel7.moelist.ui.composables.media.MEDIA_ITEM_VERTICAL_HEIGHT
-import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_SMALL_HEIGHT
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailedPlaceholder
 import com.axiel7.moelist.ui.composables.media.MediaItemVertical
 import com.axiel7.moelist.ui.composables.media.MediaItemVerticalPlaceholder
 import com.axiel7.moelist.ui.composables.score.SmallScoreIndicator
 import com.axiel7.moelist.ui.home.composables.AiringAnimeHorizontalItem
 import com.axiel7.moelist.ui.home.composables.HomeCard
+import androidx.compose.foundation.shape.CircleShape
+import coil3.compose.AsyncImage
+import com.axiel7.moelist.ui.search.SearchViewContent
+import com.axiel7.moelist.ui.search.SearchViewModel
 import com.axiel7.moelist.utils.ContextExtensions.showToast
 import com.axiel7.moelist.utils.SeasonCalendar
 import org.koin.androidx.compose.koinViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeView(
     isLoggedIn: Boolean,
+    isCompactScreen: Boolean,
     navActionManager: NavActionManager,
     padding: PaddingValues,
+    searchActive: Boolean,
+    onSearchActiveChange: (Boolean) -> Unit,
+    profilePicture: String?,
 ) {
     val viewModel: HomeViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    HomeViewContent(
-        uiState = uiState,
-        event = viewModel,
-        isLoggedIn = isLoggedIn,
-        navActionManager = navActionManager,
-        padding = padding,
-    )
+    val searchViewModel: SearchViewModel = koinViewModel()
+    val searchUiState by searchViewModel.uiState.collectAsStateWithLifecycle()
+
+    var query by rememberSaveable { mutableStateOf("") }
+    // Tracks whether the current input has been "committed" (Enter pressed or history clicked).
+    // While false, we show history instead of stale results — see recommendation R1 in the plan.
+    var hasCommittedSearch by rememberSaveable { mutableStateOf(false) }
+
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusRequester = remember { FocusRequester() }
+
+    // Auto-focus + show keyboard the moment the bar expands (kills the double-tap bug)
+    LaunchedEffect(searchActive) {
+        if (searchActive) {
+            focusRequester.requestFocus()
+            keyboardController?.show()
+        }
+    }
+
+    BackHandler(enabled = searchActive) {
+        onSearchActiveChange(false)
+        keyboardController?.hide()
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)
+    ) {
+        // Top row: SearchBar (left, fills available width) + profile icon (right).
+        // When the SearchBar expands, M3 overlays the full screen — the profile icon
+        // is naturally hidden behind it. The Row only shows in collapsed state visually.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(
+                    if (searchActive) Modifier
+                    else Modifier
+                        .statusBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            SearchBar(
+                inputField = {
+                    SearchBarDefaults.InputField(
+                        query = query,
+                        onQueryChange = {
+                            // Enter-only search: typing only updates the input, never fires a request
+                            query = it
+                            // Any edit invalidates the committed state → show history again
+                            if (hasCommittedSearch) hasCommittedSearch = false
+                        },
+                        onSearch = {
+                            // The actual search fires here (Enter)
+                            if (it.isNotBlank()) {
+                                searchViewModel.search(it)
+                                searchViewModel.onSaveSearchHistory(it)
+                                hasCommittedSearch = true
+                            }
+                            keyboardController?.hide()
+                        },
+                        expanded = searchActive,
+                        onExpandedChange = onSearchActiveChange,
+                        placeholder = { Text(text = stringResource(R.string.search)) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Search,
+                                contentDescription = null
+                            )
+                        },
+                        trailingIcon = {
+                            if (searchActive) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Close,
+                                    contentDescription = "clear",
+                                    modifier = Modifier.clickable {
+                                        if (query.isNotEmpty()) {
+                                            // Clear (X): just clear the input.
+                                            // Per product decision: keep last results visible.
+                                            query = ""
+                                        } else {
+                                            onSearchActiveChange(false)
+                                            keyboardController?.hide()
+                                        }
+                                    }
+                                )
+                            }
+                        },
+                        modifier = Modifier.focusRequester(focusRequester)
+                    )
+                },
+                expanded = searchActive,
+                onExpandedChange = onSearchActiveChange,
+                modifier = if (searchActive) Modifier.fillMaxWidth() else Modifier.weight(1f),
+                colors = SearchBarDefaults.colors(
+                    containerColor = if (searchActive)
+                        MaterialTheme.colorScheme.surface
+                    else
+                        MaterialTheme.colorScheme.surfaceContainerHigh,
+                ),
+                shape = if (searchActive) SearchBarDefaults.fullScreenShape
+                else MaterialTheme.shapes.extraLarge,
+            ) {
+                SearchViewContent(
+                    uiState = searchUiState,
+                    event = searchViewModel,
+                    query = query,
+                    isCompactScreen = isCompactScreen,
+                    navActionManager = navActionManager,
+                    // While typing without committing, show history (R1)
+                    showHistory = query.isEmpty() || !hasCommittedSearch,
+                    onHistoryItemClick = {
+                        query = it
+                        searchViewModel.search(it)
+                        hasCommittedSearch = true
+                        keyboardController?.hide()
+                    }
+                )
+            }
+
+            if (!searchActive) {
+                if (isLoggedIn && profilePicture != null) {
+                    AsyncImage(
+                        model = profilePicture,
+                        contentDescription = "profile",
+                        placeholder = painterResource(R.drawable.ic_round_account_circle_24),
+                        error = painterResource(R.drawable.ic_round_account_circle_24),
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .size(40.dp)
+                            .clickable { navActionManager.toProfile() }
+                    )
+                } else {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_round_account_circle_24),
+                        contentDescription = "profile",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .size(40.dp)
+                            .clickable { navActionManager.toProfile() }
+                    )
+                }
+            }
+        }
+
+        HomeViewContent(
+            uiState = uiState,
+            event = viewModel,
+            isLoggedIn = isLoggedIn,
+            navActionManager = navActionManager,
+        )
+    }
 }
 
 @Composable
@@ -88,7 +259,6 @@ private fun HomeViewContent(
     event: HomeEvent?,
     isLoggedIn: Boolean,
     navActionManager: NavActionManager,
-    padding: PaddingValues = PaddingValues(),
 ) {
     val context = LocalContext.current
     val airingListState = rememberLazyListState()
@@ -109,43 +279,26 @@ private fun HomeViewContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(padding)
             .verticalScroll(scrollState)
     ) {
         // Hero Section Header - Reduced top padding to minimize empty space
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom
+                .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Discover",
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.Black,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    letterSpacing = (-1).sp
-                )
-                Text(
-                    text = "What will you watch today?",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                )
-            }
-
-            FilledTonalIconButton(
-                onClick = { /* TODO: Nav to Profile */ },
-                modifier = Modifier.size(52.dp),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.AccountCircle,
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
+            Text(
+                text = "Discover",
+                style = MaterialTheme.typography.displaySmall,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.onSurface,
+                letterSpacing = (-1).sp
+            )
+            Text(
+                text = "What will you watch today?",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+            )
         }
 
         // Asymmetric Bento Grid - Color OS Influence
@@ -225,7 +378,7 @@ private fun HomeViewContent(
             text = stringResource(R.string.today),
             onClick = dropUnlessResumed { navActionManager.toCalendar() }
         )
-        
+
         if (!isLoggedIn) {
             OutlinedCard(
                 modifier = Modifier
@@ -355,7 +508,7 @@ private fun HomeViewContent(
                 }
             }
         }
-        
+
         Spacer(modifier = Modifier.height(48.dp))
     }
 }

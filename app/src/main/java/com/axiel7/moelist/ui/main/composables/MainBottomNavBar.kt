@@ -34,7 +34,6 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.BottomDestination
 import com.axiel7.moelist.ui.base.BottomDestination.Companion.Icon
 import com.axiel7.moelist.ui.base.navigation.Route
@@ -105,18 +104,11 @@ fun MainBottomNavBar(
                         ),
                         onClick = {
                             if (isSelected) {
-                                when (dest) {
-                                    BottomDestination.More -> {
-                                        navController.navigate(Route.Settings)
-                                    }
-
-                                    else -> {
-                                        navController.navigate(Route.Search(
-                                            mediaType = MediaType.MANGA
-                                                .takeIf { dest == BottomDestination.MangaList }
-                                                ?: MediaType.ANIME
-                                        ))
-                                    }
+                                // Reselecting the More tab still jumps into Settings (kept).
+                                // Other tabs no longer have a reselect action now that the
+                                // in-place SearchBar lives in Home.
+                                if (dest == BottomDestination.More) {
+                                    navController.navigate(Route.Settings)
                                 }
                             } else {
                                 scope.launch {

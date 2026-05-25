@@ -7,14 +7,11 @@ import androidx.compose.animation.core.EaseIn
 import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
@@ -42,7 +39,6 @@ import com.axiel7.moelist.ui.more.settings.list.ListStyleSettingsView
 import com.axiel7.moelist.ui.profile.ProfileView
 import com.axiel7.moelist.ui.ranking.MediaRankingView
 import com.axiel7.moelist.ui.recommendations.RecommendationsView
-import com.axiel7.moelist.ui.search.SearchHostView
 import com.axiel7.moelist.ui.season.SeasonChartView
 import com.axiel7.moelist.ui.userlist.UserMediaListWithTabsView
 import kotlin.reflect.typeOf
@@ -60,6 +56,9 @@ fun MainNavigation(
     topBarHeightPx: Float,
     topBarOffsetY: Animatable<Float, AnimationVector1D>,
     onSortClickTrigger: (() -> Unit) -> Unit = {}, // Added
+    searchActive: Boolean = false,
+    onSearchActiveChange: (Boolean) -> Unit = {},
+    profilePicture: String? = null,
 ) {
     NavHost(
         navController = navController,
@@ -96,8 +95,12 @@ fun MainNavigation(
         ) {
             HomeView(
                 isLoggedIn = isLoggedIn,
+                isCompactScreen = isCompactScreen,
                 navActionManager = navActionManager,
                 padding = padding,
+                searchActive = searchActive,
+                onSearchActiveChange = onSearchActiveChange,
+                profilePicture = profilePicture,
             )
         }
 
@@ -268,26 +271,5 @@ fun MainNavigation(
             }
         }
 
-        composable<Route.Search>(
-            typeMap = mapOf(typeOf<MediaType>() to MediaType.navType),
-            enterTransition = {
-                expandVertically(expandFrom = Alignment.Top)
-            },
-            exitTransition = {
-                shrinkVertically(shrinkTowards = Alignment.Top)
-            },
-            popEnterTransition = {
-                expandVertically(expandFrom = Alignment.Top)
-            },
-            popExitTransition = {
-                shrinkVertically(shrinkTowards = Alignment.Top)
-            },
-        ) {
-            SearchHostView(
-                isCompactScreen = isCompactScreen,
-                padding = if (isCompactScreen) PaddingValues() else padding,
-                navActionManager = navActionManager
-            )
-        }
     }//:NavHost
 }

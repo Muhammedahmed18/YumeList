@@ -41,11 +41,6 @@ sealed interface Route {
     data object Profile : Route
 
     @Serializable
-    data class Search(
-        val mediaType: MediaType = MediaType.ANIME
-    ) : Route
-
-    @Serializable
     data class UserList(
         val mediaType: MediaType,
         val status: ListStatus? = null,

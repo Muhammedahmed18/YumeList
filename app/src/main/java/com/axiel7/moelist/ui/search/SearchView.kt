@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -23,25 +22,14 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SearchBar
-import androidx.compose.material3.SearchBarDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,13 +37,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.SearchHistory
@@ -70,99 +55,11 @@ import com.axiel7.moelist.ui.composables.LoadingState
 import com.axiel7.moelist.ui.composables.OnBottomReached
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailed
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailedPlaceholder
-import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.utils.ContextExtensions.showToast
 import com.axiel7.moelist.utils.DateUtils.parseDateAndLocalize
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrNull
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrUnknown
 import com.axiel7.moelist.utils.UNKNOWN_CHAR
-import org.koin.androidx.compose.koinViewModel
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
-@Composable
-fun SearchHostView(
-    isCompactScreen: Boolean,
-    navActionManager: NavActionManager,
-    padding: PaddingValues,
-) {
-    val viewModel: SearchViewModel = koinViewModel()
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    var query by rememberSaveable { mutableStateOf("") }
-    var active by rememberSaveable { mutableStateOf(false) }
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-    Column(
-        modifier = Modifier
-            .statusBarsPadding()
-            .padding(top = padding.calculateTopPadding())
-            .fillMaxSize()
-    ) {
-        SearchBar(
-            inputField = {
-                SearchBarDefaults.InputField(
-                    query = query,
-                    onQueryChange = { 
-                        query = it
-                        viewModel.search(it)
-                    },
-                    onSearch = {
-                        viewModel.onSaveSearchHistory(it)
-                        keyboardController?.hide()
-                    },
-                    expanded = active,
-                    onExpandedChange = { active = it },
-                    placeholder = { Text(text = stringResource(R.string.search)) },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Rounded.Search,
-                            contentDescription = null
-                        )
-                    },
-                    trailingIcon = {
-                        if (active) {
-                            Icon(
-                                imageVector = Icons.Rounded.Close,
-                                contentDescription = "clear",
-                                modifier = Modifier.combinedClickable(
-                                    onClick = {
-                                        if (query.isNotEmpty()) {
-                                            query = ""
-                                            viewModel.search("")
-                                        }
-                                        else active = false
-                                    }
-                                )
-                            )
-                        }
-                    },
-                )
-            },
-            expanded = active,
-            onExpandedChange = { active = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = if (active) 0.dp else 16.dp),
-            colors = SearchBarDefaults.colors(
-                containerColor = if (active) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainerHigh,
-            ),
-            shape = if (active) SearchBarDefaults.fullScreenShape else MaterialTheme.shapes.extraLarge
-        ) {
-            SearchViewContent(
-                uiState = uiState,
-                event = viewModel,
-                query = query,
-                isCompactScreen = isCompactScreen,
-                navActionManager = navActionManager,
-                showHistory = query.isEmpty(),
-                onHistoryItemClick = {
-                    query = it
-                    viewModel.search(it)
-                }
-            )
-        }
-    }
-}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -205,7 +102,7 @@ private fun SearchHistoryList(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun SearchViewContent(
+fun SearchViewContent(
     uiState: SearchUiState,
     event: SearchEvent?,
     query: String,
@@ -236,11 +133,11 @@ private fun SearchViewContent(
                 FilterChip(
                     selected = uiState.mediaType == it,
                     onClick = { event?.onChangeMediaType(it) },
-                    label = { 
+                    label = {
                         Text(
                             text = it.localized(),
                             fontWeight = if (uiState.mediaType == it) FontWeight.Bold else FontWeight.Normal
-                        ) 
+                        )
                     },
                     leadingIcon = if (uiState.mediaType == it) {
                         {
@@ -421,20 +318,6 @@ private fun SearchViewContent(
                     }
                 }
             }
-        }
-    }
-}
-
-@Preview
-@Composable
-fun SearchPreview() {
-    MoeListTheme {
-        Surface {
-            SearchHostView(
-                isCompactScreen = false,
-                navActionManager = NavActionManager.rememberNavActionManager(),
-                padding = PaddingValues()
-            )
         }
     }
 }

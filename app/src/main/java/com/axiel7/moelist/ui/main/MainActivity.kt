@@ -35,9 +35,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -59,7 +59,6 @@ import com.axiel7.moelist.ui.base.navigation.NavActionManager.Companion.remember
 import com.axiel7.moelist.ui.base.navigation.Route
 import com.axiel7.moelist.ui.main.composables.MainBottomNavBar
 import com.axiel7.moelist.ui.main.composables.MainNavigationRail
-import com.axiel7.moelist.ui.main.composables.MainTopAppBar
 import com.axiel7.moelist.ui.onboarding.OnboardingView
 import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.utils.ContextExtensions.openLink
@@ -257,7 +256,7 @@ fun MainView(
     val isBottomDestination by remember {
         derivedStateOf { navBackStackEntry?.isBottomDestination() == true }
     }
-    
+
     // Step 1: Logic to show sort icon and handle clicks
     val isUserListTab by remember {
         derivedStateOf {
@@ -268,31 +267,18 @@ fun MainView(
     }
     var sortTrigger by remember { mutableStateOf<(() -> Unit)?>(null) }
 
+    // Hoisted in-place search state for HomeView. Lives here so the bottom nav can hide
+    // while expanded and BackHandler/system back work consistently.
+    var searchActive by rememberSaveable { mutableStateOf(false) }
+
     Scaffold(
-        topBar = {
-            if (isCompactScreen) {
-                MainTopAppBar(
-                    isLoggedIn = isLoggedIn,
-                    profilePicture = profilePicture,
-                    isVisible = isBottomDestination && !isUserListTab,
-                    navController = navController,
-                    showSort = isUserListTab,
-                    onSortClick = { sortTrigger?.invoke() },
-                    topBarOffsetY = topBarOffsetY,
-                    topBarHeightPx = topBarHeightPx,
-                    modifier = Modifier
-                        .graphicsLayer {
-                            translationY = topBarOffsetY.value
-                        }
-                )
-            }
-        },
         bottomBar = {
             if (isCompactScreen) {
                 MainBottomNavBar(
                     navController = navController,
                     navBackStackEntry = navBackStackEntry,
-                    isVisible = isBottomDestination || pinnedNavBar,
+                    // Hide bottom nav while the Home search bar is expanded
+                    isVisible = (isBottomDestination || pinnedNavBar) && !searchActive,
                     onItemSelected = saveLastTab,
                     topBarOffsetY = topBarOffsetY,
                 )
@@ -323,7 +309,9 @@ fun MainView(
                     padding = PaddingValues(),
                     topBarHeightPx = topBarHeightPx,
                     topBarOffsetY = topBarOffsetY,
-                    onSortClickTrigger = { sortTrigger = it }
+                    onSortClickTrigger = { sortTrigger = it },
+                    searchActive = searchActive,
+                    onSearchActiveChange = { searchActive = it },
                 )
             }
         } else {
@@ -350,7 +338,10 @@ fun MainView(
                 ),
                 topBarHeightPx = if (isUserListTab) 0f else topBarHeightPx,
                 topBarOffsetY = topBarOffsetY,
-                onSortClickTrigger = { sortTrigger = it }
+                onSortClickTrigger = { sortTrigger = it },
+                searchActive = searchActive,
+                onSearchActiveChange = { searchActive = it },
+                profilePicture = profilePicture,
             )
         }
     }
