@@ -24,15 +24,19 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.CalendarToday
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.EventAvailable
+import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -59,11 +63,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -88,6 +92,7 @@ import com.axiel7.moelist.utils.DateUtils.toEpochMillis
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrUnknown
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -190,65 +195,20 @@ private fun EditMediaSheetContent(
             if (isKeyboardVisible) keyboardController?.hide()
             else onDismissed()
         }
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
                 .imePadding()
-                .animateContentSize(),
         ) {
-            // Top Actions
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (!uiState.isNewEntry) {
-                    FilledTonalIconButton(
-                        onClick = { event?.toggleDeleteDialog(true) },
-                        colors = IconButtonDefaults.filledTonalIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            contentColor = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                    ) {
-                        Icon(
-                            Icons.Rounded.Delete,
-                            contentDescription = stringResource(R.string.delete)
-                        )
-                    }
-                } else {
-                    Spacer(Modifier.size(48.dp))
-                }
-
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp)
-                    )
-                } else {
-                    Button(
-                        onClick = { event?.updateListItem() },
-                        shape = CircleShape,
-                        contentPadding = ButtonDefaults.ButtonWithIconContentPadding
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Check,
-                            contentDescription = null,
-                            modifier = Modifier.size(ButtonDefaults.IconSize)
-                        )
-                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                        Text(stringResource(if (uiState.isNewEntry) R.string.add else R.string.apply))
-                    }
-                }
-            }
-
-            // Refined Header (Sticky)
+            // ===== HEADER (Sticky) =====
             ListItem(
                 modifier = Modifier.padding(horizontal = 8.dp),
                 headlineContent = {
                     Text(
-                        text = uiState.mediaInfo?.userPreferredTitle() ?: stringResource(R.string.edit_entry),
+                        text = uiState.mediaInfo?.userPreferredTitle()
+                            ?: stringResource(R.string.edit_entry),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         maxLines = 2,
@@ -273,7 +233,10 @@ private fun EditMediaSheetContent(
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                                     fontWeight = FontWeight.SemiBold,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    modifier = Modifier.padding(
+                                        horizontal = 8.dp,
+                                        vertical = 3.dp
+                                    )
                                 )
                             }
                         }
@@ -283,7 +246,10 @@ private fun EditMediaSheetContent(
                             shape = RoundedCornerShape(50)
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                modifier = Modifier.padding(
+                                    horizontal = 8.dp,
+                                    vertical = 3.dp
+                                ),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
@@ -316,13 +282,15 @@ private fun EditMediaSheetContent(
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent)
             )
 
+            // ===== SCROLLABLE CONTENT =====
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .weight(1f, fill = false)
                     .verticalScroll(rememberScrollState())
-                    .padding(bottom = 24.dp + bottomPadding)
+                    .padding(bottom = 16.dp)
             ) {
-                // Status Selection
+                // Status Selection (icon-only pills)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -333,13 +301,15 @@ private fun EditMediaSheetContent(
                     statusValues.forEach { status ->
                         val isSelected = uiState.status == status
                         val containerColor by animateColorAsState(
-                            targetValue = if (isSelected) MaterialTheme.colorScheme.primaryContainer
-                            else MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f),
+                            targetValue = if (isSelected)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else MaterialTheme.colorScheme.surfaceContainerHighest,
                             label = "statusContainer"
                         )
                         val contentColor by animateColorAsState(
-                            targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
-                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
+                            targetValue = if (isSelected)
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            else MaterialTheme.colorScheme.onSurfaceVariant,
                             label = "statusContent"
                         )
 
@@ -404,22 +374,26 @@ private fun EditMediaSheetContent(
                                 )
                             }
                         } else {
-                            ListItem(
-                                headlineContent = {
-                                    Text(
-                                        text = stringResource(R.string.episodes),
-                                        style = MaterialTheme.typography.labelLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                },
-                                colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                            Text(
+                                text = stringResource(R.string.episodes),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(
+                                    start = 20.dp,
+                                    top = 16.dp
+                                )
                             )
                         }
 
-                        val isVolumeTab = uiState.mediaType == MediaType.MANGA && selectedTabIndex == 1
-                        val current = if (isVolumeTab) uiState.volumeProgress ?: 0 else uiState.progress ?: 0
-                        val total = if (isVolumeTab) uiState.mediaInfo?.totalVolumes() else uiState.mediaInfo?.totalDuration()
+                        val isVolumeTab =
+                            uiState.mediaType == MediaType.MANGA && selectedTabIndex == 1
+                        val current =
+                            if (isVolumeTab) uiState.volumeProgress ?: 0
+                            else uiState.progress ?: 0
+                        val total =
+                            if (isVolumeTab) uiState.mediaInfo?.totalVolumes()
+                            else uiState.mediaInfo?.totalDuration()
 
                         Row(
                             modifier = Modifier
@@ -438,7 +412,11 @@ private fun EditMediaSheetContent(
                                 modifier = Modifier.size(44.dp),
                                 shape = CircleShape
                             ) {
-                                Icon(painterResource(R.drawable.round_remove_24), contentDescription = null, modifier = Modifier.size(20.dp))
+                                Icon(
+                                    imageVector = Icons.Rounded.Remove,
+                                    contentDescription = stringResource(R.string.minus_one),
+                                    modifier = Modifier.size(20.dp)
+                                )
                             }
 
                             Row(verticalAlignment = Alignment.Bottom) {
@@ -471,7 +449,11 @@ private fun EditMediaSheetContent(
                                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                             ) {
-                                Icon(painterResource(R.drawable.ic_round_add_24), contentDescription = null, modifier = Modifier.size(20.dp))
+                                Icon(
+                                    imageVector = Icons.Rounded.Add,
+                                    contentDescription = stringResource(R.string.plus_one),
+                                    modifier = Modifier.size(20.dp)
+                                )
                             }
                         }
                     }
@@ -502,67 +484,168 @@ private fun EditMediaSheetContent(
                     }
                 }
 
-                // Date Selection
-                Row(
+                // Dates Card (unified - two rows)
+                Surface(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    shape = RoundedCornerShape(24.dp)
                 ) {
-                    listOf(
-                        stringResource(R.string.start_date) to uiState.startDate,
-                        stringResource(R.string.end_date) to uiState.finishDate
-                    ).forEachIndexed { index, pair ->
-                        Surface(
-                            modifier = Modifier.weight(1f),
-                            color = MaterialTheme.colorScheme.surfaceContainer,
-                            shape = RoundedCornerShape(24.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .clickable {
-                                        if (index == 0) {
-                                            datePickerState.selectedDateMillis = uiState.startDate?.toEpochMillis()
-                                            event?.openStartDatePicker()
-                                        } else {
-                                            datePickerState.selectedDateMillis = uiState.finishDate?.toEpochMillis()
-                                            event?.openFinishDatePicker()
-                                        }
-                                    }
-                                    .padding(16.dp)
-                            ) {
-                                Text(
-                                    text = pair.first,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
+                    Column {
+                        DateRow(
+                            icon = Icons.Rounded.CalendarToday,
+                            label = stringResource(R.string.start_date),
+                            date = uiState.startDate,
+                            onClick = {
+                                datePickerState.selectedDateMillis =
+                                    uiState.startDate?.toEpochMillis()
+                                event?.openStartDatePicker()
+                            },
+                            onClear = { event?.onChangeStartDate(null) }
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+                        DateRow(
+                            icon = Icons.Rounded.EventAvailable,
+                            label = stringResource(R.string.end_date),
+                            date = uiState.finishDate,
+                            onClick = {
+                                datePickerState.selectedDateMillis =
+                                    uiState.finishDate?.toEpochMillis()
+                                event?.openFinishDatePicker()
+                            },
+                            onClear = { event?.onChangeFinishDate(null) }
+                        )
+                    }
+                }
+            }
+
+            // ===== STICKY BOTTOM ACTION BAR + FLOATING FAB =====
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter),
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    tonalElevation = 3.dp
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            .height(56.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (!uiState.isNewEntry) {
+                            FilledTonalIconButton(
+                                onClick = { event?.toggleDeleteDialog(true) },
+                                modifier = Modifier.size(48.dp),
+                                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
                                 )
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(
-                                        text = pair.second?.toString() ?: stringResource(R.string.unknown),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    if (pair.second != null) {
-                                        IconButton(
-                                            onClick = { if (index == 0) event?.onChangeStartDate(null) else event?.onChangeFinishDate(null) },
-                                            modifier = Modifier.size(24.dp)
-                                        ) {
-                                            Icon(Icons.Rounded.Clear, null, modifier = Modifier.size(16.dp))
-                                        }
-                                    }
-                                }
+                            ) {
+                                Icon(
+                                    Icons.Rounded.Delete,
+                                    contentDescription = stringResource(R.string.delete)
+                                )
                             }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        if (!uiState.isLoading) event?.updateListItem()
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 16.dp, bottom = 8.dp),
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    elevation = FloatingActionButtonDefaults.elevation(
+                        defaultElevation = 6.dp
+                    )
+                ) {
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(Modifier.size(8.dp))
+                    Text(
+                        text = stringResource(
+                            if (uiState.isNewEntry) R.string.add else R.string.apply
+                        ),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(bottomPadding))
+        }
+    }
+}
+
+@Composable
+private fun DateRow(
+    icon: ImageVector,
+    label: String,
+    date: LocalDate?,
+    onClick: () -> Unit,
+    onClear: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp)
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = date?.toString() ?: stringResource(R.string.unknown),
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (date != null) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        if (date != null) {
+            IconButton(
+                onClick = onClear,
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    Icons.Rounded.Clear,
+                    contentDescription = stringResource(R.string.delete),
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
     }
