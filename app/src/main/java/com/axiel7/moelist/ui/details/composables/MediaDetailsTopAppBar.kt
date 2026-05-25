@@ -8,6 +8,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.NotificationsOff
+import androidx.compose.material.icons.rounded.OpenInBrowser
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.axiel7.moelist.R
@@ -45,7 +48,9 @@ fun MediaDetailsTopAppBar(
     uiState: MediaDetailsUiState,
     event: MediaDetailsEvent?,
     scrollBehavior: TopAppBarScrollBehavior,
-    navigateBack: () -> Unit
+    navigateBack: () -> Unit,
+    onMalClick: () -> Unit = {},
+    onShareClick: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val isPreview = LocalInspectionMode.current
@@ -166,6 +171,20 @@ fun MediaDetailsTopAppBar(
                         tint = contentColor
                     )
                 }
+            }
+            IconButton(onClick = onMalClick) {
+                Icon(
+                    imageVector = Icons.Rounded.OpenInBrowser,
+                    contentDescription = stringResource(R.string.view_on_mal),
+                    tint = contentColor
+                )
+            }
+            IconButton(onClick = onShareClick) {
+                Icon(
+                    imageVector = Icons.Rounded.Share,
+                    contentDescription = stringResource(R.string.share),
+                    tint = contentColor
+                )
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(

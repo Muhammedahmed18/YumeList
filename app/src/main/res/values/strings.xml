@@ -4,9 +4,9 @@
     <string name="title_anime_list">Anime</string>
     <string name="title_manga_list">Manga</string>
     <string name="lorem_ipsun" translatable="false">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</string>
-    <string name="stats">Stats</string>
+    <string name="stats">Community</string>
     <string name="synopsis">Synopsis</string>
-    <string name="more_info">More information</string>
+    <string name="more_info">Details</string>
     <string name="synonyms">Synonyms</string>
     <string name="jp_title">Japanese</string>
     <string name="start_date">Start Date</string>
@@ -255,7 +255,11 @@
     <string name="chinese_simplified_native" translatable="false">简体中文</string>
     <string name="related_anime">Related Anime</string>
     <string name="related_manga">Related Manga</string>
-    <string name="franchise_timeline">Franchise Timeline</string>
+    <string name="franchise_timeline">Related</string>
+    <string name="show_more">Show more</string>
+    <string name="show_less">Show less</string>
+    <string name="more_count">+%d more</string>
+    <string name="ratings_count">%s ratings</string>
     <string name="content">Content</string>
     <string name="list_mode_standard">Standard</string>
     <string name="list_mode_compact">Compact</string>
@@ -418,4 +422,52 @@
     <string name="format">Format</string>
     <string name="all">All</string>
     <string name="reindexing_media_list">Reindexing %s List…</string>
+
+    <!-- Error / empty state messaging -->
+    <string name="network_error">Can\'t reach MyAnimeList</string>
+    <string name="network_error_desc">Check your internet connection and try again.</string>
+    <string name="session_expired">Session expired</string>
+    <string name="session_expired_desc">Please sign in again to continue.</string>
+    <string name="sign_in_again">Sign in again</string>
+    <string name="not_found">Not found</string>
+    <string name="error_server_desc">MyAnimeList is having trouble. Try again in a moment.</string>
+    <string name="something_went_wrong_desc">An unexpected error occurred. Please try again.</string>
+
+    <!-- Home empty -->
+    <string name="nothing_airing_today">Nothing airing today</string>
+    <string name="nothing_airing_today_desc">No anime from your list airs today.</string>
+    <string name="no_anime_this_season">No anime this season</string>
+    <string name="no_anime_this_season_desc">Try a different season or refresh.</string>
+
+    <!-- Search empty -->
+    <string name="no_matches_for_query">No matches found</string>
+    <string name="try_different_keywords">Try different keywords for \"%1$s\".</string>
+
+    <!-- Season / Ranking empty -->
+    <string name="no_anime_found">No anime found</string>
+    <string name="no_anime_found_desc">Try adjusting your filters.</string>
+    <string name="reset_filters">Reset filters</string>
+
+    <!-- Per-tab empty: anime -->
+    <string name="empty_watching_title">Nothing watching</string>
+    <string name="empty_watching_desc">Anime you start watching will appear here.</string>
+    <string name="empty_reading_title">Nothing reading</string>
+    <string name="empty_reading_desc">Manga you start reading will appear here.</string>
+    <string name="empty_completed_anime_title">Nothing completed yet</string>
+    <string name="empty_completed_anime_desc">Anime you finish will live here.</string>
+    <string name="empty_completed_manga_title">Nothing completed yet</string>
+    <string name="empty_completed_manga_desc">Manga you finish will live here.</string>
+    <string name="empty_on_hold_anime_title">Nothing on hold</string>
+    <string name="empty_on_hold_anime_desc">Move an anime here when you\'re taking a break.</string>
+    <string name="empty_on_hold_manga_title">Nothing on hold</string>
+    <string name="empty_on_hold_manga_desc">Move a manga here when you\'re taking a break.</string>
+    <string name="empty_dropped_anime_title">Nothing dropped</string>
+    <string name="empty_dropped_anime_desc">Anime you give up on will appear here.</string>
+    <string name="empty_dropped_manga_title">Nothing dropped</string>
+    <string name="empty_dropped_manga_desc">Manga you give up on will appear here.</string>
+    <string name="empty_ptw_title">Your plan-to-watch list is empty</string>
+    <string name="empty_ptw_desc">Add anime you want to watch later.</string>
+    <string name="empty_ptr_title">Your plan-to-read list is empty</string>
+    <string name="empty_ptr_desc">Add manga you want to read later.</string>
+    <string name="search_to_add">Search to add</string>
 </resources>

@@ -1,9 +1,8 @@
 package com.axiel7.moelist.ui.details
 
 import android.content.ClipData
+import android.content.Intent
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -37,39 +36,37 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.rounded.MenuBook
+import androidx.compose.material.icons.automirrored.rounded.TrendingUp
 import androidx.compose.material.icons.rounded.AccessTime
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.Book
 import androidx.compose.material.icons.rounded.CalendarToday
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Group
 import androidx.compose.material.icons.rounded.Language
-import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.rounded.Movie
 import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.OpenInBrowser
 import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Spellcheck
 import androidx.compose.material.icons.rounded.Translate
-import androidx.compose.material.icons.automirrored.rounded.TrendingUp
 import androidx.compose.material.icons.rounded.WbSunny
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.OutlinedIconButton
-import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -87,8 +84,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -146,6 +141,7 @@ private val CardPadding = 20.dp
 private val CardRadius = 24.dp
 private val ButtonHeight = 48.dp
 private val ButtonRadius = 24.dp
+private val TopAppBarOverlayHeight = 64.dp
 
 // ============================================
 // MAIN ENTRY POINT
@@ -192,10 +188,31 @@ private fun MediaDetailsContent(
         }
     }
 
+    fun shareMediaUrl() {
+        val url = uiState.mediaDetails?.malUrl.orEmpty()
+        if (url.isNotEmpty()) {
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, url)
+            }
+            context.startActivity(Intent.createChooser(intent, null))
+        }
+    }
+
     val bottomBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     var isSynopsisExpanded by remember { mutableStateOf(false) }
     val maxLinesSynopsis by remember {
         derivedStateOf { if (isSynopsisExpanded) Int.MAX_VALUE else 6 }
+    }
+
+    LaunchedEffect(uiState.isAnime, uiState.isLoading, uiState.characters.isEmpty()) {
+        if (uiState.isAnime
+            && !uiState.isLoading
+            && uiState.characters.isEmpty()
+            && !uiState.isLoadingCharacters
+        ) {
+            event?.getCharacters()
+        }
     }
 
     if (showSheet && uiState.mediaInfo != null) {
@@ -248,6 +265,8 @@ private fun MediaDetailsContent(
                 event = event,
                 navigateBack = dropUnlessResumed { navActionManager.goBack() },
                 scrollBehavior = topAppBarScrollBehavior,
+                onMalClick = { context.openLink(uiState.mediaDetails?.malUrl.orEmpty()) },
+                onShareClick = { shareMediaUrl() },
             )
         }
     }
@@ -267,8 +286,6 @@ private fun MediaDetailsSections(
     onToggleSynopsis: () -> Unit,
     onShowEditSheet: () -> Unit,
 ) {
-    val context = LocalContext.current
-
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -281,8 +298,6 @@ private fun MediaDetailsSections(
             uiState = uiState,
             isLoggedIn = isLoggedIn,
             onEditClick = onShowEditSheet,
-            onShareClick = { },
-            onMalClick = { context.openLink(uiState.mediaDetails?.malUrl.orEmpty()) }
         )
 
         MediaGenresSection(uiState = uiState)
@@ -294,17 +309,15 @@ private fun MediaDetailsSections(
         maxLinesSynopsis = maxLinesSynopsis,
         onToggleSynopsis = onToggleSynopsis,
     )
-    MediaDetailsInfoCard(uiState = uiState)
-    MediaFranchiseTimelineSection(
+    MediaProductionCard(uiState = uiState)
+    MediaTitlesCard(uiState = uiState)
+    MediaRelatedSection(
         uiState = uiState,
         navActionManager = navActionManager
     )
-    MediaCharactersSection(
-        uiState = uiState,
-        event = event,
-    )
+    MediaCharactersSection(uiState = uiState)
     MediaThemesSection(uiState = uiState)
-    MediaStatsSection(uiState = uiState)
+    MediaCommunitySection(uiState = uiState)
 }
 
 // ============================================
@@ -315,16 +328,13 @@ private fun MediaHeaderSection(
     uiState: MediaDetailsUiState,
     navActionManager: NavActionManager,
 ) {
-    val context = LocalContext.current
-    val clipboard = LocalClipboard.current
-    val scope = rememberCoroutineScope()
     val topPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(
-                top = topPadding + 64.dp,
+                top = topPadding + TopAppBarOverlayHeight,
                 start = PageHorizontalPadding,
                 end = PageHorizontalPadding
             ),
@@ -349,90 +359,19 @@ private fun MediaHeaderSection(
                 url = uiState.mediaDetails?.mainPicture?.large,
                 modifier = Modifier.fillMaxSize()
             )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(40.dp)
-                    .align(Alignment.BottomCenter)
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                MaterialTheme.colorScheme.background.copy(alpha = 0.3f)
-                            )
-                        )
-                    )
-            )
         }
 
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            val title = uiState.mediaDetails?.userPreferredTitle().orEmpty()
-            Text(
-                text = title,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .defaultPlaceholder(visible = uiState.isLoading)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        if (title.isNotEmpty()) {
-                            scope.launch {
-                                clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("title", title)))
-                            }
-                            context.showToast(R.string.copied)
-                        }
-                    },
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 4,
-                overflow = TextOverflow.Ellipsis,
-                lineHeight = 28.sp
-            )
-
-            val totalCount = when (val media = uiState.mediaDetails) {
-                is AnimeDetails -> media.numEpisodes?.takeIf { it > 0 }?.toString()
-                is MangaDetails -> media.numChapters?.takeIf { it > 0 }?.toString()
-                else -> null
-            }
-
-            val countLabel = if (uiState.isAnime) {
-                if (totalCount == "1") stringResource(R.string.episode) else stringResource(R.string.episodes)
-            } else {
-                if (totalCount == "1") stringResource(R.string.chapter) else stringResource(R.string.chapters)
-            }
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                MetadataBadge(
-                    text = uiState.mediaDetails?.mediaFormat?.localized() ?: "??",
+            MediaTitleHeading(uiState = uiState)
+            MediaMetaStrip(uiState = uiState)
+            if (!uiState.hideScore) {
+                ScoreBlock(
+                    score = uiState.mediaDetails?.mean,
+                    scoringUsers = uiState.mediaDetails?.numScoringUsers,
                     isLoading = uiState.isLoading
-                )
-                MetadataBadge(
-                    text = "$countLabel (${totalCount ?: "-"})",
-                    isLoading = uiState.isLoading
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (!uiState.hideScore) {
-                    ModernScoreDisplay(
-                        score = uiState.mediaDetails?.mean ?: 0f,
-                        isLoading = uiState.isLoading
-                    )
-                }
-                MetadataBadge(
-                    text = uiState.mediaDetails?.status?.localized() ?: "Loading",
-                    isLoading = uiState.isLoading,
                 )
             }
         }
@@ -440,126 +379,168 @@ private fun MediaHeaderSection(
 }
 
 @Composable
-private fun ModernScoreDisplay(
-    score: Float,
-    isLoading: Boolean,
-) {
-    Row(
-        verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text(
-            text = if (isLoading) " " else score.toStringOrNull() ?: "??",
-            modifier = Modifier.defaultPlaceholder(visible = isLoading),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            text = "/10",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 4.dp)
-        )
-    }
-}
+private fun MediaTitleHeading(uiState: MediaDetailsUiState) {
+    val context = LocalContext.current
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+    val title = uiState.mediaDetails?.userPreferredTitle().orEmpty()
 
-@Composable
-private fun MetadataBadge(
-    text: String,
-    isLoading: Boolean,
-) {
-    SuggestionChip(
-        onClick = { },
-        label = {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Medium,
-            )
-        },
-        modifier = Modifier.defaultPlaceholder(visible = isLoading),
+    Text(
+        text = title,
+        modifier = Modifier
+            .fillMaxWidth()
+            .defaultPlaceholder(visible = uiState.isLoading)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                if (title.isNotEmpty()) {
+                    scope.launch {
+                        clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("title", title)))
+                    }
+                    context.showToast(R.string.copied)
+                }
+            },
+        style = MaterialTheme.typography.headlineSmall,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurface,
+        maxLines = 4,
+        overflow = TextOverflow.Ellipsis,
+        lineHeight = 28.sp
     )
 }
 
+@Composable
+private fun MediaMetaStrip(uiState: MediaDetailsUiState) {
+    val details = uiState.mediaDetails
+    val parts = buildList {
+        details?.mediaFormat?.localized()?.let { add(it) }
+        details?.startYear?.let { add(it) }
+        (details as? AnimeDetails)?.startSeason?.seasonYearText()?.let { add(it) }
+        val total = when (details) {
+            is AnimeDetails -> details.numEpisodes?.takeIf { it > 0 }?.let { count ->
+                "$count " + if (count == 1) stringResource(R.string.episode)
+                else stringResource(R.string.episodes)
+            }
+            is MangaDetails -> details.numChapters?.takeIf { it > 0 }?.let { count ->
+                "$count " + if (count == 1) stringResource(R.string.chapter)
+                else stringResource(R.string.chapters)
+            }
+            else -> null
+        }
+        total?.let { add(it) }
+        details?.status?.localized()?.let { add(it) }
+    }
+
+    Text(
+        text = if (uiState.isLoading) "Loading metadata"
+        else parts.joinToString(" · ").ifEmpty { "—" },
+        modifier = Modifier
+            .fillMaxWidth()
+            .defaultPlaceholder(visible = uiState.isLoading),
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Medium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+        lineHeight = 18.sp,
+    )
+}
+
+@Composable
+private fun ScoreBlock(
+    score: Float?,
+    scoringUsers: Int?,
+    isLoading: Boolean,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.defaultPlaceholder(visible = isLoading)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f),
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = score?.toStringOrNull() ?: "??",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    text = "/10",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
+                    modifier = Modifier.padding(bottom = 3.dp)
+                )
+            }
+        }
+        if (scoringUsers != null && scoringUsers > 0) {
+            Text(
+                text = stringResource(R.string.ratings_count, scoringUsers.format().orEmpty()),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
 // ============================================
-// ACTION DOCK
+// ACTION DOCK (Option A: just Add/Edit, full width)
 // ============================================
 @Composable
 private fun MediaActionDock(
     uiState: MediaDetailsUiState,
     isLoggedIn: Boolean,
     onEditClick: () -> Unit,
-    onShareClick: () -> Unit,
-    onMalClick: () -> Unit
 ) {
     val context = LocalContext.current
 
-    Row(
+    Button(
+        onClick = {
+            if (isLoggedIn) onEditClick()
+            else context.showToast(R.string.please_login_to_use_this_feature)
+        },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = PageHorizontalPadding),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = PageHorizontalPadding)
+            .height(ButtonHeight),
+        shape = RoundedCornerShape(ButtonRadius),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        )
     ) {
-        Button(
-            onClick = {
-                if (isLoggedIn) onEditClick()
-                else context.showToast(R.string.please_login_to_use_this_feature)
-            },
-            modifier = Modifier
-                .weight(1f)
-                .height(ButtonHeight),
-            shape = RoundedCornerShape(ButtonRadius),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        ) {
-            Icon(
-                imageVector = if (uiState.isNewEntry) Icons.Rounded.Add else Icons.Rounded.Edit,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            val btnText = if (uiState.isNewEntry) stringResource(R.string.add)
-            else uiState.mediaDetails?.myListStatus?.status?.localized() ?: stringResource(R.string.edit)
-            Text(
-                text = btnText,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-
-        OutlinedIconButton(
-            onClick = onMalClick,
-            modifier = Modifier.size(ButtonHeight)
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.OpenInBrowser,
-                contentDescription = null,
-                modifier = Modifier.size(22.dp)
-            )
-        }
-
-        OutlinedIconButton(
-            onClick = onShareClick,
-            modifier = Modifier.size(ButtonHeight)
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Share,
-                contentDescription = null,
-                modifier = Modifier.size(22.dp)
-            )
-        }
+        Icon(
+            imageVector = if (uiState.isNewEntry) Icons.Rounded.Add else Icons.Rounded.Edit,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        val btnText = if (uiState.isNewEntry) stringResource(R.string.add)
+        else uiState.mediaDetails?.myListStatus?.status?.localized() ?: stringResource(R.string.edit)
+        Text(
+            text = btnText,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
 // ============================================
 // GENRES SECTION
 // ============================================
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MediaGenresSection(uiState: MediaDetailsUiState) {
     val genres = uiState.mediaDetails?.genres ?: return
@@ -619,12 +600,7 @@ private fun MediaSynopsisSection(
                         modifier = Modifier
                             .fillMaxWidth()
                             .defaultPlaceholder(visible = uiState.isLoading)
-                            .animateContentSize(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessLow
-                                )
-                            ),
+                            .animateContentSize(),
                         style = MaterialTheme.typography.bodyLarge,
                         lineHeight = 28.sp,
                         overflow = TextOverflow.Ellipsis,
@@ -640,7 +616,8 @@ private fun MediaSynopsisSection(
                     modifier = Modifier.align(Alignment.End)
                 ) {
                     Text(
-                        text = if (isSynopsisExpanded) "Show Less" else "Read More",
+                        text = if (isSynopsisExpanded) stringResource(R.string.show_less)
+                        else stringResource(R.string.show_more),
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -651,14 +628,11 @@ private fun MediaSynopsisSection(
 }
 
 // ============================================
-// MERGED INFO CARD
+// PRODUCTION CARD (was "More Info")
 // ============================================
 @Composable
-private fun MediaDetailsInfoCard(uiState: MediaDetailsUiState) {
-    val englishTitle = uiState.mediaDetails?.alternativeTitles?.en
-    val japaneseTitle = uiState.mediaDetails?.alternativeTitles?.ja
-    val romajiTitle = uiState.mediaDetails?.title
-    val hasAltTitles = !englishTitle.isNullOrBlank() || !japaneseTitle.isNullOrBlank() || !romajiTitle.isNullOrBlank()
+private fun MediaProductionCard(uiState: MediaDetailsUiState) {
+    val details = uiState.mediaDetails ?: return
 
     ElevatedCard(
         modifier = Modifier
@@ -677,24 +651,24 @@ private fun MediaDetailsInfoCard(uiState: MediaDetailsUiState) {
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            if (uiState.mediaDetails is AnimeDetails) {
+            if (details is AnimeDetails) {
                 Row(modifier = Modifier.fillMaxWidth()) {
                     MediaInfoView(
                         title = stringResource(R.string.duration),
-                        info = uiState.mediaDetails.episodeDurationLocalized(),
+                        info = details.episodeDurationLocalized(),
                         iconVector = Icons.Rounded.AccessTime,
                         modifier = Modifier.weight(1f)
                     )
                     MediaInfoView(
                         title = stringResource(R.string.source),
-                        info = uiState.mediaDetails.source?.localized()
+                        info = details.source?.localized()
                             ?: stringResource(R.string.unknown),
                         iconVector = Icons.AutoMirrored.Rounded.MenuBook,
                         modifier = Modifier.weight(1f)
                     )
                 }
-            } else if (uiState.mediaDetails is MangaDetails) {
-                val volumes = uiState.mediaDetails.numVolumes
+            } else if (details is MangaDetails) {
+                val volumes = details.numVolumes
                 MediaInfoView(
                     title = stringResource(R.string.volumes),
                     info = if (volumes == null || volumes == 0) "-" else volumes.toString(),
@@ -710,27 +684,26 @@ private fun MediaDetailsInfoCard(uiState: MediaDetailsUiState) {
             Row(modifier = Modifier.fillMaxWidth()) {
                 MediaInfoView(
                     title = stringResource(R.string.start_date),
-                    info = uiState.mediaDetails?.startDate?.parseDateAndLocalize(),
+                    info = details.startDate?.parseDateAndLocalize(),
                     iconVector = Icons.Rounded.CalendarToday,
                     modifier = Modifier.weight(1f)
                 )
                 MediaInfoView(
                     title = stringResource(R.string.end_date),
-                    info = uiState.mediaDetails?.endDate?.parseDateAndLocalize(),
+                    info = details.endDate?.parseDateAndLocalize(),
                     iconVector = Icons.Rounded.CalendarToday,
                     modifier = Modifier.weight(1f)
                 )
             }
 
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-            )
-
-            if (uiState.mediaDetails is AnimeDetails) {
+            if (details is AnimeDetails) {
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
                 Row(modifier = Modifier.fillMaxWidth()) {
                     MediaInfoView(
                         title = stringResource(R.string.season),
-                        info = uiState.mediaDetails.startSeason?.seasonYearText(),
+                        info = details.startSeason?.seasonYearText(),
                         iconVector = Icons.Rounded.WbSunny,
                         modifier = Modifier.weight(1f)
                     )
@@ -741,88 +714,138 @@ private fun MediaDetailsInfoCard(uiState: MediaDetailsUiState) {
                         modifier = Modifier.weight(1f)
                     )
                 }
-            } else if (uiState.mediaDetails is MangaDetails) {
+            } else if (details is MangaDetails) {
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
                 MediaInfoView(
                     title = stringResource(R.string.authors),
-                    info = uiState.mediaDetails.authors
+                    info = details.authors
                         ?.joinToString { "${it.node.firstName} ${it.node.lastName}" },
                     iconVector = Icons.Rounded.Person,
                     modifier = Modifier.fillMaxWidth()
                 )
-            }
-
-            if (hasAltTitles) {
-                HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 4.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                )
-
-                Text(
-                    text = stringResource(R.string.title_language),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
-
-                if (!englishTitle.isNullOrBlank()) {
-                    MediaInfoView(
-                        title = stringResource(R.string.english),
-                        info = englishTitle,
-                        iconVector = Icons.Rounded.Language,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                if (!japaneseTitle.isNullOrBlank()) {
-                    MediaInfoView(
-                        title = stringResource(R.string.japanese),
-                        info = japaneseTitle,
-                        iconVector = Icons.Rounded.Translate,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                if (!romajiTitle.isNullOrBlank()) {
-                    MediaInfoView(
-                        title = stringResource(R.string.romaji),
-                        info = romajiTitle,
-                        iconVector = Icons.Rounded.Spellcheck,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
             }
         }
     }
 }
 
 // ============================================
-// FRANCHISE TIMELINE
+// TITLES CARD
 // ============================================
 @Composable
-private fun MediaFranchiseTimelineSection(
+private fun MediaTitlesCard(uiState: MediaDetailsUiState) {
+    val englishTitle = uiState.mediaDetails?.alternativeTitles?.en
+    val japaneseTitle = uiState.mediaDetails?.alternativeTitles?.ja
+    val romajiTitle = uiState.mediaDetails?.title
+    val hasAltTitles = !englishTitle.isNullOrBlank()
+            || !japaneseTitle.isNullOrBlank()
+            || !romajiTitle.isNullOrBlank()
+    if (!hasAltTitles) return
+
+    ElevatedCard(
+        modifier = Modifier
+            .padding(horizontal = PageHorizontalPadding)
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(CardRadius),
+    ) {
+        Column(
+            modifier = Modifier.padding(CardPadding),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.title_language),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+
+            if (!englishTitle.isNullOrBlank()) {
+                CopyableTitleRow(
+                    label = stringResource(R.string.english),
+                    value = englishTitle,
+                    icon = Icons.Rounded.Language
+                )
+            }
+            if (!japaneseTitle.isNullOrBlank()) {
+                CopyableTitleRow(
+                    label = stringResource(R.string.japanese),
+                    value = japaneseTitle,
+                    icon = Icons.Rounded.Translate
+                )
+            }
+            if (!romajiTitle.isNullOrBlank()) {
+                CopyableTitleRow(
+                    label = stringResource(R.string.romaji),
+                    value = romajiTitle,
+                    icon = Icons.Rounded.Spellcheck
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CopyableTitleRow(
+    label: String,
+    value: String,
+    icon: ImageVector,
+) {
+    val context = LocalContext.current
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        MediaInfoView(
+            title = label,
+            info = value,
+            iconVector = icon,
+            modifier = Modifier.weight(1f)
+        )
+        IconButton(
+            onClick = {
+                scope.launch {
+                    clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(label, value)))
+                }
+                context.showToast(R.string.copied)
+            }
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.ContentCopy,
+                contentDescription = stringResource(R.string.copied),
+                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+// ============================================
+// RELATED SECTION (was "Franchise Timeline")
+// ============================================
+@Composable
+private fun MediaRelatedSection(
     uiState: MediaDetailsUiState,
     navActionManager: NavActionManager
 ) {
     val coreRelated = uiState.coreRelatedMedia
-    if (coreRelated.isNotEmpty()) {
-        Column {
-            Column(
-                modifier = Modifier.padding(horizontal = PageHorizontalPadding, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.franchise_timeline),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = "Viewing order",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+    val categorized = uiState.categorizedRelatedMedia
+    if (coreRelated.isEmpty() && categorized.isEmpty()) return
+
+    Column {
+        Text(
+            text = stringResource(R.string.franchise_timeline),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(horizontal = PageHorizontalPadding, vertical = 12.dp)
+        )
+
+        if (coreRelated.isNotEmpty()) {
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(horizontal = PageHorizontalPadding),
@@ -831,15 +854,15 @@ private fun MediaFranchiseTimelineSection(
             ) {
                 itemsIndexed(coreRelated) { index, item ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        TimelineItem(
+                        RelatedItemCard(
                             item = item,
                             isCurrent = item.node.id == uiState.mediaDetails?.id,
                             onClick = {
-                                val mediaType = if (item is RelatedAnime) MediaType.ANIME else MediaType.MANGA
+                                val mediaType =
+                                    if (item is RelatedAnime) MediaType.ANIME else MediaType.MANGA
                                 navActionManager.toMediaDetails(mediaType, item.node.id)
                             }
                         )
-
                         if (index < coreRelated.size - 1) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
@@ -854,11 +877,46 @@ private fun MediaFranchiseTimelineSection(
                 }
             }
         }
+
+        categorized.forEach { (format, items) ->
+            Column(modifier = Modifier.padding(top = 16.dp)) {
+                Text(
+                    text = format.localized(),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(
+                        horizontal = PageHorizontalPadding,
+                        vertical = 8.dp
+                    )
+                )
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = PageHorizontalPadding),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(
+                        items = items,
+                        key = { it.node.id }
+                    ) { item ->
+                        RelatedItemCard(
+                            item = item,
+                            isCurrent = false,
+                            onClick = {
+                                val mediaType =
+                                    if (item is RelatedAnime) MediaType.ANIME else MediaType.MANGA
+                                navActionManager.toMediaDetails(mediaType, item.node.id)
+                            }
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
 @Composable
-private fun TimelineItem(
+private fun RelatedItemCard(
     item: BaseRelated,
     isCurrent: Boolean,
     onClick: () -> Unit
@@ -924,76 +982,60 @@ private fun TimelineItem(
 // CHARACTERS SECTION
 // ============================================
 @Composable
-private fun MediaCharactersSection(
-    uiState: MediaDetailsUiState,
-    event: MediaDetailsEvent?,
-) {
+private fun MediaCharactersSection(uiState: MediaDetailsUiState) {
     val context = LocalContext.current
+    if (!uiState.isAnime) return
+    if (uiState.characters.isEmpty() && !uiState.isLoadingCharacters) return
 
-    if (uiState.isAnime) {
-        Column {
-            Text(
-                text = stringResource(R.string.characters),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(horizontal = PageHorizontalPadding, vertical = 16.dp)
-            )
-            if (uiState.characters.isNotEmpty() || uiState.isLoadingCharacters) {
-                LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = PageHorizontalPadding),
-                    horizontalArrangement = Arrangement.spacedBy(20.dp)
-                ) {
-                    items(
-                        items = uiState.characters,
-                        key = { it.node.id },
-                        contentType = { it }
-                    ) { item ->
-                        CharacterItem(
-                            character = item,
-                            onClick = { context.openLink(CHARACTER_URL + item.node.id) }
+    Column {
+        Text(
+            text = stringResource(R.string.characters),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(horizontal = PageHorizontalPadding, vertical = 16.dp)
+        )
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = PageHorizontalPadding),
+            horizontalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            items(
+                items = uiState.characters,
+                key = { it.node.id },
+                contentType = { it }
+            ) { item ->
+                CharacterItem(
+                    character = item,
+                    onClick = { context.openLink(CHARACTER_URL + item.node.id) }
+                )
+            }
+            if (uiState.isLoadingCharacters) {
+                items(4) {
+                    Column(
+                        modifier = Modifier.width(96.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(96.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .defaultPlaceholder(visible = true)
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(12.dp)
+                                .defaultPlaceholder(visible = true)
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.65f)
+                                .height(12.dp)
+                                .defaultPlaceholder(visible = true)
                         )
                     }
-                    if (uiState.isLoadingCharacters) {
-                        items(4) {
-                            Column(
-                                modifier = Modifier.width(96.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(96.dp)
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .defaultPlaceholder(visible = true)
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(12.dp)
-                                        .defaultPlaceholder(visible = true)
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth(0.65f)
-                                        .height(12.dp)
-                                        .defaultPlaceholder(visible = true)
-                                )
-                            }
-                        }
-                    }
-                }
-            } else {
-                FilledTonalButton(
-                    onClick = { event?.getCharacters() },
-                    modifier = Modifier.padding(horizontal = PageHorizontalPadding),
-                    shape = RoundedCornerShape(ButtonRadius)
-                ) {
-                    Text(
-                        text = stringResource(R.string.view_characters),
-                        fontWeight = FontWeight.SemiBold
-                    )
                 }
             }
         }
@@ -1067,6 +1109,10 @@ private fun MediaThemesSection(uiState: MediaDetailsUiState) {
     var showMusicSheet by remember { mutableStateOf(false) }
 
     if (uiState.mediaDetails is AnimeDetails) {
+        val openingThemes = uiState.mediaDetails.openingThemes.orEmpty()
+        val endingThemes = uiState.mediaDetails.endingThemes.orEmpty()
+        if (openingThemes.isEmpty() && endingThemes.isEmpty()) return
+
         Column {
             if (showMusicSheet && selectedSong != null) {
                 MusicStreamingSheet(
@@ -1088,20 +1134,20 @@ private fun MediaThemesSection(uiState: MediaDetailsUiState) {
                 modifier = Modifier.padding(horizontal = PageHorizontalPadding, vertical = 16.dp)
             )
 
-            val openingThemes = uiState.mediaDetails.openingThemes.orEmpty()
             if (openingThemes.isNotEmpty()) {
                 ThemePlayerCard(
                     title = stringResource(R.string.opening),
-                    count = openingThemes.size,
+                    firstTrack = openingThemes.first().text,
+                    extraCount = openingThemes.size - 1,
                     onClick = { showOpeningSheet = true }
                 )
             }
 
-            val endingThemes = uiState.mediaDetails.endingThemes.orEmpty()
             if (endingThemes.isNotEmpty()) {
                 ThemePlayerCard(
                     title = stringResource(R.string.ending),
-                    count = endingThemes.size,
+                    firstTrack = endingThemes.first().text,
+                    extraCount = endingThemes.size - 1,
                     onClick = { showEndingSheet = true }
                 )
             }
@@ -1136,7 +1182,8 @@ private fun MediaThemesSection(uiState: MediaDetailsUiState) {
 @Composable
 private fun ThemePlayerCard(
     title: String,
-    count: Int,
+    firstTrack: String,
+    extraCount: Int,
     onClick: () -> Unit
 ) {
     ElevatedCard(
@@ -1172,10 +1219,20 @@ private fun ThemePlayerCard(
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "$count tracks",
+                    text = firstTrack,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
+                if (extraCount > 0) {
+                    Text(
+                        text = stringResource(R.string.more_count, extraCount),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
             }
             Icon(
                 imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
@@ -1253,87 +1310,79 @@ private fun ThemeListSheet(
 }
 
 // ============================================
-// STATS SECTION
+// COMMUNITY SECTION (was "Stats")
 // ============================================
 @Composable
-private fun MediaStatsSection(uiState: MediaDetailsUiState) {
-    Column {
+private fun MediaCommunitySection(uiState: MediaDetailsUiState) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             text = stringResource(R.string.stats),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(horizontal = PageHorizontalPadding, vertical = 16.dp)
+            modifier = Modifier.padding(horizontal = PageHorizontalPadding, vertical = 4.dp)
         )
 
         ElevatedCard(
             modifier = Modifier
                 .padding(horizontal = PageHorizontalPadding)
-                .fillMaxWidth()
-                .defaultPlaceholder(visible = uiState.isLoading),
+                .fillMaxWidth(),
             shape = RoundedCornerShape(CardRadius),
         ) {
-            Column(
-                modifier = Modifier.padding(CardPadding),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(CardPadding),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
+                MetricItem(
+                    label = stringResource(R.string.top_ranked),
+                    value = uiState.mediaDetails?.rankText().orEmpty(),
+                    icon = Icons.Rounded.BarChart,
+                    isLoading = uiState.isLoading,
+                    modifier = Modifier.weight(1f)
+                )
+                MetricItem(
+                    label = stringResource(R.string.popularity),
+                    value = uiState.mediaDetails?.popularity?.let { "#$it" } ?: UNKNOWN_CHAR,
+                    icon = Icons.AutoMirrored.Rounded.TrendingUp,
+                    isLoading = uiState.isLoading,
+                    modifier = Modifier.weight(1f)
+                )
+                MetricItem(
+                    label = stringResource(R.string.members),
+                    value = uiState.mediaDetails?.numListUsers?.format() ?: UNKNOWN_CHAR,
+                    icon = Icons.Rounded.Group,
+                    isLoading = uiState.isLoading,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        (uiState.mediaDetails as? AnimeDetails)?.statistics?.status?.toStats()?.let { stats ->
+            ElevatedCard(
+                modifier = Modifier
+                    .padding(horizontal = PageHorizontalPadding)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(CardRadius),
+            ) {
+                Column(
+                    modifier = Modifier.padding(CardPadding),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    MetricItem(
-                        label = stringResource(R.string.top_ranked),
-                        value = uiState.mediaDetails?.rankText().orEmpty(),
-                        icon = Icons.Rounded.BarChart
+                    Text(
+                        text = stringResource(R.string.status_distribution),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    Box(
-                        modifier = Modifier
-                            .height(32.dp)
-                            .width(1.dp)
-                            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                    )
+                    val totalValue =
+                        remember(stats) { stats.sumOf { it.value.toDouble() } }.toFloat()
 
-                    MetricItem(
-                        label = stringResource(R.string.popularity),
-                        value = "#${uiState.mediaDetails?.popularity}",
-                        icon = Icons.AutoMirrored.Rounded.TrendingUp
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .height(32.dp)
-                            .width(1.dp)
-                            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                    )
-
-                    MetricItem(
-                        label = stringResource(R.string.members),
-                        value = uiState.mediaDetails?.numListUsers?.format() ?: UNKNOWN_CHAR,
-                        icon = Icons.Rounded.Group
-                    )
-                }
-
-                (uiState.mediaDetails as? AnimeDetails)?.statistics?.status?.toStats()?.let { stats ->
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.status_distribution),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        val totalValue = remember(stats) { stats.sumOf { it.value.toDouble() } }.toFloat()
-
-                        stats.forEach { stat ->
-                            StatusBarRow(
-                                stat = stat,
-                                totalValue = totalValue
-                            )
-                        }
+                    stats.forEach { stat ->
+                        StatusBarRow(stat = stat, totalValue = totalValue)
                     }
                 }
             }
@@ -1403,6 +1452,7 @@ private fun MetricItem(
     label: String,
     value: String,
     icon: ImageVector,
+    isLoading: Boolean,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -1418,6 +1468,7 @@ private fun MetricItem(
         )
         Text(
             text = value,
+            modifier = Modifier.defaultPlaceholder(visible = isLoading),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
