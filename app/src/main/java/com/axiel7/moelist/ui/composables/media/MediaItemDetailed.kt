@@ -1,6 +1,5 @@
 package com.axiel7.moelist.ui.composables.media
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -20,7 +18,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -69,9 +66,7 @@ fun MediaItemDetailed(
                 if (badgeContent != null) {
                     Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(topEnd = 12.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .padding(8.dp)
                             .align(Alignment.BottomStart),
                         verticalAlignment = Alignment.CenterVertically,
                         content = badgeContent
@@ -80,9 +75,7 @@ fun MediaItemDetailed(
                 if (topBadgeContent != null) {
                     Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(bottomEnd = 12.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .padding(8.dp)
                             .align(Alignment.TopStart),
                         verticalAlignment = Alignment.CenterVertically,
                         content = topBadgeContent

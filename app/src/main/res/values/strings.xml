@@ -54,6 +54,11 @@
     <string name="today">Today</string>
     <string name="nothing_today">Nothing today\n( ≧Д≦)</string>
     <string name="this_season">This Season</string>
+    <string name="discover">Discover</string>
+    <string name="top_rated">Top rated</string>
+    <string name="top_manga">Top manga</string>
+    <string name="weekly_schedule">Weekly schedule</string>
+    <string name="see_all">See all</string>
     <string name="recommendations">Recommendations</string>
     <string name="total_entries">Total: %s</string>
     <string name="anime_count">%d Anime</string>

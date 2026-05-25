@@ -14,7 +14,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -40,6 +40,7 @@ import com.axiel7.moelist.ui.composables.OnBottomReached
 import com.axiel7.moelist.ui.composables.TextIconHorizontal
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailed
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailedPlaceholder
+import com.axiel7.moelist.ui.composables.media.PosterStatusBadge
 import com.axiel7.moelist.ui.ranking.MediaRankingEvent
 import com.axiel7.moelist.ui.ranking.MediaRankingUiState
 import com.axiel7.moelist.ui.ranking.MediaRankingViewModel
@@ -95,21 +96,20 @@ private fun MediaRankingListViewContent(
             title = item.node.userPreferredTitle(),
             imageUrl = item.node.mainPicture?.large,
             topBadgeContent = {
-                Text(
-                    text = "#${item.ranking?.rank}",
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            badgeContent = item.node.myListStatus?.status?.let { status ->
-                {
-                    Icon(
-                        imageVector = status.icon,
-                        contentDescription = status.localized(),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(16.dp)
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.85f),
+                ) {
+                    Text(
+                        text = "#${item.ranking?.rank}",
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            },
+            badgeContent = item.node.myListStatus?.status?.let { status ->
+                { PosterStatusBadge(status = status, iconSize = 20.dp) }
             },
             subtitle1 = {
                 Text(

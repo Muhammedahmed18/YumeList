@@ -1,10 +1,8 @@
 package com.axiel7.moelist.ui.search
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -21,7 +19,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -32,8 +29,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -55,10 +50,12 @@ import com.axiel7.moelist.ui.composables.LoadingState
 import com.axiel7.moelist.ui.composables.OnBottomReached
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailed
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailedPlaceholder
+import com.axiel7.moelist.ui.composables.media.PosterStatusBadge
+import com.axiel7.moelist.ui.composables.score.InlineScoreIndicator
+import com.axiel7.moelist.ui.composables.score.PersonalScoreBadge
 import com.axiel7.moelist.utils.ContextExtensions.showToast
 import com.axiel7.moelist.utils.DateUtils.parseDateAndLocalize
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrNull
-import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrUnknown
 import com.axiel7.moelist.utils.UNKNOWN_CHAR
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -166,42 +163,10 @@ fun SearchViewContent(
             title = item.node.userPreferredTitle(),
             imageUrl = item.node.mainPicture?.large,
             topBadgeContent = if (userScore > 0) {
-                {
-                    Box(
-                        modifier = Modifier
-                            .padding(4.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.9f))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = userScore.toString(),
-                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
-                            Icon(
-                                painter = painterResource(R.drawable.ic_round_star_16),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .padding(start = 2.dp)
-                                    .size(10.dp),
-                                tint = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
-                        }
-                    }
-                }
+                { PersonalScoreBadge(score = userScore) }
             } else null,
             badgeContent = item.node.myListStatus?.status?.let { status ->
-                {
-                    Icon(
-                        imageVector = status.icon,
-                        contentDescription = status.localized(),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
+                { PosterStatusBadge(status = status, iconSize = 20.dp) }
             },
             subtitle1 = {
                 Text(
@@ -231,21 +196,7 @@ fun SearchViewContent(
             },
             subtitle3 = {
                 if (!uiState.hideScore) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_round_details_star_24),
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp),
-                            tint = Color(0xFFFFB300)
-                        )
-                        Text(
-                            text = item.node.mean.toStringPositiveValueOrUnknown(),
-                            modifier = Modifier.padding(start = 4.dp),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
+                    InlineScoreIndicator(score = item.node.mean)
                 }
             },
             onClick = dropUnlessResumed {
