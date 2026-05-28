@@ -18,6 +18,7 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.ContextCompat
 import com.axiel7.moelist.BuildConfig
 import com.axiel7.moelist.R
+import java.util.Locale
 
 object ContextExtensions {
 
@@ -27,6 +28,15 @@ object ContextExtensions {
 
     fun Context.showToast(@StringRes stringRes: Int) {
         showToast(getString(stringRes))
+    }
+
+    fun Context.getCurrentLanguageTag(): String? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            resources.configuration.locales[0].toLanguageTag()
+        } else {
+            @Suppress("DEPRECATION")
+            resources.configuration.locale.toLanguageTag()
+        }
     }
 
     fun Context.openAction(uri: String) {

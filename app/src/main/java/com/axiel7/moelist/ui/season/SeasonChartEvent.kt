@@ -1,5 +1,6 @@
 package com.axiel7.moelist.ui.season
 
+import com.axiel7.moelist.data.model.anime.MyAnimeListStatus
 import com.axiel7.moelist.data.model.anime.Season
 import com.axiel7.moelist.data.model.anime.SeasonType
 import com.axiel7.moelist.data.model.media.MediaFormat
@@ -13,4 +14,6 @@ interface SeasonChartEvent : PagedUiEvent {
     fun onChangeIsNew(value: Boolean)
     fun onChangeFormat(value: MediaFormat?)
     fun onApplyFilters()
+    fun onQuickAddPlanToWatch(animeId: Int)
+    fun getMyListStatusOf(animeId: Int): MyAnimeListStatus?
 }

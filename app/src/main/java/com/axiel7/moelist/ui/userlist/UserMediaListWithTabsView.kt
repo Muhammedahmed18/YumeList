@@ -171,7 +171,6 @@ fun UserMediaListWithTabsView(
                         sheetState = editSheetState,
                         mediaInfo = uiState.mediaInfo!!,
                         myListStatus = uiState.myListStatus,
-                        bottomPadding = systemBarsPadding.calculateBottomPadding(),
                         onEdited = { status, removed ->
                             hideEditSheet {
                                 viewModel.onChangeItemMyListStatus(status, removed)

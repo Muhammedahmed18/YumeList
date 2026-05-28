@@ -19,6 +19,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -45,6 +46,38 @@ fun TextIconHorizontal(
     ) {
         Icon(
             painter = painterResource(icon),
+            contentDescription = text,
+            modifier = Modifier
+                .padding(end = 4.dp)
+                .size(iconSize),
+            tint = color
+        )
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 4.dp),
+            color = color,
+            fontSize = fontSize,
+            style = style
+        )
+    }
+}
+
+@Composable
+fun TextIconHorizontal(
+    text: String,
+    imageVector: ImageVector,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    fontSize: TextUnit = TextUnit.Unspecified,
+    iconSize: Dp = 24.dp,
+    style: TextStyle = MaterialTheme.typography.bodyLarge,
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = imageVector,
             contentDescription = text,
             modifier = Modifier
                 .padding(end = 4.dp)
@@ -93,6 +126,38 @@ fun TextIconVertical(
     }
 }
 
+@Composable
+fun TextIconVertical(
+    text: String,
+    imageVector: ImageVector,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    fontSize: TextUnit = TextUnit.Unspecified,
+    style: TextStyle = MaterialTheme.typography.bodyLarge,
+    isLoading: Boolean = false,
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = imageVector,
+            contentDescription = text,
+            modifier = Modifier.padding(4.dp),
+            tint = color
+        )
+        Text(
+            text = text,
+            modifier = Modifier
+                .padding(horizontal = 4.dp)
+                .defaultPlaceholder(visible = isLoading),
+            color = color,
+            fontSize = fontSize,
+            style = style
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TextIconVertical(
@@ -120,6 +185,42 @@ fun TextIconVertical(
         TextIconVertical(
             text = text,
             icon = icon,
+            modifier = modifier.clickable { scope.launch { tooltipState.show() } },
+            color = color,
+            fontSize = fontSize,
+            style = style,
+            isLoading = isLoading
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TextIconVertical(
+    text: String,
+    imageVector: ImageVector,
+    modifier: Modifier = Modifier,
+    tooltip: String,
+    color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    fontSize: TextUnit = TextUnit.Unspecified,
+    style: TextStyle = MaterialTheme.typography.bodyLarge,
+    isLoading: Boolean = false,
+) {
+    val tooltipState = rememberTooltipState()
+    val scope = rememberCoroutineScope()
+
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        tooltip = {
+            PlainTooltip {
+                Text(text = tooltip)
+            }
+        },
+        state = tooltipState
+    ) {
+        TextIconVertical(
+            text = text,
+            imageVector = imageVector,
             modifier = modifier.clickable { scope.launch { tooltipState.show() } },
             color = color,
             fontSize = fontSize,

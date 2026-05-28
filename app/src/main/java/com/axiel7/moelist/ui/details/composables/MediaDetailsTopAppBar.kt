@@ -6,9 +6,9 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.NotificationsOff
-import androidx.compose.material.icons.rounded.OpenInBrowser
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -49,8 +49,8 @@ fun MediaDetailsTopAppBar(
     event: MediaDetailsEvent?,
     scrollBehavior: TopAppBarScrollBehavior,
     navigateBack: () -> Unit,
-    onMalClick: () -> Unit = {},
-    onShareClick: () -> Unit = {},
+    onOpenClick: () -> Unit,
+    onShareClick: () -> Unit,
 ) {
     val context = LocalContext.current
     val isPreview = LocalInspectionMode.current
@@ -111,18 +111,15 @@ fun MediaDetailsTopAppBar(
             )
         } else null
 
+    // With a regular (pinned/enterAlways) TopAppBar the bar height is fixed, so we
+    // drive the title + color reveal off how much content has scrolled under the bar.
     val isScrolled by remember {
-        derivedStateOf { scrollBehavior.state.contentOffset < -120f }
+        derivedStateOf { scrollBehavior.state.overlappedFraction > 0.01f }
     }
 
     val titleAlpha by animateFloatAsState(
         targetValue = if (isScrolled) 1f else 0f,
         label = "titleAlpha"
-    )
-
-    val backgroundColor by animateColorAsState(
-        targetValue = if (isScrolled) MaterialTheme.colorScheme.surface else Color.Transparent,
-        label = "appBarBackgroundColor"
     )
 
     val contentColor by animateColorAsState(
@@ -138,8 +135,7 @@ fun MediaDetailsTopAppBar(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
+                fontWeight = FontWeight.SemiBold
             )
         },
         navigationIcon = {
@@ -152,6 +148,20 @@ fun MediaDetailsTopAppBar(
             }
         },
         actions = {
+            IconButton(onClick = onOpenClick) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
+                    contentDescription = stringResource(R.string.view_on_mal),
+                    tint = contentColor
+                )
+            }
+            IconButton(onClick = onShareClick) {
+                Icon(
+                    imageVector = Icons.Rounded.Share,
+                    contentDescription = stringResource(R.string.share),
+                    tint = contentColor
+                )
+            }
             if (uiState.mediaDetails?.status == MediaStatus.AIRING
                 || uiState.mediaDetails?.status == MediaStatus.NOT_AIRED
             ) {
@@ -172,24 +182,13 @@ fun MediaDetailsTopAppBar(
                     )
                 }
             }
-            IconButton(onClick = onMalClick) {
-                Icon(
-                    imageVector = Icons.Rounded.OpenInBrowser,
-                    contentDescription = stringResource(R.string.view_on_mal),
-                    tint = contentColor
-                )
-            }
-            IconButton(onClick = onShareClick) {
-                Icon(
-                    imageVector = Icons.Rounded.Share,
-                    contentDescription = stringResource(R.string.share),
-                    tint = contentColor
-                )
-            }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = backgroundColor,
-            scrolledContainerColor = MaterialTheme.colorScheme.surface
+            containerColor = Color.Transparent,
+            scrolledContainerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            navigationIconContentColor = contentColor,
+            actionIconContentColor = contentColor
         ),
         scrollBehavior = scrollBehavior
     )

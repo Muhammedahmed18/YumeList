@@ -19,13 +19,16 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.EventBusy
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,6 +38,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -48,8 +52,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -57,6 +64,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
 import com.axiel7.moelist.R
+import com.axiel7.moelist.data.model.anime.AnimeSeasonal
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.BackIconButton
@@ -67,6 +75,7 @@ import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_SMALL_WIDTH
 import com.axiel7.moelist.ui.composables.media.MediaItemVertical
 import com.axiel7.moelist.ui.composables.media.PosterStatusBadge
 import com.axiel7.moelist.ui.composables.score.PosterScoreChip
+import com.axiel7.moelist.ui.editmedia.EditMediaSheet
 import com.axiel7.moelist.ui.season.composables.SeasonChartFilterSheet
 import com.axiel7.moelist.ui.season.composables.SeasonChartFormatSheet
 import com.axiel7.moelist.ui.theme.MoeListTheme
@@ -97,6 +106,7 @@ private fun SeasonChartViewContent(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val haptic = LocalHapticFeedback.current
 
     val filterSheetState = rememberModalBottomSheetState()
     var showFilterSheet by remember { mutableStateOf(false) }
@@ -108,6 +118,12 @@ private fun SeasonChartViewContent(
     var showFormatSheet by remember { mutableStateOf(false) }
     fun hideFormatSheet() {
         scope.launch { formatSheetState.hide() }.invokeOnCompletion { showFormatSheet = false }
+    }
+
+    val editSheetState = rememberModalBottomSheetState()
+    var selectedAnimeForEdit by remember { mutableStateOf<AnimeSeasonal?>(null) }
+    fun hideEditSheet() {
+        scope.launch { editSheetState.hide() }.invokeOnCompletion { selectedAnimeForEdit = null }
     }
 
     val bottomBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -133,6 +149,16 @@ private fun SeasonChartViewContent(
             event = event,
             onDismiss = { hideFormatSheet() },
             sheetState = formatSheetState
+        )
+    }
+
+    selectedAnimeForEdit?.let { anime ->
+        EditMediaSheet(
+            sheetState = editSheetState,
+            mediaInfo = anime.node,
+            myListStatus = event?.getMyListStatusOf(anime.node.id),
+            onEdited = { _, _ -> hideEditSheet() },
+            onDismissed = { hideEditSheet() }
         )
     }
 
@@ -274,24 +300,53 @@ private fun SeasonChartViewContent(
                                 key = { it.node.id }
                             ) { item ->
                                 val score = item.node.mean
+                                val listStatus = item.node.myListStatus?.status
+                                val hasScore = score != null && score > 0f
                                 MediaItemVertical(
                                     imageUrl = item.node.mainPicture?.large,
                                     title = item.node.userPreferredTitle(),
-                                    badgeContent = item.node.myListStatus?.status?.let { status ->
+                                    badgeContent = listStatus?.let { status ->
                                         { PosterStatusBadge(status) }
                                     },
-                                    posterOverlay = if (score != null && score > 0f) {
-                                        {
+                                    posterOverlay = {
+                                        if (hasScore) {
                                             PosterScoreChip(
-                                                score = score,
+                                                score = score!!,
                                                 modifier = Modifier
                                                     .padding(8.dp)
                                                     .align(Alignment.BottomStart)
                                             )
                                         }
-                                    } else null,
+                                        if (listStatus == null) {
+                                            Surface(
+                                                modifier = Modifier
+                                                    .padding(8.dp)
+                                                    .align(Alignment.TopEnd)
+                                                    .clip(RoundedCornerShape(12.dp))
+                                                    .clickable {
+                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                        event?.onQuickAddPlanToWatch(item.node.id)
+                                                    },
+                                                shape = RoundedCornerShape(12.dp),
+                                                color = MaterialTheme.colorScheme.primary,
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Add,
+                                                    contentDescription = stringResource(R.string.add),
+                                                    modifier = Modifier
+                                                        .padding(4.dp)
+                                                        .size(16.dp),
+                                                    tint = MaterialTheme.colorScheme.onPrimary
+                                                )
+                                            }
+                                        }
+                                    },
                                     onClick = dropUnlessResumed {
                                         navActionManager?.toMediaDetails(MediaType.ANIME, item.node.id)
+                                    },
+                                    onLongClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        selectedAnimeForEdit = item
                                     }
                                 )
                             }

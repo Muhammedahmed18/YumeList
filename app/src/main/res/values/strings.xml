@@ -38,6 +38,11 @@
         <item quantity="one">%d chapter</item>
         <item quantity="other">%d chapters</item>
     </plurals>
+    <plurals name="num_tracks">
+        <item quantity="one">%d track</item>
+        <item quantity="other">%d tracks</item>
+    </plurals>
+    <string name="show_all_count">Show all %1$d ›</string>
     <string name="delete">Delete</string>
     <string name="watching">Watching</string>
     <string name="reading">Reading</string>
@@ -76,6 +81,11 @@
     <string name="members">Members</string>
     <string name="users_scores">Users scores</string>
     <string name="popularity">Popularity</string>
+    <string name="score">Score</string>
+    <string name="ranked">Ranked</string>
+    <string name="community">Community</string>
+    <string name="sign_in_to_track">Sign in to track</string>
+    <string name="add_to_list">Add to list</string>
     <string name="error_server">Error connecting to server</string>
     <string name="tv">TV</string>
     <string name="ova">OVA</string>
@@ -212,6 +222,8 @@
     <string name="discontinued">Discontinued</string>
     <string name="opening">Opening Themes</string>
     <string name="ending">Ending Themes</string>
+    <string name="openings">Openings</string>
+    <string name="endings">Endings</string>
     <string name="copied">Copied!</string>
     <string name="login_browser_warning">Try with another browser if you can\'t login.</string>
     <string name="parent_story">Parent story</string>

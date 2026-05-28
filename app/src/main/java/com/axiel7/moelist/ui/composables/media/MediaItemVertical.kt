@@ -7,8 +7,9 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
@@ -44,6 +45,7 @@ import com.axiel7.moelist.ui.theme.MoeListTheme
 
 const val MEDIA_ITEM_VERTICAL_HEIGHT = 220
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MediaItemVertical(
     title: String,
@@ -55,6 +57,7 @@ fun MediaItemVertical(
     subtitle2: @Composable (() -> Unit)? = null,
     minLines: Int = 1,
     onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -69,10 +72,11 @@ fun MediaItemVertical(
                 scaleY = scale
             }
             .clip(RoundedCornerShape(24.dp))
-            .clickable(
+            .combinedClickable(
                 interactionSource = interactionSource,
                 indication = null,
-                onClick = onClick
+                onClick = onClick,
+                onLongClick = onLongClick
             ),
         horizontalAlignment = Alignment.Start
     ) {

@@ -1,10 +1,12 @@
 package com.axiel7.moelist.ui.season
 
 import androidx.lifecycle.viewModelScope
+import com.axiel7.moelist.data.model.anime.MyAnimeListStatus
 import com.axiel7.moelist.data.model.anime.Season
 import com.axiel7.moelist.data.model.anime.SeasonType
 import com.axiel7.moelist.data.model.anime.StartSeason
 import com.axiel7.moelist.data.model.media.BasicMyListStatus
+import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.MediaFormat
 import com.axiel7.moelist.data.model.media.MediaSort
 import com.axiel7.moelist.data.repository.AnimeRepository
@@ -67,6 +69,24 @@ class SeasonChartViewModel(
 
     override fun onApplyFilters() {
         fetchFullSeason()
+    }
+
+    override fun onQuickAddPlanToWatch(animeId: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = animeRepository.updateAnimeEntry(
+                animeId = animeId,
+                status = ListStatus.PLAN_TO_WATCH
+            )
+            if (result == null) {
+                mutableUiState.update { it.copy(message = "Failed to add to list") }
+            }
+        }
+    }
+
+    override fun getMyListStatusOf(animeId: Int): MyAnimeListStatus? {
+        return animeRepository.userAnimeList.value
+            .find { it.node.id == animeId }
+            ?.listStatus
     }
 
     private fun fetchFullSeason() {

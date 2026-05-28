@@ -1,12 +1,17 @@
 package com.axiel7.moelist.ui.details
 
-import android.content.ClipData
-import android.content.Intent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,56 +26,59 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.automirrored.rounded.TrendingUp
-import androidx.compose.material.icons.rounded.AccessTime
+import androidx.compose.material.icons.rounded.Abc
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.Book
-import androidx.compose.material.icons.rounded.CalendarToday
-import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.Bookmark
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Group
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Movie
 import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.Spellcheck
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.RssFeed
+import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.ThumbsUpDown
+import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Translate
-import androidx.compose.material.icons.rounded.WbSunny
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.ListItem
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
@@ -84,45 +92,44 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.ClipEntry
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
-import androidx.navigation.compose.rememberNavController
-import coil3.compose.AsyncImage
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.anime.AnimeDetails
 import com.axiel7.moelist.data.model.anime.RelatedAnime
 import com.axiel7.moelist.data.model.manga.MangaDetails
-import com.axiel7.moelist.data.model.media.BaseRelated
-import com.axiel7.moelist.data.model.media.Character
-import com.axiel7.moelist.data.model.media.MediaFormat
+import com.axiel7.moelist.data.model.manga.RelatedManga
 import com.axiel7.moelist.data.model.media.MediaStatus
 import com.axiel7.moelist.data.model.media.MediaType
-import com.axiel7.moelist.data.model.media.Stat
+import com.axiel7.moelist.data.model.media.RelationType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
+import com.axiel7.moelist.ui.composables.InfoTitle
+import com.axiel7.moelist.ui.composables.TextIconVertical
 import com.axiel7.moelist.ui.composables.defaultPlaceholder
 import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_BIG_HEIGHT
 import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_BIG_WIDTH
+import com.axiel7.moelist.ui.composables.media.MediaItemVertical
 import com.axiel7.moelist.ui.composables.media.MediaPoster
 import com.axiel7.moelist.ui.details.composables.MediaDetailsTopAppBar
 import com.axiel7.moelist.ui.details.composables.MediaInfoView
 import com.axiel7.moelist.ui.details.composables.MusicStreamingSheet
 import com.axiel7.moelist.ui.editmedia.EditMediaSheet
+import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.utils.CHARACTER_URL
+import com.axiel7.moelist.utils.ContextExtensions.copyToClipBoard
 import com.axiel7.moelist.utils.ContextExtensions.openLink
 import com.axiel7.moelist.utils.ContextExtensions.showToast
 import com.axiel7.moelist.utils.DateUtils.parseDateAndLocalize
@@ -132,20 +139,6 @@ import com.axiel7.moelist.utils.UNKNOWN_CHAR
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
-// ============================================
-// SPACING TOKENS
-// ============================================
-private val PageHorizontalPadding = 24.dp
-private val SectionVerticalSpacing = 20.dp
-private val CardPadding = 20.dp
-private val CardRadius = 24.dp
-private val ButtonHeight = 48.dp
-private val ButtonRadius = 24.dp
-private val TopAppBarOverlayHeight = 64.dp
-
-// ============================================
-// MAIN ENTRY POINT
-// ============================================
 @Composable
 fun MediaDetailsView(
     isLoggedIn: Boolean,
@@ -162,10 +155,7 @@ fun MediaDetailsView(
     )
 }
 
-// ============================================
-// ROOT CONTENT
-// ============================================
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 private fun MediaDetailsContent(
     uiState: MediaDetailsUiState,
@@ -174,46 +164,40 @@ private fun MediaDetailsContent(
     navActionManager: NavActionManager
 ) {
     val context = LocalContext.current
+
     val scrollState = rememberScrollState()
     val topAppBarScrollBehavior =
         TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val scope = rememberCoroutineScope()
+
     val sheetState = rememberModalBottomSheetState()
     var showSheet by remember { mutableStateOf(false) }
-
-    fun hideSheet(onComplete: () -> Unit = {}) {
-        scope.launch { sheetState.hide() }.invokeOnCompletion {
-            showSheet = false
-            onComplete()
-        }
-    }
-
-    fun shareMediaUrl() {
-        val url = uiState.mediaDetails?.malUrl.orEmpty()
-        if (url.isNotEmpty()) {
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_TEXT, url)
-            }
-            context.startActivity(Intent.createChooser(intent, null))
-        }
+    fun hideSheet() {
+        scope.launch { sheetState.hide() }.invokeOnCompletion { showSheet = false }
     }
 
     val bottomBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
     var isSynopsisExpanded by remember { mutableStateOf(false) }
     val maxLinesSynopsis by remember {
         derivedStateOf { if (isSynopsisExpanded) Int.MAX_VALUE else 6 }
     }
 
-    LaunchedEffect(uiState.isAnime, uiState.isLoading, uiState.characters.isEmpty()) {
-        if (uiState.isAnime
-            && !uiState.isLoading
-            && uiState.characters.isEmpty()
-            && !uiState.isLoadingCharacters
-        ) {
-            event?.getCharacters()
-        }
-    }
+    // Theme sheets
+    var showThemesSheet by remember { mutableStateOf(false) }
+    var themesSheetTitle by remember { mutableStateOf("") }
+    var themesSheetItems by remember { mutableStateOf<List<String>>(emptyList()) }
+    val themesSheetState = rememberModalBottomSheetState()
+
+    // Music streaming (per-song)
+    var showMusicSheet by remember { mutableStateOf(false) }
+    var selectedSong by remember { mutableStateOf<String?>(null) }
+
+    // Pre-calculate strings to avoid Context.getString lint in Composable
+    val pleaseLoginMessage = stringResource(R.string.please_login_to_use_this_feature)
+    val openingLabel = stringResource(R.string.opening)
+    val endingLabel = stringResource(R.string.ending)
+    val copiedMessage = stringResource(R.string.copied)
 
     if (showSheet && uiState.mediaInfo != null) {
         EditMediaSheet(
@@ -222,11 +206,36 @@ private fun MediaDetailsContent(
             myListStatus = uiState.myListStatus,
             bottomPadding = bottomBarPadding,
             onEdited = { status, removed ->
-                hideSheet {
-                    event?.onChangedMyListStatus(status, removed)
-                }
+                hideSheet()
+                event?.onChangedMyListStatus(status, removed)
             },
             onDismissed = { hideSheet() }
+        )
+    }
+
+    if (showThemesSheet) {
+        ThemesSheet(
+            sheetState = themesSheetState,
+            title = themesSheetTitle,
+            themes = themesSheetItems,
+            bottomPadding = bottomBarPadding,
+            onThemeClick = { song ->
+                selectedSong = song
+                showThemesSheet = false
+                showMusicSheet = true
+            },
+            onDismiss = { showThemesSheet = false }
+        )
+    }
+
+    if (showMusicSheet && selectedSong != null) {
+        MusicStreamingSheet(
+            songTitle = selectedSong.orEmpty(),
+            bottomPadding = bottomBarPadding,
+            onDismiss = {
+                showMusicSheet = false
+                selectedSong = null
+            }
         )
     }
 
@@ -238,1290 +247,1010 @@ private fun MediaDetailsContent(
     }
 
     Scaffold(
-        modifier = Modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection)
-    ) { padding ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
-                    .padding(bottom = padding.calculateBottomPadding() + 24.dp),
-                verticalArrangement = Arrangement.spacedBy(SectionVerticalSpacing)
-            ) {
-                MediaDetailsSections(
-                    uiState = uiState,
-                    event = event,
-                    isLoggedIn = isLoggedIn,
-                    navActionManager = navActionManager,
-                    isSynopsisExpanded = isSynopsisExpanded,
-                    maxLinesSynopsis = maxLinesSynopsis,
-                    onToggleSynopsis = { isSynopsisExpanded = !isSynopsisExpanded },
-                    onShowEditSheet = { showSheet = true }
-                )
-            }
-
+        modifier = Modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
+        topBar = {
             MediaDetailsTopAppBar(
                 uiState = uiState,
                 event = event,
                 navigateBack = dropUnlessResumed { navActionManager.goBack() },
                 scrollBehavior = topAppBarScrollBehavior,
-                onMalClick = { context.openLink(uiState.mediaDetails?.malUrl.orEmpty()) },
-                onShareClick = { shareMediaUrl() },
-            )
-        }
-    }
-}
-
-// ============================================
-// SECTIONS ORCHESTRATOR
-// ============================================
-@Composable
-private fun MediaDetailsSections(
-    uiState: MediaDetailsUiState,
-    event: MediaDetailsEvent?,
-    isLoggedIn: Boolean,
-    navActionManager: NavActionManager,
-    isSynopsisExpanded: Boolean,
-    maxLinesSynopsis: Int,
-    onToggleSynopsis: () -> Unit,
-    onShowEditSheet: () -> Unit,
-) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        MediaHeaderSection(
-            uiState = uiState,
-            navActionManager = navActionManager,
-        )
-
-        MediaActionDock(
-            uiState = uiState,
-            isLoggedIn = isLoggedIn,
-            onEditClick = onShowEditSheet,
-        )
-
-        MediaGenresSection(uiState = uiState)
-    }
-
-    MediaSynopsisSection(
-        uiState = uiState,
-        isSynopsisExpanded = isSynopsisExpanded,
-        maxLinesSynopsis = maxLinesSynopsis,
-        onToggleSynopsis = onToggleSynopsis,
-    )
-    MediaProductionCard(uiState = uiState)
-    MediaTitlesCard(uiState = uiState)
-    MediaRelatedSection(
-        uiState = uiState,
-        navActionManager = navActionManager
-    )
-    MediaCharactersSection(uiState = uiState)
-    MediaThemesSection(uiState = uiState)
-    MediaCommunitySection(uiState = uiState)
-}
-
-// ============================================
-// HEADER SECTION
-// ============================================
-@Composable
-private fun MediaHeaderSection(
-    uiState: MediaDetailsUiState,
-    navActionManager: NavActionManager,
-) {
-    val topPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                top = topPadding + TopAppBarOverlayHeight,
-                start = PageHorizontalPadding,
-                end = PageHorizontalPadding
-            ),
-        horizontalArrangement = Arrangement.spacedBy(20.dp),
-        verticalAlignment = Alignment.Top
-    ) {
-        Box(
-            modifier = Modifier
-                .size(
-                    width = (MEDIA_POSTER_BIG_WIDTH * 0.9).dp,
-                    height = (MEDIA_POSTER_BIG_HEIGHT * 0.9).dp
-                )
-                .defaultPlaceholder(visible = uiState.isLoading)
-                .clip(RoundedCornerShape(20.dp))
-                .clickable(onClick = dropUnlessResumed {
-                    if (uiState.picturesUrls.isNotEmpty()) {
-                        navActionManager.toFullPoster(uiState.picturesUrls)
+                onOpenClick = {
+                    uiState.mediaDetails?.let { details ->
+                        val type = if (uiState.isAnime) "anime" else "manga"
+                        context.openLink("https://myanimelist.net/$type/${details.id}")
                     }
-                })
-        ) {
-            MediaPoster(
-                url = uiState.mediaDetails?.mainPicture?.large,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            MediaTitleHeading(uiState = uiState)
-            MediaMetaStrip(uiState = uiState)
-            if (!uiState.hideScore) {
-                ScoreBlock(
-                    score = uiState.mediaDetails?.mean,
-                    scoringUsers = uiState.mediaDetails?.numScoringUsers,
-                    isLoading = uiState.isLoading
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun MediaTitleHeading(uiState: MediaDetailsUiState) {
-    val context = LocalContext.current
-    val clipboard = LocalClipboard.current
-    val scope = rememberCoroutineScope()
-    val title = uiState.mediaDetails?.userPreferredTitle().orEmpty()
-
-    Text(
-        text = title,
-        modifier = Modifier
-            .fillMaxWidth()
-            .defaultPlaceholder(visible = uiState.isLoading)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null
-            ) {
-                if (title.isNotEmpty()) {
-                    scope.launch {
-                        clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("title", title)))
+                },
+                onShareClick = {
+                    uiState.mediaDetails?.let { details ->
+                        val type = if (uiState.isAnime) "anime" else "manga"
+                        context.shareText("https://myanimelist.net/$type/${details.id}")
                     }
-                    context.showToast(R.string.copied)
-                }
-            },
-        style = MaterialTheme.typography.headlineSmall,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onSurface,
-        maxLines = 4,
-        overflow = TextOverflow.Ellipsis,
-        lineHeight = 28.sp
-    )
-}
-
-@Composable
-private fun MediaMetaStrip(uiState: MediaDetailsUiState) {
-    val details = uiState.mediaDetails
-    val parts = buildList {
-        details?.mediaFormat?.localized()?.let { add(it) }
-        details?.startYear?.let { add(it) }
-        (details as? AnimeDetails)?.startSeason?.seasonYearText()?.let { add(it) }
-        val total = when (details) {
-            is AnimeDetails -> details.numEpisodes?.takeIf { it > 0 }?.let { count ->
-                "$count " + if (count == 1) stringResource(R.string.episode)
-                else stringResource(R.string.episodes)
-            }
-            is MangaDetails -> details.numChapters?.takeIf { it > 0 }?.let { count ->
-                "$count " + if (count == 1) stringResource(R.string.chapter)
-                else stringResource(R.string.chapters)
-            }
-            else -> null
-        }
-        total?.let { add(it) }
-        details?.status?.localized()?.let { add(it) }
-    }
-
-    Text(
-        text = if (uiState.isLoading) "Loading metadata"
-        else parts.joinToString(" · ").ifEmpty { "—" },
-        modifier = Modifier
-            .fillMaxWidth()
-            .defaultPlaceholder(visible = uiState.isLoading),
-        style = MaterialTheme.typography.labelLarge,
-        fontWeight = FontWeight.Medium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 2,
-        overflow = TextOverflow.Ellipsis,
-        lineHeight = 18.sp,
-    )
-}
-
-@Composable
-private fun ScoreBlock(
-    score: Float?,
-    scoringUsers: Int?,
-    isLoading: Boolean,
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.defaultPlaceholder(visible = isLoading)
-    ) {
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f),
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Text(
-                    text = score?.toStringOrNull() ?: "??",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-                Text(
-                    text = "/10",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
-                    modifier = Modifier.padding(bottom = 3.dp)
-                )
-            }
-        }
-        if (scoringUsers != null && scoringUsers > 0) {
-            Text(
-                text = stringResource(R.string.ratings_count, scoringUsers.format().orEmpty()),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                },
             )
         }
-    }
-}
-
-// ============================================
-// ACTION DOCK (Option A: just Add/Edit, full width)
-// ============================================
-@Composable
-private fun MediaActionDock(
-    uiState: MediaDetailsUiState,
-    isLoggedIn: Boolean,
-    onEditClick: () -> Unit,
-) {
-    val context = LocalContext.current
-
-    Button(
-        onClick = {
-            if (isLoggedIn) onEditClick()
-            else context.showToast(R.string.please_login_to_use_this_feature)
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = PageHorizontalPadding)
-            .height(ButtonHeight),
-        shape = RoundedCornerShape(ButtonRadius),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary
-        )
-    ) {
-        Icon(
-            imageVector = if (uiState.isNewEntry) Icons.Rounded.Add else Icons.Rounded.Edit,
-            contentDescription = null,
-            modifier = Modifier.size(20.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        val btnText = if (uiState.isNewEntry) stringResource(R.string.add)
-        else uiState.mediaDetails?.myListStatus?.status?.localized() ?: stringResource(R.string.edit)
-        Text(
-            text = btnText,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
-}
-
-// ============================================
-// GENRES SECTION
-// ============================================
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun MediaGenresSection(uiState: MediaDetailsUiState) {
-    val genres = uiState.mediaDetails?.genres ?: return
-    if (genres.isEmpty()) return
-
-    FlowRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = PageHorizontalPadding),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        genres.forEach { genre ->
-            SuggestionChip(
-                onClick = { },
-                label = {
-                    Text(
-                        text = genre.localized(),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Medium,
-                    )
-                }
-            )
-        }
-    }
-}
-
-// ============================================
-// SYNOPSIS SECTION
-// ============================================
-@Composable
-private fun MediaSynopsisSection(
-    uiState: MediaDetailsUiState,
-    isSynopsisExpanded: Boolean,
-    maxLinesSynopsis: Int,
-    onToggleSynopsis: () -> Unit,
-) {
-    val synopsisAndBackground = uiState.mediaDetails?.synopsisAndBackground()
-    if (uiState.isLoading || !synopsisAndBackground.isNullOrEmpty()) {
+    ) { padding ->
         Column(
             modifier = Modifier
-                .padding(horizontal = PageHorizontalPadding)
+                .verticalScroll(scrollState)
+                .padding(padding)
+                .padding(bottom = bottomBarPadding + 16.dp)
         ) {
-            Text(
-                text = stringResource(R.string.synopsis),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
-            Box(modifier = Modifier.fillMaxWidth()) {
-                SelectionContainer {
-                    Text(
-                        text = synopsisAndBackground
-                            ?: AnnotatedString(stringResource(R.string.lorem_ipsun)),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .defaultPlaceholder(visible = uiState.isLoading)
-                            .animateContentSize(),
-                        style = MaterialTheme.typography.bodyLarge,
-                        lineHeight = 28.sp,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = maxLinesSynopsis,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
-                    )
-                }
-            }
-
-            if (!uiState.isLoading) {
-                TextButton(
-                    onClick = { onToggleSynopsis() },
-                    modifier = Modifier.align(Alignment.End)
-                ) {
-                    Text(
-                        text = if (isSynopsisExpanded) stringResource(R.string.show_less)
-                        else stringResource(R.string.show_more),
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-        }
-    }
-}
-
-// ============================================
-// PRODUCTION CARD (was "More Info")
-// ============================================
-@Composable
-private fun MediaProductionCard(uiState: MediaDetailsUiState) {
-    val details = uiState.mediaDetails ?: return
-
-    ElevatedCard(
-        modifier = Modifier
-            .padding(horizontal = PageHorizontalPadding)
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(CardRadius),
-    ) {
-        Column(
-            modifier = Modifier.padding(CardPadding),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.more_info),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            if (details is AnimeDetails) {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    MediaInfoView(
-                        title = stringResource(R.string.duration),
-                        info = details.episodeDurationLocalized(),
-                        iconVector = Icons.Rounded.AccessTime,
-                        modifier = Modifier.weight(1f)
-                    )
-                    MediaInfoView(
-                        title = stringResource(R.string.source),
-                        info = details.source?.localized()
-                            ?: stringResource(R.string.unknown),
-                        iconVector = Icons.AutoMirrored.Rounded.MenuBook,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            } else if (details is MangaDetails) {
-                val volumes = details.numVolumes
-                MediaInfoView(
-                    title = stringResource(R.string.volumes),
-                    info = if (volumes == null || volumes == 0) "-" else volumes.toString(),
-                    iconVector = Icons.Rounded.Book,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-            )
-
-            Row(modifier = Modifier.fillMaxWidth()) {
-                MediaInfoView(
-                    title = stringResource(R.string.start_date),
-                    info = details.startDate?.parseDateAndLocalize(),
-                    iconVector = Icons.Rounded.CalendarToday,
-                    modifier = Modifier.weight(1f)
-                )
-                MediaInfoView(
-                    title = stringResource(R.string.end_date),
-                    info = details.endDate?.parseDateAndLocalize(),
-                    iconVector = Icons.Rounded.CalendarToday,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            if (details is AnimeDetails) {
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                )
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    MediaInfoView(
-                        title = stringResource(R.string.season),
-                        info = details.startSeason?.seasonYearText(),
-                        iconVector = Icons.Rounded.WbSunny,
-                        modifier = Modifier.weight(1f)
-                    )
-                    MediaInfoView(
-                        title = stringResource(R.string.studios),
-                        info = uiState.studiosJoined,
-                        iconVector = Icons.Rounded.Movie,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            } else if (details is MangaDetails) {
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                )
-                MediaInfoView(
-                    title = stringResource(R.string.authors),
-                    info = details.authors
-                        ?.joinToString { "${it.node.firstName} ${it.node.lastName}" },
-                    iconVector = Icons.Rounded.Person,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-    }
-}
-
-// ============================================
-// TITLES CARD
-// ============================================
-@Composable
-private fun MediaTitlesCard(uiState: MediaDetailsUiState) {
-    val englishTitle = uiState.mediaDetails?.alternativeTitles?.en
-    val japaneseTitle = uiState.mediaDetails?.alternativeTitles?.ja
-    val romajiTitle = uiState.mediaDetails?.title
-    val hasAltTitles = !englishTitle.isNullOrBlank()
-            || !japaneseTitle.isNullOrBlank()
-            || !romajiTitle.isNullOrBlank()
-    if (!hasAltTitles) return
-
-    ElevatedCard(
-        modifier = Modifier
-            .padding(horizontal = PageHorizontalPadding)
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(CardRadius),
-    ) {
-        Column(
-            modifier = Modifier.padding(CardPadding),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.title_language),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-
-            if (!englishTitle.isNullOrBlank()) {
-                CopyableTitleRow(
-                    label = stringResource(R.string.english),
-                    value = englishTitle,
-                    icon = Icons.Rounded.Language
-                )
-            }
-            if (!japaneseTitle.isNullOrBlank()) {
-                CopyableTitleRow(
-                    label = stringResource(R.string.japanese),
-                    value = japaneseTitle,
-                    icon = Icons.Rounded.Translate
-                )
-            }
-            if (!romajiTitle.isNullOrBlank()) {
-                CopyableTitleRow(
-                    label = stringResource(R.string.romaji),
-                    value = romajiTitle,
-                    icon = Icons.Rounded.Spellcheck
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CopyableTitleRow(
-    label: String,
-    value: String,
-    icon: ImageVector,
-) {
-    val context = LocalContext.current
-    val clipboard = LocalClipboard.current
-    val scope = rememberCoroutineScope()
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        MediaInfoView(
-            title = label,
-            info = value,
-            iconVector = icon,
-            modifier = Modifier.weight(1f)
-        )
-        IconButton(
-            onClick = {
-                scope.launch {
-                    clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(label, value)))
-                }
-                context.showToast(R.string.copied)
-            }
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.ContentCopy,
-                contentDescription = stringResource(R.string.copied),
-                modifier = Modifier.size(18.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-// ============================================
-// RELATED SECTION (was "Franchise Timeline")
-// ============================================
-@Composable
-private fun MediaRelatedSection(
-    uiState: MediaDetailsUiState,
-    navActionManager: NavActionManager
-) {
-    val coreRelated = uiState.coreRelatedMedia
-    val categorized = uiState.categorizedRelatedMedia
-    if (coreRelated.isEmpty() && categorized.isEmpty()) return
-
-    Column {
-        Text(
-            text = stringResource(R.string.franchise_timeline),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(horizontal = PageHorizontalPadding, vertical = 12.dp)
-        )
-
-        if (coreRelated.isNotEmpty()) {
-            LazyRow(
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = PageHorizontalPadding),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                itemsIndexed(coreRelated) { index, item ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        RelatedItemCard(
-                            item = item,
-                            isCurrent = item.node.id == uiState.mediaDetails?.id,
-                            onClick = {
-                                val mediaType =
-                                    if (item is RelatedAnime) MediaType.ANIME else MediaType.MANGA
-                                navActionManager.toMediaDetails(mediaType, item.node.id)
-                            }
-                        )
-                        if (index < coreRelated.size - 1) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .padding(horizontal = 2.dp)
-                                    .size(20.dp),
-                                tint = MaterialTheme.colorScheme.outlineVariant
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        categorized.forEach { (format, items) ->
-            Column(modifier = Modifier.padding(top = 16.dp)) {
-                Text(
-                    text = format.localized(),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(
-                        horizontal = PageHorizontalPadding,
-                        vertical = 8.dp
-                    )
-                )
-                LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = PageHorizontalPadding),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(
-                        items = items,
-                        key = { it.node.id }
-                    ) { item ->
-                        RelatedItemCard(
-                            item = item,
-                            isCurrent = false,
-                            onClick = {
-                                val mediaType =
-                                    if (item is RelatedAnime) MediaType.ANIME else MediaType.MANGA
-                                navActionManager.toMediaDetails(mediaType, item.node.id)
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun RelatedItemCard(
-    item: BaseRelated,
-    isCurrent: Boolean,
-    onClick: () -> Unit
-) {
-    ElevatedCard(
-        onClick = onClick,
-        modifier = Modifier.width(120.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = if (isCurrent) CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ) else CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
-    ) {
-        Column {
-            AsyncImage(
-                model = item.node.mainPicture?.medium,
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp)
-                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
-                contentScale = ContentScale.Crop
-            )
-            Column(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = if (isCurrent) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                    else MaterialTheme.colorScheme.secondaryContainer,
-                ) {
-                    Text(
-                        text = item.relationType.localized(),
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        color = if (isCurrent) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-                Text(
-                    text = item.node.userPreferredTitle(),
-                    modifier = Modifier.fillMaxWidth(),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = if (isCurrent) FontWeight.SemiBold else FontWeight.Medium,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    minLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    color = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer
-                    else MaterialTheme.colorScheme.onSurface
-                )
-            }
-        }
-    }
-}
-
-// ============================================
-// CHARACTERS SECTION
-// ============================================
-@Composable
-private fun MediaCharactersSection(uiState: MediaDetailsUiState) {
-    val context = LocalContext.current
-    if (!uiState.isAnime) return
-    if (uiState.characters.isEmpty() && !uiState.isLoadingCharacters) return
-
-    Column {
-        Text(
-            text = stringResource(R.string.characters),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(horizontal = PageHorizontalPadding, vertical = 16.dp)
-        )
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = PageHorizontalPadding),
-            horizontalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            items(
-                items = uiState.characters,
-                key = { it.node.id },
-                contentType = { it }
-            ) { item ->
-                CharacterItem(
-                    character = item,
-                    onClick = { context.openLink(CHARACTER_URL + item.node.id) }
-                )
-            }
-            if (uiState.isLoadingCharacters) {
-                items(4) {
-                    Column(
-                        modifier = Modifier.width(96.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(96.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .defaultPlaceholder(visible = true)
-                        )
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(12.dp)
-                                .defaultPlaceholder(visible = true)
-                        )
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(0.65f)
-                                .height(12.dp)
-                                .defaultPlaceholder(visible = true)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun CharacterItem(
-    character: Character,
-    onClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .width(96.dp)
-            .clickable { onClick() },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Box {
-            AsyncImage(
-                model = character.node.mainPicture?.medium,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(96.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .border(
-                        1.dp,
-                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                        RoundedCornerShape(16.dp)
-                    ),
-                contentScale = ContentScale.Crop
-            )
-            character.role?.let { role ->
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f),
+            // ---------- Header ----------
+            Row(modifier = Modifier.padding(top = 16.dp)) {
+                MediaPoster(
+                    url = uiState.mediaDetails?.mainPicture?.large,
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(x = (-4).dp, y = 4.dp)
-                ) {
-                    Text(
-                        text = role.localized(),
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-        }
-        Text(
-            text = character.fullName(),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            minLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
-}
-
-// ============================================
-// MUSIC THEMES
-// ============================================
-@Composable
-private fun MediaThemesSection(uiState: MediaDetailsUiState) {
-    var showOpeningSheet by remember { mutableStateOf(false) }
-    var showEndingSheet by remember { mutableStateOf(false) }
-    var selectedSong by remember { mutableStateOf<String?>(null) }
-    var showMusicSheet by remember { mutableStateOf(false) }
-
-    if (uiState.mediaDetails is AnimeDetails) {
-        val openingThemes = uiState.mediaDetails.openingThemes.orEmpty()
-        val endingThemes = uiState.mediaDetails.endingThemes.orEmpty()
-        if (openingThemes.isEmpty() && endingThemes.isEmpty()) return
-
-        Column {
-            if (showMusicSheet && selectedSong != null) {
-                MusicStreamingSheet(
-                    songTitle = selectedSong.orEmpty(),
-                    bottomPadding = WindowInsets.navigationBars.asPaddingValues()
-                        .calculateBottomPadding(),
-                    onDismiss = {
-                        showMusicSheet = false
-                        selectedSong = null
-                    }
-                )
-            }
-
-            Text(
-                text = stringResource(R.string.music_themes),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(horizontal = PageHorizontalPadding, vertical = 16.dp)
-            )
-
-            if (openingThemes.isNotEmpty()) {
-                ThemePlayerCard(
-                    title = stringResource(R.string.opening),
-                    firstTrack = openingThemes.first().text,
-                    extraCount = openingThemes.size - 1,
-                    onClick = { showOpeningSheet = true }
-                )
-            }
-
-            if (endingThemes.isNotEmpty()) {
-                ThemePlayerCard(
-                    title = stringResource(R.string.ending),
-                    firstTrack = endingThemes.first().text,
-                    extraCount = endingThemes.size - 1,
-                    onClick = { showEndingSheet = true }
-                )
-            }
-
-            if (showOpeningSheet) {
-                ThemeListSheet(
-                    title = stringResource(R.string.opening),
-                    themes = openingThemes.map { it.text },
-                    onDismiss = { showOpeningSheet = false },
-                    onThemeClick = { song: String ->
-                        selectedSong = song
-                        showMusicSheet = true
-                    }
-                )
-            }
-
-            if (showEndingSheet) {
-                ThemeListSheet(
-                    title = stringResource(R.string.ending),
-                    themes = endingThemes.map { it.text },
-                    onDismiss = { showEndingSheet = false },
-                    onThemeClick = { song: String ->
-                        selectedSong = song
-                        showMusicSheet = true
-                    }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ThemePlayerCard(
-    title: String,
-    firstTrack: String,
-    extraCount: Int,
-    onClick: () -> Unit
-) {
-    ElevatedCard(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = PageHorizontalPadding, vertical = 6.dp),
-        shape = RoundedCornerShape(20.dp),
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Surface(
-                modifier = Modifier.size(44.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
-            ) {
-                Icon(
-                    painter = rememberVectorPainter(Icons.Rounded.MusicNote),
-                    contentDescription = null,
-                    modifier = Modifier.padding(10.dp),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = firstTrack,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (extraCount > 0) {
-                    Text(
-                        text = stringResource(R.string.more_count, extraCount),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
-            }
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ThemeListSheet(
-    title: String,
-    themes: List<String>,
-    onDismiss: () -> Unit,
-    onThemeClick: (String) -> Unit
-) {
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = 24.dp)
-        ) {
-            Text(
-                text = title,
-                modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 8.dp),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold
-            )
-            themes.forEachIndexed { index, theme ->
-                ListItem(
-                    headlineContent = {
-                        Text(
-                            text = theme,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
+                        .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                        .size(
+                            width = MEDIA_POSTER_BIG_WIDTH.dp,
+                            height = MEDIA_POSTER_BIG_HEIGHT.dp
                         )
-                    },
-                    leadingContent = {
-                        Surface(
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primaryContainer
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.MusicNote,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .padding(8.dp)
-                                    .size(20.dp),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        .defaultPlaceholder(visible = uiState.isLoading)
+                        .clickable(onClick = dropUnlessResumed {
+                            if (uiState.picturesUrls.isNotEmpty())
+                                navActionManager.toFullPoster(uiState.picturesUrls)
+                        })
+                )
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    // Title
+                    Text(
+                        text = uiState.mediaDetails?.userPreferredTitle() ?: "Loading",
+                        modifier = Modifier
+                            .defaultPlaceholder(visible = uiState.isLoading)
+                            .combinedClickable(
+                                onLongClick = {
+                                    uiState.mediaDetails?.title?.let { context.copyToClipBoard(it) }
+                                },
+                                onClick = { }
+                            ),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 28.sp
+                    )
+
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(0.dp)
+                    ) {
+                        // Status Chip
+                        val statusStr = uiState.mediaDetails?.status?.localized() ?: "Loading"
+                        val statusColor = if (uiState.mediaDetails?.status == MediaStatus.AIRING
+                            || uiState.mediaDetails?.status == MediaStatus.PUBLISHING
+                        ) MaterialTheme.colorScheme.primaryContainer
+                        else MaterialTheme.colorScheme.surfaceContainer
+
+                        SuggestionChip(
+                            onClick = { },
+                            label = { Text(text = statusStr) },
+                            colors = SuggestionChipDefaults.suggestionChipColors(
+                                containerColor = statusColor
+                            ),
+                            border = null,
+                            modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading)
+                        )
+
+                        // Format & Year Chip
+                        SuggestionChip(
+                            onClick = { },
+                            label = { Text(text = uiState.mediaDetails?.mediaFormatWithYear() ?: "Loading") },
+                            modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading)
+                        )
+
+                        // Episodes / Chapters
+                        val countLabel = when (val d = uiState.mediaDetails) {
+                            is AnimeDetails -> "${d.numEpisodes.countOrDash()} Eps"
+                            is MangaDetails -> "${d.numChapters.countOrDash()} Chs"
+                            else -> "Loading"
+                        }
+                        SuggestionChip(
+                            onClick = { },
+                            label = { Text(text = countLabel) },
+                            icon = {
+                                Icon(
+                                    imageVector = if (uiState.isAnime) Icons.Rounded.Timer
+                                    else Icons.AutoMirrored.Rounded.MenuBook,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            },
+                            modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading)
+                        )
+
+                        // Duration Chip (anime only)
+                        if (uiState.isAnime) {
+                            SuggestionChip(
+                                onClick = { },
+                                label = {
+                                    Text(
+                                        text = (uiState.mediaDetails as? AnimeDetails)
+                                            ?.episodeDurationLocalized() ?: "Loading"
+                                    )
+                                },
+                                icon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Schedule,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                },
+                                modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading)
                             )
                         }
-                    },
-                    modifier = Modifier.clickable {
-                        onThemeClick(theme)
-                        onDismiss()
+
+                        // Score Chip
+                        if (!uiState.hideScore) {
+                            SuggestionChip(
+                                onClick = { },
+                                label = {
+                                    Text(
+                                        text = uiState.mediaDetails?.mean.toStringOrNull() ?: "??",
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                },
+                                icon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Star,
+                                        contentDescription = null,
+                                        tint = Color(0xFFFFC107),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                },
+                                modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading)
+                            )
+                        }
                     }
-                )
-                if (index < themes.lastIndex) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 24.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
+                }
+            }//:Row
+
+            // ---------- Action Dock ----------
+            ActionDock(
+                isLoggedIn = isLoggedIn,
+                isNewEntry = uiState.isNewEntry,
+                listStatusLabel = uiState.mediaDetails?.myListStatus?.status?.localized(),
+                onEditClick = {
+                    if (isLoggedIn) {
+                        if (uiState.mediaDetails != null) showSheet = true
+                    } else {
+                        context.showToast(pleaseLoginMessage)
+                    }
+                }
+            )
+
+            // ---------- Genres ----------
+            if (!uiState.mediaDetails?.genres.isNullOrEmpty()) {
+                LazyRow(
+                    modifier = Modifier
+                        .padding(vertical = 8.dp)
+                        .fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(uiState.mediaDetails?.genres.orEmpty()) { genre ->
+                        SuggestionChip(
+                            onClick = { },
+                            label = { Text(text = genre.localized()) },
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                    }
                 }
             }
-        }
-    }
-}
 
-// ============================================
-// COMMUNITY SECTION (was "Stats")
-// ============================================
-@Composable
-private fun MediaCommunitySection(uiState: MediaDetailsUiState) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(
-            text = stringResource(R.string.stats),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(horizontal = PageHorizontalPadding, vertical = 4.dp)
-        )
-
-        ElevatedCard(
-            modifier = Modifier
-                .padding(horizontal = PageHorizontalPadding)
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(CardRadius),
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(CardPadding),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                MetricItem(
-                    label = stringResource(R.string.top_ranked),
-                    value = uiState.mediaDetails?.rankText().orEmpty(),
-                    icon = Icons.Rounded.BarChart,
-                    isLoading = uiState.isLoading,
-                    modifier = Modifier.weight(1f)
+            // ---------- Synopsis ----------
+            val synopsisAndBackground = uiState.mediaDetails?.synopsisAndBackground()
+            if (uiState.isLoading || !synopsisAndBackground.isNullOrEmpty()) {
+                InfoTitle(text = stringResource(R.string.synopsis))
+                Text(
+                    text = synopsisAndBackground
+                        ?: AnnotatedString(stringResource(R.string.lorem_ipsun)),
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .animateContentSize(animationSpec = spring())
+                        .defaultPlaceholder(visible = uiState.isLoading)
+                        .combinedClickable(
+                            onLongClick = {
+                                uiState.mediaDetails?.synopsis?.let {
+                                    context.copyToClipBoard(it)
+                                    context.showToast(copiedMessage)
+                                }
+                            },
+                            onClick = { isSynopsisExpanded = !isSynopsisExpanded }
+                        )
+                        .then(
+                            if (!isSynopsisExpanded) {
+                                Modifier.drawWithContent {
+                                    drawContent()
+                                    // Fade the bottom of the collapsed synopsis for a soft cut-off
+                                    drawRect(
+                                        brush = Brush.verticalGradient(
+                                            colors = listOf(Color.Black, Color.Transparent),
+                                            startY = size.height * 0.65f,
+                                            endY = size.height
+                                        ),
+                                        blendMode = BlendMode.DstIn
+                                    )
+                                }
+                            } else Modifier
+                        ),
+                    style = MaterialTheme.typography.bodyLarge,
+                    lineHeight = 24.sp,
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = maxLinesSynopsis
                 )
-                MetricItem(
-                    label = stringResource(R.string.popularity),
-                    value = uiState.mediaDetails?.popularity?.let { "#$it" } ?: UNKNOWN_CHAR,
-                    icon = Icons.AutoMirrored.Rounded.TrendingUp,
-                    isLoading = uiState.isLoading,
-                    modifier = Modifier.weight(1f)
-                )
-                MetricItem(
-                    label = stringResource(R.string.members),
-                    value = uiState.mediaDetails?.numListUsers?.format() ?: UNKNOWN_CHAR,
-                    icon = Icons.Rounded.Group,
-                    isLoading = uiState.isLoading,
-                    modifier = Modifier.weight(1f)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    IconButton(
+                        onClick = { isSynopsisExpanded = !isSynopsisExpanded }
+                    ) {
+                        Icon(
+                            imageVector = if (isSynopsisExpanded) Icons.Rounded.KeyboardArrowUp
+                            else Icons.Rounded.KeyboardArrowDown,
+                            contentDescription = if (isSynopsisExpanded) stringResource(R.string.show_less)
+                            else stringResource(R.string.show_more)
+                        )
+                    }
+                }
             }
-        }
 
-        (uiState.mediaDetails as? AnimeDetails)?.statistics?.status?.toStats()?.let { stats ->
+            // ---------- More Info (single card) ----------
+            InfoTitle(text = stringResource(R.string.more_info))
             ElevatedCard(
                 modifier = Modifier
-                    .padding(horizontal = PageHorizontalPadding)
-                    .fillMaxWidth(),
-                shape = RoundedCornerShape(CardRadius),
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(16.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(CardPadding),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.status_distribution),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                Column(modifier = Modifier.padding(16.dp)) {
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        maxItemsInEachRow = 2
+                    ) {
+                        val cellModifier = Modifier.weight(1f)
 
-                    val totalValue =
-                        remember(stats) { stats.sumOf { it.value.toDouble() } }.toFloat()
-
-                    stats.forEach { stat ->
-                        StatusBarRow(stat = stat, totalValue = totalValue)
+                        if (uiState.isAnime) {
+                            // Row 1: Studio + Source
+                            MediaInfoView(
+                                title = stringResource(R.string.studios),
+                                info = uiState.studiosJoined,
+                                iconVector = Icons.Rounded.Movie,
+                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
+                            )
+                            MediaInfoView(
+                                title = stringResource(R.string.source),
+                                info = (uiState.mediaDetails as? AnimeDetails)?.source?.localized(),
+                                iconVector = Icons.Rounded.History,
+                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
+                            )
+                            // Row 2: Start Date + End Date
+                            MediaInfoView(
+                                title = stringResource(R.string.start_date),
+                                info = uiState.mediaDetails?.startDate?.parseDateAndLocalize(),
+                                iconVector = Icons.Rounded.Add,
+                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
+                            )
+                            MediaInfoView(
+                                title = stringResource(R.string.end_date),
+                                info = uiState.mediaDetails?.endDate?.parseDateAndLocalize(),
+                                iconVector = Icons.Rounded.History,
+                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
+                            )
+                            // Row 3: Season + Broadcast
+                            MediaInfoView(
+                                title = stringResource(R.string.season),
+                                info = (uiState.mediaDetails as? AnimeDetails)?.startSeason?.seasonYearText(),
+                                iconVector = Icons.Rounded.RssFeed,
+                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
+                            )
+                            MediaInfoView(
+                                title = stringResource(R.string.broadcast),
+                                info = (uiState.mediaDetails as? AnimeDetails)?.broadcast?.timeText(
+                                    isAiring = uiState.mediaDetails.status == MediaStatus.AIRING
+                                ),
+                                iconVector = Icons.Rounded.RssFeed,
+                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
+                            )
+                        } else {
+                            MediaInfoView(
+                                title = stringResource(R.string.authors),
+                                info = (uiState.mediaDetails as? MangaDetails)?.authors
+                                    ?.joinToString { "${it.node.firstName} ${it.node.lastName}" },
+                                iconVector = Icons.Rounded.Movie,
+                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
+                            )
+                            MediaInfoView(
+                                title = stringResource(R.string.source),
+                                info = (uiState.mediaDetails as? AnimeDetails)?.source?.localized(),
+                                iconVector = Icons.Rounded.History,
+                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
+                            )
+                            MediaInfoView(
+                                title = stringResource(R.string.serialization),
+                                info = uiState.serializationJoined,
+                                iconVector = Icons.Rounded.Bookmark,
+                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
+                            )
+                            if (uiState.mediaDetails is MangaDetails) {
+                                MediaInfoView(
+                                    title = stringResource(R.string.volumes),
+                                    info = uiState.mediaDetails.numVolumes.countOrDash(),
+                                    iconVector = Icons.Rounded.Bookmark,
+                                    modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
+                                )
+                            }
+                            MediaInfoView(
+                                title = stringResource(R.string.start_date),
+                                info = uiState.mediaDetails?.startDate?.parseDateAndLocalize(),
+                                iconVector = Icons.Rounded.Add,
+                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
+                            )
+                            MediaInfoView(
+                                title = stringResource(R.string.end_date),
+                                info = uiState.mediaDetails?.endDate?.parseDateAndLocalize(),
+                                iconVector = Icons.Rounded.History,
+                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
+                            )
+                        }
                     }
                 }
             }
+
+            // ---------- Title Languages ----------
+            InfoTitle(text = stringResource(R.string.title_language))
+            ElevatedCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    SelectionContainer {
+                        MediaInfoView(
+                            title = stringResource(R.string.romaji),
+                            info = uiState.mediaDetails?.title,
+                            iconVector = Icons.Rounded.Translate,
+                            modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading)
+                        )
+                    }
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), thickness = 0.5.dp)
+                    SelectionContainer {
+                        MediaInfoView(
+                            title = stringResource(R.string.jp_title),
+                            info = uiState.mediaDetails?.alternativeTitles?.ja,
+                            iconVector = Icons.Rounded.Language,
+                            modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading)
+                        )
+                    }
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), thickness = 0.5.dp)
+                    SelectionContainer {
+                        MediaInfoView(
+                            title = stringResource(R.string.english),
+                            info = uiState.mediaDetails?.alternativeTitles?.en,
+                            iconVector = Icons.Rounded.Abc,
+                            modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading)
+                        )
+                    }
+                }
+            }
+
+            // ---------- Related Section ----------
+            RelatedSection(
+                uiState = uiState,
+                navActionManager = navActionManager
+            )
+
+            // ---------- Characters (anime only) ----------
+            if (uiState.isAnime) {
+                InfoTitle(text = stringResource(R.string.characters))
+                if (uiState.characters.isNotEmpty() || uiState.isLoadingCharacters) {
+                    LazyRow(
+                        modifier = Modifier.padding(top = 8.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(
+                            items = uiState.characters,
+                            contentType = { it }
+                        ) { item ->
+                            Box {
+                                MediaItemVertical(
+                                    imageUrl = item.node.mainPicture?.medium,
+                                    title = item.fullName(),
+                                    subtitle = {},
+                                    minLines = 2,
+                                    onClick = {
+                                        context.openLink(CHARACTER_URL + item.node.id)
+                                    }
+                                )
+                                CharacterRolePill(
+                                    role = item.role?.localized().orEmpty(),
+                                    isMain = item.role?.name.equals("MAIN", ignoreCase = true),
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(top = 8.dp, end = 8.dp)
+                                )
+                            }
+                        }
+                        if (uiState.isLoadingCharacters && uiState.characters.isEmpty()) {
+                            items(4) {
+                                CharacterShimmerItem()
+                            }
+                        }
+                    }
+                } else {
+                    FilledTonalButton(
+                        onClick = { event?.getCharacters() },
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .fillMaxWidth()
+                    ) {
+                        Text(text = stringResource(R.string.view_characters))
+                    }
+                }
+            }
+
+            // ---------- Themes / Music (anime only) ----------
+            if (uiState.mediaDetails is AnimeDetails) {
+                val openings = uiState.mediaDetails.openingThemes?.map { it.text }.orEmpty()
+                val endings = uiState.mediaDetails.endingThemes?.map { it.text }.orEmpty()
+
+                if (openings.isNotEmpty() || endings.isNotEmpty()) {
+                    InfoTitle(text = stringResource(R.string.music_themes))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        if (openings.isNotEmpty()) {
+                            FilledTonalButton(
+                                onClick = {
+                                    themesSheetTitle = openingLabel
+                                    themesSheetItems = openings
+                                    showThemesSheet = true
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.MusicNote,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text = "$openingLabel (${openings.size})",
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
+                        }
+                        if (endings.isNotEmpty()) {
+                            FilledTonalButton(
+                                onClick = {
+                                    themesSheetTitle = endingLabel
+                                    themesSheetItems = endings
+                                    showThemesSheet = true
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.MusicNote,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text = "$endingLabel (${endings.size})",
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ---------- Stats Section ----------
+            InfoTitle(text = stringResource(R.string.stats))
+            ElevatedCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .defaultPlaceholder(visible = uiState.isLoading),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        MetricItem(
+                            value = uiState.mediaDetails?.rankText().orEmpty(),
+                            label = stringResource(R.string.top_ranked),
+                            icon = Icons.Rounded.BarChart
+                        )
+                        VerticalDivider(modifier = Modifier.height(40.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                        MetricItem(
+                            value = "# ${uiState.mediaDetails?.popularity}",
+                            label = stringResource(R.string.popularity),
+                            icon = Icons.AutoMirrored.Rounded.TrendingUp
+                        )
+                        VerticalDivider(modifier = Modifier.height(40.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                        MetricItem(
+                            value = uiState.mediaDetails?.numListUsers?.format() ?: UNKNOWN_CHAR,
+                            label = stringResource(R.string.members),
+                            icon = Icons.Rounded.Group
+                        )
+                    }
+
+                    (uiState.mediaDetails as? AnimeDetails)?.statistics?.status?.toStats()?.let { stats ->
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text(
+                            text = stringResource(R.string.status_distribution),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                        val total = remember(stats) { stats.sumOf { it.value.toDouble() } }
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            stats.forEach { stat ->
+                                StatusBarRow(
+                                    color = stat.type.primaryColor(),
+                                    label = stat.type.localized(),
+                                    value = stat.value.toDouble(),
+                                    total = total
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }//:Column
+    }//:Scaffold
+}
+
+@Composable
+private fun ActionDock(
+    isLoggedIn: Boolean,
+    isNewEntry: Boolean,
+    listStatusLabel: String?,
+    onEditClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Button(
+            onClick = onEditClick,
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(16.dp),
+            contentPadding = PaddingValues(vertical = 12.dp)
+        ) {
+            Icon(
+                imageVector = if (isNewEntry) Icons.Rounded.Add else Icons.Rounded.Edit,
+                contentDescription = null
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = if (isNewEntry) stringResource(R.string.add)
+                else listStatusLabel ?: stringResource(R.string.edit),
+                style = MaterialTheme.typography.labelLarge
+            )
         }
     }
 }
 
+/**
+ * A single status-distribution row: colored dot + label, a progress bar, and a
+ * trailing percentage with raw count.
+ */
 @Composable
 private fun StatusBarRow(
-    stat: Stat<*>,
-    totalValue: Float
+    color: Color,
+    label: String,
+    value: Double,
+    total: Double,
 ) {
-    val progress = if (totalValue > 0) stat.value / totalValue else 0f
-    val percentage = (progress * 100).toInt()
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(8.dp)
-                .background(stat.type.primaryColor(), CircleShape)
-        )
-
-        Text(
-            text = stat.type.localized(),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(80.dp)
-        )
-
-        Column(modifier = Modifier.weight(1f)) {
-            LinearProgressIndicator(
-                progress = { progress },
+    val fraction = if (total > 0) (value / total).toFloat() else 0f
+    val percent = (fraction * 100).format() ?: "0"
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = color,
+                modifier = Modifier.size(10.dp)
+            ) {}
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(CircleShape),
-                color = stat.type.primaryColor(),
-                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                drawStopIndicator = {}
+                    .weight(1f)
+                    .padding(start = 8.dp)
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "$percentage%",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = stat.value.toInt().format() ?: stat.value.toInt().toString(),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
+            Text(
+                text = "$percent%",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = " (${value.toInt().format() ?: value.toInt().toString()})",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
+        LinearProgressIndicator(
+            progress = { fraction },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(RoundedCornerShape(3.dp)),
+            color = color,
+            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            gapSize = (-1).dp,
+            drawStopIndicator = {}
+        )
     }
 }
 
 @Composable
 private fun MetricItem(
-    label: String,
     value: String,
-    icon: ImageVector,
-    isLoading: Boolean,
-    modifier: Modifier = Modifier
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector
 ) {
     Column(
-        modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            modifier = Modifier.size(18.dp),
-            tint = MaterialTheme.colorScheme.primary
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp)
         )
         Text(
             text = value,
-            modifier = Modifier.defaultPlaceholder(visible = isLoading),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
         )
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
 
-// ============================================
-// PREVIEW
-// ============================================
-@Preview(showBackground = true)
 @Composable
-private fun MediaDetailsPreview() {
-    val mockAnime = AnimeDetails(
-        id = 1,
-        title = "Frieren: Beyond Journey's End",
-        mainPicture = null,
-        alternativeTitles = null,
-        startDate = "2023-09-29",
-        endDate = "2024-03-22",
-        synopsis = "The adventure is over but life goes on for an elf mage beginning to learn what life is all about.",
-        mean = 9.39f,
-        rank = 1,
-        popularity = 10,
-        numListUsers = 1000000,
-        numScoringUsers = 800000,
-        nsfw = "white",
-        genres = emptyList(),
-        mediaFormat = MediaFormat.TV,
-        status = MediaStatus.FINISHED_AIRING,
-        numEpisodes = 28,
-        startSeason = null,
-        broadcast = null,
-        source = null,
-        averageEpisodeDuration = 1440,
-        rating = "pg_13",
-        studios = emptyList()
-    )
-
-    MaterialTheme {
-        MediaDetailsContent(
-            uiState = MediaDetailsUiState(mediaDetails = mockAnime, isLoading = false),
-            event = null,
-            isLoggedIn = true,
-            navActionManager = NavActionManager.rememberNavActionManager(rememberNavController())
+private fun CharacterRolePill(
+    role: String,
+    isMain: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    if (role.isEmpty()) return
+    val container = if (isMain) MaterialTheme.colorScheme.primaryContainer
+    else MaterialTheme.colorScheme.surfaceContainerHighest
+    val content = if (isMain) MaterialTheme.colorScheme.onPrimaryContainer
+    else MaterialTheme.colorScheme.onSurfaceVariant
+    Surface(
+        modifier = modifier,
+        shape = CircleShape,
+        color = container.copy(alpha = 0.9f),
+        tonalElevation = 2.dp,
+    ) {
+        Text(
+            text = role,
+            color = content,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
         )
     }
 }
+
+@Composable
+private fun CharacterShimmerItem(
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier.size(width = 100.dp, height = 140.dp)
+    ) {
+        // Poster placeholder
+        Spacer(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(12.dp))
+                .defaultPlaceholder(visible = true)
+        )
+        // Role pill placeholder, overlaid where the real CharacterRolePill sits
+        Spacer(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 8.dp, end = 8.dp)
+                .size(width = 52.dp, height = 18.dp)
+                .clip(CircleShape)
+                .defaultPlaceholder(visible = true)
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ThemesSheet(
+    sheetState: androidx.compose.material3.SheetState,
+    title: String,
+    themes: List<String>,
+    bottomPadding: androidx.compose.ui.unit.Dp,
+    onThemeClick: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+    ) {
+        Column(
+            modifier = Modifier.padding(bottom = bottomPadding + 16.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
+            )
+            LazyColumn {
+                items(themes) { song ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onThemeClick(song) }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Rounded.MusicNote,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                        Text(
+                            text = song,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(horizontal = 12.dp)
+                        )
+                        Icon(
+                            imageVector = Icons.Rounded.PlayArrow,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Normalized UI model so the RelatedAnime and RelatedManga types (which do not share a
+ * common supertype here) can be displayed and filtered through one code path.
+ */
+@androidx.compose.runtime.Immutable
+private data class RelatedRow(
+    val id: Int,
+    val imageUrl: String?,
+    val title: String,
+    val relation: String,
+    val relationType: RelationType,
+    val mediaType: MediaType,
+)
+
+@Composable
+private fun RelatedSection(
+    uiState: MediaDetailsUiState,
+    navActionManager: NavActionManager,
+) {
+    val all = uiState.relatedAnime.map {
+        RelatedRow(
+            id = it.node.id,
+            imageUrl = it.node.mainPicture?.large,
+            title = it.node.userPreferredTitle(),
+            relation = it.relationType.localized(),
+            relationType = it.relationType,
+            mediaType = MediaType.ANIME,
+        )
+    } + uiState.relatedManga.map {
+        RelatedRow(
+            id = it.node.id,
+            imageUrl = it.node.mainPicture?.large,
+            title = it.node.userPreferredTitle(),
+            relation = it.relationType.localized(),
+            relationType = it.relationType,
+            mediaType = MediaType.MANGA,
+        )
+    }
+    if (all.isEmpty()) return
+
+    // Timeline focus: Sequels and Prequels
+    val timeline = all.filter { it.relationType == RelationType.SEQUEL || it.relationType == RelationType.PREQUEL }
+    val others = all.filter { it.relationType != RelationType.SEQUEL && it.relationType != RelationType.PREQUEL }
+
+    if (timeline.isNotEmpty()) {
+        InfoTitle(text = stringResource(R.string.franchise_timeline))
+        LazyRow(
+            modifier = Modifier.padding(top = 8.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(
+                items = timeline,
+                key = { "${it.mediaType}-${it.id}" }
+            ) { row ->
+                MediaItemVertical(
+                    imageUrl = row.imageUrl,
+                    title = row.title,
+                    subtitle = {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer
+                        ) {
+                            Text(
+                                text = row.relation,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    },
+                    onClick = dropUnlessResumed {
+                        navActionManager.toMediaDetails(row.mediaType, row.id)
+                    }
+                )
+            }
+        }
+    }
+
+    if (others.isNotEmpty()) {
+        var isRelatedExpanded by remember { mutableStateOf(false) }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { isRelatedExpanded = !isRelatedExpanded },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                InfoTitle(text = stringResource(R.string.related_anime))
+            }
+            Icon(
+                imageVector = if (isRelatedExpanded) Icons.Rounded.KeyboardArrowUp
+                else Icons.Rounded.KeyboardArrowDown,
+                contentDescription = null,
+                modifier = Modifier.padding(end = 16.dp)
+            )
+        }
+
+        val categories = listOf<String?>(null) + others.map { it.relation }.distinct()
+        var selectedCategory by remember { mutableStateOf<String?>(null) }
+        val filtered = if (selectedCategory == null) others
+        else others.filter { it.relation == selectedCategory }
+
+        AnimatedVisibility(
+            visible = isRelatedExpanded,
+            enter = expandVertically(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioLowBouncy,
+                    stiffness = Spring.StiffnessLow
+                )
+            ) + fadeIn(animationSpec = tween(durationMillis = 220)),
+            exit = shrinkVertically(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMedium
+                )
+            ) + fadeOut(animationSpec = tween(durationMillis = 150))
+        ) {
+            Column {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(vertical = 4.dp)
+                ) {
+                    items(categories) { category ->
+                        val selected = selectedCategory == category
+                        FilterChip(
+                            selected = selected,
+                            onClick = { selectedCategory = category },
+                            label = {
+                                Text(text = category ?: stringResource(R.string.all))
+                            },
+                            leadingIcon = if (selected) {
+                                {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Check,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            } else null
+                        )
+                    }
+                }
+
+                LazyRow(
+                    modifier = Modifier.padding(top = 8.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(
+                        items = filtered,
+                        key = { "${it.mediaType}-${it.id}" }
+                    ) { row ->
+                        MediaItemVertical(
+                            imageUrl = row.imageUrl,
+                            title = row.title,
+                            subtitle = {
+                                Text(
+                                    text = row.relation,
+                                    color = MaterialTheme.colorScheme.outline,
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            },
+                            onClick = dropUnlessResumed {
+                                navActionManager.toMediaDetails(row.mediaType, row.id)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Formats a nullable count as the number, or "-" when null/non-positive. */
+private fun Int?.countOrDash(): String =
+    if (this != null && this > 0) this.toString() else "-"
+
+/** Fires a system share sheet for the given text. */
+private fun android.content.Context.shareText(text: String) {
+    val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(android.content.Intent.EXTRA_TEXT, text)
+    }
+    startActivity(android.content.Intent.createChooser(intent, null))
+}
+
+@Preview
+@Composable
+fun MediaDetailsPreview() {
+    MoeListTheme {
+        Surface {
+            MediaDetailsContent(
+                uiState = MediaDetailsUiState(),
+                event = null,
+                isLoggedIn = false,
+                navActionManager = NavActionManager.rememberNavActionManager()
+            )
+        }
+    }
+}   
