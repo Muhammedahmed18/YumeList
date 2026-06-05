@@ -23,11 +23,14 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -57,6 +60,7 @@ import com.axiel7.moelist.ui.base.ThemeStyle
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.base.navigation.NavActionManager.Companion.rememberNavActionManager
 import com.axiel7.moelist.ui.base.navigation.Route
+import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
 import com.axiel7.moelist.ui.main.composables.MainBottomNavBar
 import com.axiel7.moelist.ui.main.composables.MainNavigationRail
 import com.axiel7.moelist.ui.onboarding.OnboardingView
@@ -92,7 +96,6 @@ class MainActivity : AppCompatActivity() {
         val lastTabOpened = findLastTabOpened()
         val initialTheme = runBlocking { viewModel.theme.first() }
         val initialUseBlackColors = runBlocking { viewModel.useBlackColors.first() }
-        val initialUseMonochrome = runBlocking { viewModel.useMonochrome.first() }
         val initialTabletMode = runBlocking { viewModel.tabletMode.first() }
         val initialOnboardingCompleted = runBlocking { viewModel.isOnboardingCompleted.first() }
 
@@ -100,9 +103,6 @@ class MainActivity : AppCompatActivity() {
             val theme by viewModel.theme.collectAsStateWithLifecycle(initialValue = initialTheme)
             val useBlackColors by viewModel.useBlackColors.collectAsStateWithLifecycle(
                 initialValue = initialUseBlackColors
-            )
-            val useMonochrome by viewModel.useMonochrome.collectAsStateWithLifecycle(
-                initialValue = initialUseMonochrome
             )
             val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsStateWithLifecycle(
                 initialValue = initialOnboardingCompleted
@@ -131,7 +131,6 @@ class MainActivity : AppCompatActivity() {
             MoeListTheme(
                 darkTheme = isDark,
                 useBlackColors = useBlackColors,
-                useMonochrome = useMonochrome
             ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -248,6 +247,7 @@ fun MainView(
     profilePicture: String?,
 ) {
     val density = LocalDensity.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var topBarHeightPx by remember { mutableFloatStateOf(0f) }
     val topBarOffsetY = remember { Animatable(0f) }
@@ -271,6 +271,7 @@ fun MainView(
     // while expanded and BackHandler/system back work consistently.
     var searchActive by rememberSaveable { mutableStateOf(false) }
 
+    CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
     Scaffold(
         bottomBar = {
             if (isCompactScreen) {
@@ -284,6 +285,7 @@ fun MainView(
                 )
             }
         },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         contentWindowInsets = WindowInsets.systemBars
             .only(WindowInsetsSides.Horizontal)
     ) { padding ->
@@ -345,4 +347,5 @@ fun MainView(
             )
         }
     }
+    } // CompositionLocalProvider
 }

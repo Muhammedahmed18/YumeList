@@ -44,7 +44,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
@@ -58,6 +57,7 @@ import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.ListStyle
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.EmptyState
+import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
 import com.axiel7.moelist.ui.composables.ErrorState
 import com.axiel7.moelist.ui.composables.OnBottomReached
 import com.axiel7.moelist.ui.composables.collapsable
@@ -70,7 +70,6 @@ import com.axiel7.moelist.ui.userlist.composables.MinimalUserMediaListItem
 import com.axiel7.moelist.ui.userlist.composables.MinimalUserMediaListItemPlaceholder
 import com.axiel7.moelist.ui.userlist.composables.StandardUserMediaListItem
 import com.axiel7.moelist.ui.userlist.composables.StandardUserMediaListItemPlaceholder
-import com.axiel7.moelist.utils.ContextExtensions.showToast
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,9 +84,9 @@ fun UserMediaListView(
     contentPadding: PaddingValues = PaddingValues(),
     onShowEditSheet: (BaseUserMediaList<out BaseMediaNode>) -> Unit,
 ) {
-    val context = LocalContext.current
     val layoutDirection = LocalLayoutDirection.current
     val haptic = LocalHapticFeedback.current
+    val snackbarHostState = LocalSnackbarHostState.current
     val pullRefreshState = rememberPullToRefreshState()
 
     // Hoist states to maintain scroll position during sort/status changes
@@ -97,7 +96,7 @@ fun UserMediaListView(
 
     LaunchedEffect(uiState.message) {
         if (uiState.message != null) {
-            context.showToast(uiState.message)
+            snackbarHostState.showSnackbar(uiState.message)
             event?.onMessageDisplayed()
         }
     }
