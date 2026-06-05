@@ -48,8 +48,6 @@ class MainViewModel(
 
     val useBlackColors = defaultPreferencesRepository.useBlackColors
 
-    val useMonochrome = defaultPreferencesRepository.useMonochrome
-
     val isOnboardingCompleted = defaultPreferencesRepository.isOnboardingCompleted
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
@@ -122,10 +120,6 @@ class MainViewModel(
 
     fun setUseBlackColors(value: Boolean) = viewModelScope.launch {
         defaultPreferencesRepository.setUseBlackColors(value)
-    }
-
-    fun setUseMonochrome(value: Boolean) = viewModelScope.launch {
-        defaultPreferencesRepository.setUseMonochrome(value)
     }
 
     fun completeOnboarding() = viewModelScope.launch {
