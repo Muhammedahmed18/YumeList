@@ -71,7 +71,6 @@ fun MediaItemVertical(
                 scaleX = scale
                 scaleY = scale
             }
-            .clip(RoundedCornerShape(24.dp))
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = null,

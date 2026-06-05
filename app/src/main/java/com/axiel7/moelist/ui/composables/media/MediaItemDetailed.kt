@@ -18,7 +18,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import com.axiel7.moelist.ui.theme.ShapePoster
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -61,6 +63,7 @@ fun MediaItemDetailed(
                             width = MEDIA_POSTER_SMALL_WIDTH.dp,
                             height = MEDIA_POSTER_SMALL_HEIGHT.dp
                         )
+                        .clip(ShapePoster)
                 )
 
                 if (badgeContent != null) {
