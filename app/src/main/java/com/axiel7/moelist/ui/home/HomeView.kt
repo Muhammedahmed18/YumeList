@@ -57,7 +57,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -74,6 +73,7 @@ import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.EmptyState
 import com.axiel7.moelist.ui.composables.ErrorState
+import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
 import com.axiel7.moelist.ui.composables.isSessionExpiredMessage
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailedPlaceholder
 import com.axiel7.moelist.ui.composables.media.MediaItemVertical
@@ -83,7 +83,6 @@ import com.axiel7.moelist.ui.composables.score.PosterScoreChip
 import com.axiel7.moelist.ui.home.composables.AiringAnimeHorizontalItem
 import com.axiel7.moelist.ui.search.SearchViewContent
 import com.axiel7.moelist.ui.search.SearchViewModel
-import com.axiel7.moelist.utils.ContextExtensions.showToast
 import com.axiel7.moelist.utils.SeasonCalendar
 import org.koin.androidx.compose.koinViewModel
 
@@ -253,13 +252,13 @@ private fun HomeViewContent(
     isLoggedIn: Boolean,
     navActionManager: NavActionManager,
 ) {
-    val context = LocalContext.current
+    val snackbarHostState = LocalSnackbarHostState.current
     val airingListState = rememberLazyListState()
     val seasonalListState = rememberLazyListState()
 
     LaunchedEffect(uiState.message) {
         if (uiState.message != null) {
-            context.showToast(uiState.message)
+            snackbarHostState.showSnackbar(uiState.message)
             event?.onMessageDisplayed()
         }
     }
