@@ -273,6 +273,9 @@
     <string name="more_count">+%d more</string>
     <string name="ratings_count">%s ratings</string>
     <string name="content">Content</string>
+    <string name="navigation">Navigation</string>
+    <string name="media_lists">Media Lists</string>
+    <string name="app_integration">App Integration</string>
     <string name="list_mode_standard">Standard</string>
     <string name="list_mode_compact">Compact</string>
     <string name="list_mode_minimal">Minimal</string>
@@ -325,6 +328,9 @@
     <string name="ten" translatable="false">10</string>
     <string name="airing_notification_enabled">Airing notification enabled</string>
     <string name="start_airing_notification_enabled">Start airing notification enabled</string>
+    <string name="notification_disabled">Notification disabled</string>
+    <string name="enable_notification">Enable notification</string>
+    <string name="disable_notification">Disable notification</string>
     <string name="invalid_start_date">Invalid start date</string>
     <string name="invalid_broadcast">Invalid broadcast</string>
     <string name="synopsis_background">Background</string>
@@ -349,6 +355,8 @@
     <string name="role_supporting">Supporting</string>
     <string name="view_characters">View Characters (Beta)</string>
     <string name="characters">Characters</string>
+    <string name="genres">Genres</string>
+    <string name="titles">Titles</string>
     <string name="genre_adult_cast">Adult Cast</string>
     <string name="genre_avant_garde">Avant Garde</string>
     <string name="genre_award_winning">Award Winning</string>
@@ -405,6 +413,7 @@
     <string name="current_season">Current</string>
     <string name="next_season">Next</string>
     <string name="status_distribution">Status distribution</string>
+    <string name="status">Status</string>
     <string name="tv_special">TV Special</string>
     <string name="cm">CM</string>
     <string name="pv">PV</string>
@@ -419,6 +428,9 @@
     <string name="mode_never">Never</string>
     <string name="tablet_mode">Tablet mode</string>
     <string name="refresh">Refresh</string>
+    <string name="use_system_font">App Font</string>
+    <string name="system_default">System Default</string>
+    <string name="nunito">Nunito</string>
 
     <string name="plus_one_episode">+1 Episode</string>
     <string name="plus_one_chapter">+1 Chapter</string>
@@ -482,4 +494,5 @@
     <string name="empty_ptr_title">Your plan-to-read list is empty</string>
     <string name="empty_ptr_desc">Add manga you want to read later.</string>
     <string name="search_to_add">Search to add</string>
+    <string name="dates">Dates</string>
 </resources>
