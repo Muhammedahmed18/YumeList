@@ -1,8 +1,9 @@
 package com.axiel7.moelist.ui.composables.preferences
 
-import androidx.annotation.DrawableRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -18,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,17 +31,16 @@ fun SwitchPreferenceView(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     value: Boolean,
-    @DrawableRes icon: Int? = null,
+    icon: Any? = null,
     iconTint: Color = MaterialTheme.colorScheme.primary,
     iconPadding: PaddingValues = PaddingValues(16.dp),
+    useTonalContainer: Boolean = false,
     onValueChange: (Boolean) -> Unit
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable {
-                onValueChange(!value)
-            },
+            .clickable { onValueChange(!value) },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -48,12 +50,48 @@ fun SwitchPreferenceView(
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (icon != null) {
-                Icon(
-                    painter = painterResource(icon),
-                    contentDescription = "",
-                    modifier = Modifier.padding(iconPadding),
-                    tint = iconTint
-                )
+                if (useTonalContainer) {
+                    Box(
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .size(40.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                shape = RoundedCornerShape(12.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        when (icon) {
+                            is ImageVector -> Icon(
+                                imageVector = icon,
+                                contentDescription = "",
+                                modifier = Modifier.size(20.dp),
+                                tint = iconTint
+                            )
+                            is Int -> Icon(
+                                painter = painterResource(icon),
+                                contentDescription = "",
+                                modifier = Modifier.size(20.dp),
+                                tint = iconTint
+                            )
+                        }
+                    }
+                } else {
+                    when (icon) {
+                        is ImageVector -> Icon(
+                            imageVector = icon,
+                            contentDescription = "",
+                            modifier = Modifier.padding(iconPadding),
+                            tint = iconTint
+                        )
+                        is Int -> Icon(
+                            painter = painterResource(icon),
+                            contentDescription = "",
+                            modifier = Modifier.padding(iconPadding),
+                            tint = iconTint
+                        )
+                    }
+                }
             } else {
                 Spacer(
                     modifier = Modifier
@@ -80,15 +118,13 @@ fun SwitchPreferenceView(
                         lineHeight = 14.sp
                     )
                 }
-            }//: Column
-        }//: Row
+            }
+        }
 
         Switch(
             checked = value,
-            onCheckedChange = {
-                onValueChange(it)
-            },
+            onCheckedChange = { onValueChange(it) },
             modifier = Modifier.padding(horizontal = 16.dp)
         )
-    }//: Row
+    }
 }
