@@ -18,6 +18,7 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import java.time.format.TextStyle
 import java.util.Locale
 import kotlin.math.absoluteValue
 
@@ -83,6 +84,22 @@ data class Broadcast(
         append(airingInString())
         localStartTime()?.let {
             append(" ($it)")
+        }
+    }
+
+    @Composable
+    fun airingInWithDayAndTime() = buildString {
+        append(airingInString())
+        val day = localDayOfTheWeek()?.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+        val time = localStartTime()
+        if (day != null || time != null) {
+            append(" (")
+            if (day != null) {
+                append(day)
+                if (time != null) append(", ")
+            }
+            if (time != null) append(time)
+            append(")")
         }
     }
 

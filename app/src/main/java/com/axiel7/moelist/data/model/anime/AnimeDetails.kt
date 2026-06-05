@@ -75,7 +75,7 @@ data class AnimeDetails(
     @SerialName("ending_themes")
     val endingThemes: List<Theme>? = null,
     @SerialName("statistics")
-    val statistics: Statistics? = null,
+    override val statistics: Statistics? = null,
 ) : BaseMediaDetails() {
 
     fun toAnimeNode() = AnimeNode(
