@@ -31,15 +31,6 @@ class SettingsViewModel(
     override fun setUseBlackColors(value: Boolean) {
         viewModelScope.launch {
             defaultPreferencesRepository.setUseBlackColors(value)
-            if (!value) {
-                defaultPreferencesRepository.setUseMonochrome(false)
-            }
-        }
-    }
-
-    override fun setUseMonochrome(value: Boolean) {
-        viewModelScope.launch {
-            defaultPreferencesRepository.setUseMonochrome(value)
         }
     }
 
@@ -128,12 +119,6 @@ class SettingsViewModel(
             }
             .launchIn(viewModelScope)
 
-        defaultPreferencesRepository.useMonochrome
-            .onEach { value ->
-                mutableUiState.update { it.copy(useMonochrome = value) }
-            }
-            .launchIn(viewModelScope)
-
         defaultPreferencesRepository.nsfw
             .onEach { value ->
                 mutableUiState.update { it.copy(showNsfw = value) }
@@ -199,6 +184,12 @@ class SettingsViewModel(
         defaultPreferencesRepository.randomListEntryEnabled
             .onEach { value ->
                 mutableUiState.update { it.copy(randomListEntryEnabled = value) }
+            }
+            .launchIn(viewModelScope)
+
+        defaultPreferencesRepository.useListTabs
+            .onEach { value ->
+                mutableUiState.update { it.copy(useListTabs = value) }
             }
             .launchIn(viewModelScope)
     }

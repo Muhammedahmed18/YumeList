@@ -87,11 +87,6 @@ class DefaultPreferencesRepository(
         dataStore.setValue(USE_BLACK_COLORS_KEY, value)
     }
 
-    val useMonochrome = dataStore.getValue(USE_MONOCHROME_KEY, false)
-    suspend fun setUseMonochrome(value: Boolean) {
-        dataStore.setValue(USE_MONOCHROME_KEY, value)
-    }
-
     val isOnboardingCompleted = dataStore.getValue(ONBOARDING_COMPLETED_KEY, false)
     suspend fun setOnboardingCompleted(value: Boolean) {
         dataStore.setValue(ONBOARDING_COMPLETED_KEY, value)
@@ -359,7 +354,6 @@ class DefaultPreferencesRepository(
         private val HIDE_SCORES_KEY = booleanPreferencesKey("hide_scores")
         private val THEME_KEY = stringPreferencesKey("theme")
         private val USE_BLACK_COLORS_KEY = booleanPreferencesKey("use_black_colors")
-        private val USE_MONOCHROME_KEY = booleanPreferencesKey("use_monochrome")
         private val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
         private val LAST_TAB_KEY = intPreferencesKey("last_tab")
         private val PINNED_NAV_BAR_KEY = booleanPreferencesKey("pinned_nav_bar")
