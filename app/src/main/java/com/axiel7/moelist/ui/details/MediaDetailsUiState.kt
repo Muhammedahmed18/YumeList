@@ -11,13 +11,17 @@ import com.axiel7.moelist.data.model.media.BaseMediaNode
 import com.axiel7.moelist.data.model.media.BaseMyListStatus
 import com.axiel7.moelist.data.model.media.BaseRelated
 import com.axiel7.moelist.data.model.media.Character
+import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.MediaFormat
 import com.axiel7.moelist.data.model.media.RelationType
+import com.axiel7.moelist.data.model.media.Stat
 import com.axiel7.moelist.ui.base.state.UiState
 
 @Immutable
 data class MediaDetailsUiState(
     val mediaDetails: BaseMediaDetails? = null,
+    val statusDistribution: List<Stat<ListStatus>>? = null,
+    val isLoadingStatusDistribution: Boolean = false,
     val hideScore: Boolean = false,
     val relatedAnime: List<RelatedAnime> = emptyList(),
     val relatedManga: List<RelatedManga> = emptyList(),

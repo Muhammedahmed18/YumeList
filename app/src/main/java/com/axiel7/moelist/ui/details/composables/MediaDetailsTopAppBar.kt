@@ -2,8 +2,6 @@ package com.axiel7.moelist.ui.details.composables
 
 import android.Manifest
 import android.os.Build
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
@@ -13,19 +11,14 @@ import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -33,10 +26,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.anime.AnimeDetails
 import com.axiel7.moelist.data.model.media.MediaStatus
+import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
 import com.axiel7.moelist.ui.details.MediaDetailsEvent
 import com.axiel7.moelist.ui.details.MediaDetailsUiState
-import com.axiel7.moelist.utils.ContextExtensions.showToast
 import com.axiel7.moelist.utils.DateUtils.parseDate
+import kotlinx.coroutines.launch
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -47,18 +41,28 @@ import java.time.LocalTime
 fun MediaDetailsTopAppBar(
     uiState: MediaDetailsUiState,
     event: MediaDetailsEvent?,
+    showTitle: Boolean,
     scrollBehavior: TopAppBarScrollBehavior,
     navigateBack: () -> Unit,
     onOpenClick: () -> Unit,
     onShareClick: () -> Unit,
 ) {
-    val context = LocalContext.current
     val isPreview = LocalInspectionMode.current
+    val snackbarHostState = LocalSnackbarHostState.current
+    val scope = rememberCoroutineScope()
     val savedForNotification = when (uiState.mediaDetails?.status) {
         MediaStatus.AIRING -> uiState.notification
         MediaStatus.NOT_AIRED -> uiState.startNotification
         else -> null
     }
+
+    val notificationDisabledMessage = stringResource(R.string.notification_disabled)
+    val enableNotificationLabel = stringResource(R.string.enable_notification)
+    val disableNotificationLabel = stringResource(R.string.disable_notification)
+    val airingNotificationEnabledMessage = stringResource(R.string.airing_notification_enabled)
+    val startAiringNotificationEnabledMessage = stringResource(R.string.start_airing_notification_enabled)
+    val invalidStartDateMessage = stringResource(R.string.invalid_start_date)
+    val invalidBroadcastMessage = stringResource(R.string.invalid_broadcast)
 
     fun onClickNotification(permissionGranted: Boolean) {
         val enable = savedForNotification == null
@@ -74,7 +78,7 @@ fun MediaDetailsTopAppBar(
                         weekDay = details.broadcast.dayOfTheWeek,
                         jpHour = LocalTime.parse(details.broadcast.startTime)
                     )
-                    context.showToast(R.string.airing_notification_enabled)
+                    scope.launch { snackbarHostState.showSnackbar(airingNotificationEnabledMessage) }
                 } else if (details.status == MediaStatus.NOT_AIRED && details.startDate != null) {
                     val startDate = details.startDate.parseDate()
                     if (startDate != null) {
@@ -83,22 +87,22 @@ fun MediaDetailsTopAppBar(
                             animeId = details.id,
                             startDate = startDate
                         )
-                        context.showToast(R.string.start_airing_notification_enabled)
+                        scope.launch { snackbarHostState.showSnackbar(startAiringNotificationEnabledMessage) }
                     } else {
-                        context.showToast(R.string.invalid_start_date)
+                        scope.launch { snackbarHostState.showSnackbar(invalidStartDateMessage) }
                     }
                 } else {
                     if (details.broadcast?.dayOfTheWeek == null
                         || details.broadcast.startTime == null
                     ) {
-                        context.showToast(R.string.invalid_broadcast)
+                        scope.launch { snackbarHostState.showSnackbar(invalidBroadcastMessage) }
                     } else if (details.startDate == null) {
-                        context.showToast(R.string.invalid_start_date)
+                        scope.launch { snackbarHostState.showSnackbar(invalidStartDateMessage) }
                     }
                 }
             } else {
                 event?.removeAiringAnimeNotification(animeId = details.id)
-                context.showToast("Notification disabled")
+                scope.launch { snackbarHostState.showSnackbar(notificationDisabledMessage) }
             }
         }
     }
@@ -111,39 +115,22 @@ fun MediaDetailsTopAppBar(
             )
         } else null
 
-    // With a regular (pinned/enterAlways) TopAppBar the bar height is fixed, so we
-    // drive the title + color reveal off how much content has scrolled under the bar.
-    val isScrolled by remember {
-        derivedStateOf { scrollBehavior.state.overlappedFraction > 0.01f }
-    }
-
-    val titleAlpha by animateFloatAsState(
-        targetValue = if (isScrolled) 1f else 0f,
-        label = "titleAlpha"
-    )
-
-    val contentColor by animateColorAsState(
-        targetValue = if (isScrolled) MaterialTheme.colorScheme.onSurface else Color.White,
-        label = "appBarContentColor"
-    )
-
     TopAppBar(
         title = {
             Text(
                 text = uiState.mediaDetails?.userPreferredTitle().orEmpty(),
-                modifier = Modifier.graphicsLayer { alpha = titleAlpha },
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.Bold,
+                modifier = androidx.compose.ui.Modifier.alpha(if (showTitle) 1f else 0f)
             )
         },
         navigationIcon = {
             IconButton(onClick = navigateBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = null,
-                    tint = contentColor
+                    contentDescription = null
                 )
             }
         },
@@ -151,15 +138,13 @@ fun MediaDetailsTopAppBar(
             IconButton(onClick = onOpenClick) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
-                    contentDescription = stringResource(R.string.view_on_mal),
-                    tint = contentColor
+                    contentDescription = stringResource(R.string.view_on_mal)
                 )
             }
             IconButton(onClick = onShareClick) {
                 Icon(
                     imageVector = Icons.Rounded.Share,
-                    contentDescription = stringResource(R.string.share),
-                    tint = contentColor
+                    contentDescription = stringResource(R.string.share)
                 )
             }
             if (uiState.mediaDetails?.status == MediaStatus.AIRING
@@ -177,18 +162,18 @@ fun MediaDetailsTopAppBar(
                     Icon(
                         imageVector = if (savedForNotification != null) Icons.Rounded.Notifications
                         else Icons.Rounded.NotificationsOff,
-                        contentDescription = "notification",
-                        tint = contentColor
+                        contentDescription = if (savedForNotification != null) disableNotificationLabel
+                        else enableNotificationLabel
                     )
                 }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
-            scrolledContainerColor = MaterialTheme.colorScheme.surface,
+            containerColor = MaterialTheme.colorScheme.surface,
+            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
             titleContentColor = MaterialTheme.colorScheme.onSurface,
-            navigationIconContentColor = contentColor,
-            actionIconContentColor = contentColor
+            navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+            actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
         ),
         scrollBehavior = scrollBehavior
     )

@@ -1,22 +1,15 @@
 package com.axiel7.moelist.ui.details
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,56 +18,50 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.automirrored.rounded.TrendingUp
-import androidx.compose.material.icons.rounded.Abc
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.BarChart
-import androidx.compose.material.icons.rounded.Book
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Event
 import androidx.compose.material.icons.rounded.Group
 import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
-import androidx.compose.material.icons.rounded.KeyboardArrowUp
-import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.LiveTv
 import androidx.compose.material.icons.rounded.Movie
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.RssFeed
-import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Star
-import androidx.compose.material.icons.rounded.ThumbsUpDown
-import androidx.compose.material.icons.rounded.Timer
-import androidx.compose.material.icons.rounded.Translate
-import androidx.compose.material3.Button
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.InputChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -92,12 +79,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -107,22 +94,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
+import com.axiel7.moelist.App
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.anime.AnimeDetails
-import com.axiel7.moelist.data.model.anime.RelatedAnime
 import com.axiel7.moelist.data.model.manga.MangaDetails
-import com.axiel7.moelist.data.model.manga.RelatedManga
 import com.axiel7.moelist.data.model.media.MediaStatus
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.data.model.media.RelationType
+import com.axiel7.moelist.data.model.media.TitleLanguage
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.InfoTitle
-import com.axiel7.moelist.ui.composables.TextIconVertical
 import com.axiel7.moelist.ui.composables.defaultPlaceholder
 import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_BIG_HEIGHT
 import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_BIG_WIDTH
 import com.axiel7.moelist.ui.composables.media.MediaItemVertical
 import com.axiel7.moelist.ui.composables.media.MediaPoster
+import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
 import com.axiel7.moelist.ui.details.composables.MediaDetailsTopAppBar
 import com.axiel7.moelist.ui.details.composables.MediaInfoView
 import com.axiel7.moelist.ui.details.composables.MusicStreamingSheet
@@ -131,7 +118,6 @@ import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.utils.CHARACTER_URL
 import com.axiel7.moelist.utils.ContextExtensions.copyToClipBoard
 import com.axiel7.moelist.utils.ContextExtensions.openLink
-import com.axiel7.moelist.utils.ContextExtensions.showToast
 import com.axiel7.moelist.utils.DateUtils.parseDateAndLocalize
 import com.axiel7.moelist.utils.NumExtensions.format
 import com.axiel7.moelist.utils.StringExtensions.toStringOrNull
@@ -155,7 +141,7 @@ fun MediaDetailsView(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 private fun MediaDetailsContent(
     uiState: MediaDetailsUiState,
@@ -164,10 +150,16 @@ private fun MediaDetailsContent(
     navActionManager: NavActionManager
 ) {
     val context = LocalContext.current
+    val snackbarHostState = LocalSnackbarHostState.current
 
     val scrollState = rememberScrollState()
     val topAppBarScrollBehavior =
         TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+    val density = LocalDensity.current
+    val titleThresholdPx = remember(density) {
+        with(density) { (MEDIA_POSTER_BIG_HEIGHT / 2).dp.toPx() }
+    }
+    val showTitle by remember { derivedStateOf { scrollState.value > titleThresholdPx } }
     val scope = rememberCoroutineScope()
 
     val sheetState = rememberModalBottomSheetState()
@@ -197,7 +189,6 @@ private fun MediaDetailsContent(
     val pleaseLoginMessage = stringResource(R.string.please_login_to_use_this_feature)
     val openingLabel = stringResource(R.string.opening)
     val endingLabel = stringResource(R.string.ending)
-    val copiedMessage = stringResource(R.string.copied)
 
     if (showSheet && uiState.mediaInfo != null) {
         EditMediaSheet(
@@ -239,9 +230,9 @@ private fun MediaDetailsContent(
         )
     }
 
-    if (uiState.message != null) {
-        LaunchedEffect(uiState.message) {
-            context.showToast(uiState.message)
+    LaunchedEffect(uiState.message) {
+        if (uiState.message != null) {
+            snackbarHostState.showSnackbar(uiState.message)
             event?.onMessageDisplayed()
         }
     }
@@ -252,6 +243,7 @@ private fun MediaDetailsContent(
             MediaDetailsTopAppBar(
                 uiState = uiState,
                 event = event,
+                showTitle = showTitle,
                 navigateBack = dropUnlessResumed { navActionManager.goBack() },
                 scrollBehavior = topAppBarScrollBehavior,
                 onOpenClick = {
@@ -267,24 +259,55 @@ private fun MediaDetailsContent(
                     }
                 },
             )
+        },
+        floatingActionButton = {
+            if (uiState.mediaDetails != null) {
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        if (isLoggedIn) {
+                            showSheet = true
+                        } else {
+                            scope.launch { snackbarHostState.showSnackbar(pleaseLoginMessage) }
+                        }
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = if (uiState.isNewEntry) Icons.Rounded.Add else Icons.Rounded.Edit,
+                            contentDescription = null
+                        )
+                    },
+                    text = {
+                        Text(
+                            text = if (uiState.isNewEntry) stringResource(R.string.add)
+                            else uiState.mediaDetails.myListStatus?.status?.localized() ?: stringResource(R.string.edit)
+                        )
+                    },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    expanded = !scrollState.isScrollInProgress
+                )
+            }
         }
     ) { padding ->
         Column(
             modifier = Modifier
                 .verticalScroll(scrollState)
                 .padding(padding)
-                .padding(bottom = bottomBarPadding + 16.dp)
+                .padding(bottom = bottomBarPadding + 80.dp) // Room for FAB
         ) {
-            // ---------- Header ----------
-            Row(modifier = Modifier.padding(top = 16.dp)) {
+            // ---------- Hero Section ----------
+            Row(
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
                 MediaPoster(
                     url = uiState.mediaDetails?.mainPicture?.large,
                     modifier = Modifier
-                        .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
                         .size(
                             width = MEDIA_POSTER_BIG_WIDTH.dp,
                             height = MEDIA_POSTER_BIG_HEIGHT.dp
                         )
+                        .clip(RoundedCornerShape(28.dp))
                         .defaultPlaceholder(visible = uiState.isLoading)
                         .clickable(onClick = dropUnlessResumed {
                             if (uiState.picturesUrls.isNotEmpty())
@@ -294,147 +317,150 @@ private fun MediaDetailsContent(
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .padding(end = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                        .height(MEDIA_POSTER_BIG_HEIGHT.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    // Title
                     Text(
-                        text = uiState.mediaDetails?.userPreferredTitle() ?: "Loading",
-                        modifier = Modifier
-                            .defaultPlaceholder(visible = uiState.isLoading)
-                            .combinedClickable(
-                                onLongClick = {
-                                    uiState.mediaDetails?.title?.let { context.copyToClipBoard(it) }
-                                },
-                                onClick = { }
-                            ),
-                        style = MaterialTheme.typography.headlineSmall,
+                        text = uiState.mediaDetails?.userPreferredTitle() ?: "",
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        lineHeight = 28.sp
+                        maxLines = 4,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading)
                     )
-
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(0.dp)
-                    ) {
-                        // Status Chip
-                        val statusStr = uiState.mediaDetails?.status?.localized() ?: "Loading"
-                        val statusColor = if (uiState.mediaDetails?.status == MediaStatus.AIRING
-                            || uiState.mediaDetails?.status == MediaStatus.PUBLISHING
-                        ) MaterialTheme.colorScheme.primaryContainer
-                        else MaterialTheme.colorScheme.surfaceContainer
-
-                        SuggestionChip(
-                            onClick = { },
-                            label = { Text(text = statusStr) },
-                            colors = SuggestionChipDefaults.suggestionChipColors(
-                                containerColor = statusColor
-                            ),
-                            border = null,
-                            modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading)
-                        )
-
-                        // Format & Year Chip
-                        SuggestionChip(
-                            onClick = { },
-                            label = { Text(text = uiState.mediaDetails?.mediaFormatWithYear() ?: "Loading") },
-                            modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading)
-                        )
-
-                        // Episodes / Chapters
-                        val countLabel = when (val d = uiState.mediaDetails) {
-                            is AnimeDetails -> "${d.numEpisodes.countOrDash()} Eps"
-                            is MangaDetails -> "${d.numChapters.countOrDash()} Chs"
-                            else -> "Loading"
-                        }
-                        SuggestionChip(
-                            onClick = { },
-                            label = { Text(text = countLabel) },
-                            icon = {
-                                Icon(
-                                    imageVector = if (uiState.isAnime) Icons.Rounded.Timer
-                                    else Icons.AutoMirrored.Rounded.MenuBook,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            },
-                            modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading)
-                        )
-
-                        // Duration Chip (anime only)
-                        if (uiState.isAnime) {
-                            SuggestionChip(
-                                onClick = { },
-                                label = {
-                                    Text(
-                                        text = (uiState.mediaDetails as? AnimeDetails)
-                                            ?.episodeDurationLocalized() ?: "Loading"
-                                    )
-                                },
-                                icon = {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Schedule,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                },
-                                modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading)
-                            )
-                        }
-
-                        // Score Chip
-                        if (!uiState.hideScore) {
-                            SuggestionChip(
-                                onClick = { },
-                                label = {
-                                    Text(
-                                        text = uiState.mediaDetails?.mean.toStringOrNull() ?: "??",
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                },
-                                icon = {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Star,
-                                        contentDescription = null,
-                                        tint = Color(0xFFFFC107),
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                },
-                                modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading)
-                            )
-                        }
-                    }
-                }
-            }//:Row
-
-            // ---------- Action Dock ----------
-            ActionDock(
-                isLoggedIn = isLoggedIn,
-                isNewEntry = uiState.isNewEntry,
-                listStatusLabel = uiState.mediaDetails?.myListStatus?.status?.localized(),
-                onEditClick = {
-                    if (isLoggedIn) {
-                        if (uiState.mediaDetails != null) showSheet = true
+                    val altTitle = if (App.titleLanguage == TitleLanguage.ENGLISH) {
+                        uiState.mediaDetails?.title
                     } else {
-                        context.showToast(pleaseLoginMessage)
+                        uiState.mediaDetails?.alternativeTitles?.en
+                    }
+                    if (!altTitle.isNullOrBlank()) {
+                        Text(
+                            text = altTitle,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    uiState.mediaDetails?.status?.let { status ->
+                        val statusColor = status.statusColor()
+                        Surface(
+                            shape = RoundedCornerShape(28.dp),
+                            color = statusColor.copy(alpha = 0.12f),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(
+                                    horizontal = 16.dp,
+                                    vertical = 12.dp
+                                ),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.status),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = statusColor,
+                                        modifier = Modifier.size(8.dp)
+                                    ) {}
+                                    Text(
+                                        text = status.localized(),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = statusColor
+                                    )
+                                }
+                                if (status == MediaStatus.AIRING) {
+                                    val airingText = (uiState.mediaDetails as? AnimeDetails)
+                                        ?.broadcast?.airingInWithDayAndTime()
+                                    if (!airingText.isNullOrEmpty()) {
+                                        Text(
+                                            text = airingText,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-            )
+            }
+
+            // ---------- Stat Strip ----------
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                    .defaultPlaceholder(visible = uiState.isLoading)
+            ) {
+                Row(
+                    modifier = Modifier.padding(vertical = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    MetricItem(
+                        value = uiState.mediaDetails?.mean.toStringOrNull() ?: "??",
+                        label = stringResource(R.string.score),
+                        icon = Icons.Rounded.Star,
+                        iconTint = Color(0xFFFFC107)
+                    )
+                    VerticalDivider(
+                        modifier = Modifier.height(40.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
+                    MetricItem(
+                        value = uiState.mediaDetails?.mediaFormatWithYear() ?: "...",
+                        label = stringResource(R.string.format),
+                        icon = Icons.Rounded.BarChart
+                    )
+                    VerticalDivider(
+                        modifier = Modifier.height(40.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
+                    MetricItem(
+                        value = when (val d = uiState.mediaDetails) {
+                            is AnimeDetails -> d.numEpisodes.countOrDash()
+                            is MangaDetails -> d.numChapters.countOrDash()
+                            else -> "..."
+                        },
+                        label = if (uiState.isAnime) "Episodes" else "Chapters",
+                        icon = if (uiState.isAnime) Icons.Rounded.PlayArrow
+                               else Icons.AutoMirrored.Rounded.MenuBook
+                    )
+                }
+            }
 
             // ---------- Genres ----------
             if (!uiState.mediaDetails?.genres.isNullOrEmpty()) {
+                InfoTitle(text = stringResource(R.string.genres))
                 LazyRow(
                     modifier = Modifier
-                        .padding(vertical = 8.dp)
+                        .padding(vertical = 12.dp)
                         .fillMaxWidth(),
                     contentPadding = PaddingValues(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(uiState.mediaDetails?.genres.orEmpty()) { genre ->
-                        SuggestionChip(
+                        AssistChip(
                             onClick = { },
                             label = { Text(text = genre.localized()) },
-                            shape = RoundedCornerShape(8.dp)
+                            shape = CircleShape,
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                labelColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            ),
+                            border = null
                         )
                     }
                 }
@@ -444,200 +470,196 @@ private fun MediaDetailsContent(
             val synopsisAndBackground = uiState.mediaDetails?.synopsisAndBackground()
             if (uiState.isLoading || !synopsisAndBackground.isNullOrEmpty()) {
                 InfoTitle(text = stringResource(R.string.synopsis))
-                Text(
-                    text = synopsisAndBackground
-                        ?: AnnotatedString(stringResource(R.string.lorem_ipsun)),
+                Column(
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
-                        .animateContentSize(animationSpec = spring())
-                        .defaultPlaceholder(visible = uiState.isLoading)
-                        .combinedClickable(
-                            onLongClick = {
-                                uiState.mediaDetails?.synopsis?.let {
-                                    context.copyToClipBoard(it)
-                                    context.showToast(copiedMessage)
-                                }
-                            },
-                            onClick = { isSynopsisExpanded = !isSynopsisExpanded }
-                        )
-                        .then(
-                            if (!isSynopsisExpanded) {
-                                Modifier.drawWithContent {
-                                    drawContent()
-                                    // Fade the bottom of the collapsed synopsis for a soft cut-off
-                                    drawRect(
-                                        brush = Brush.verticalGradient(
-                                            colors = listOf(Color.Black, Color.Transparent),
-                                            startY = size.height * 0.65f,
-                                            endY = size.height
-                                        ),
-                                        blendMode = BlendMode.DstIn
-                                    )
-                                }
-                            } else Modifier
-                        ),
-                    style = MaterialTheme.typography.bodyLarge,
-                    lineHeight = 24.sp,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = maxLinesSynopsis
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                        .padding(16.dp)
                 ) {
-                    IconButton(
-                        onClick = { isSynopsisExpanded = !isSynopsisExpanded }
-                    ) {
-                        Icon(
-                            imageVector = if (isSynopsisExpanded) Icons.Rounded.KeyboardArrowUp
-                            else Icons.Rounded.KeyboardArrowDown,
-                            contentDescription = if (isSynopsisExpanded) stringResource(R.string.show_less)
-                            else stringResource(R.string.show_more)
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = synopsisAndBackground
+                                ?: AnnotatedString(stringResource(R.string.lorem_ipsun)),
+                            modifier = Modifier
+                                .animateContentSize(animationSpec = spring())
+                                .defaultPlaceholder(visible = uiState.isLoading)
+                                .combinedClickable(
+                                    onLongClick = {
+                                        uiState.mediaDetails?.synopsis?.let {
+                                            context.copyToClipBoard(it)
+                                        }
+                                    },
+                                    onClick = { isSynopsisExpanded = !isSynopsisExpanded }
+                                ),
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                lineHeight = 26.sp,
+                                letterSpacing = 0.2.sp
+                            ),
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = maxLinesSynopsis
+                        )
+                        val gradientAlpha by animateFloatAsState(
+                            targetValue = if (isSynopsisExpanded) 0f else 1f,
+                            label = "synopsisGradient"
+                        )
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .graphicsLayer { alpha = gradientAlpha }
+                                .background(
+                                    Brush.verticalGradient(
+                                        0.0f to Color.Transparent,
+                                        0.5f to Color.Transparent,
+                                        1.0f to MaterialTheme.colorScheme.surfaceContainerLow
+                                    )
+                                )
                         )
                     }
+                    val arrowRotation by animateFloatAsState(
+                        targetValue = if (isSynopsisExpanded) 180f else 0f,
+                        label = "synopsisArrow"
+                    )
+                    Icon(
+                        imageVector = Icons.Rounded.KeyboardArrowDown,
+                        contentDescription = if (isSynopsisExpanded) stringResource(R.string.show_less)
+                        else stringResource(R.string.show_more),
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(top = 4.dp)
+                            .graphicsLayer { rotationZ = arrowRotation }
+                            .clickable { isSynopsisExpanded = !isSynopsisExpanded }
+                    )
                 }
             }
 
-            // ---------- More Info (single card) ----------
+            // ---------- More Info ----------
             InfoTitle(text = stringResource(R.string.more_info))
-            ElevatedCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(16.dp)
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        maxItemsInEachRow = 2
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        val cellModifier = Modifier.weight(1f)
-
                         if (uiState.isAnime) {
-                            // Row 1: Studio + Source
-                            MediaInfoView(
-                                title = stringResource(R.string.studios),
-                                info = uiState.studiosJoined,
-                                iconVector = Icons.Rounded.Movie,
-                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
-                            )
-                            MediaInfoView(
-                                title = stringResource(R.string.source),
-                                info = (uiState.mediaDetails as? AnimeDetails)?.source?.localized(),
-                                iconVector = Icons.Rounded.History,
-                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
-                            )
-                            // Row 2: Start Date + End Date
-                            MediaInfoView(
-                                title = stringResource(R.string.start_date),
-                                info = uiState.mediaDetails?.startDate?.parseDateAndLocalize(),
-                                iconVector = Icons.Rounded.Add,
-                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
-                            )
-                            MediaInfoView(
-                                title = stringResource(R.string.end_date),
-                                info = uiState.mediaDetails?.endDate?.parseDateAndLocalize(),
-                                iconVector = Icons.Rounded.History,
-                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
-                            )
-                            // Row 3: Season + Broadcast
-                            MediaInfoView(
-                                title = stringResource(R.string.season),
-                                info = (uiState.mediaDetails as? AnimeDetails)?.startSeason?.seasonYearText(),
-                                iconVector = Icons.Rounded.RssFeed,
-                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
-                            )
-                            MediaInfoView(
-                                title = stringResource(R.string.broadcast),
-                                info = (uiState.mediaDetails as? AnimeDetails)?.broadcast?.timeText(
-                                    isAiring = uiState.mediaDetails.status == MediaStatus.AIRING
-                                ),
-                                iconVector = Icons.Rounded.RssFeed,
-                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
-                            )
-                        } else {
-                            MediaInfoView(
-                                title = stringResource(R.string.authors),
-                                info = (uiState.mediaDetails as? MangaDetails)?.authors
-                                    ?.joinToString { "${it.node.firstName} ${it.node.lastName}" },
-                                iconVector = Icons.Rounded.Movie,
-                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
-                            )
-                            MediaInfoView(
-                                title = stringResource(R.string.source),
-                                info = (uiState.mediaDetails as? AnimeDetails)?.source?.localized(),
-                                iconVector = Icons.Rounded.History,
-                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
-                            )
-                            MediaInfoView(
-                                title = stringResource(R.string.serialization),
-                                info = uiState.serializationJoined,
-                                iconVector = Icons.Rounded.Bookmark,
-                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
-                            )
-                            if (uiState.mediaDetails is MangaDetails) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
                                 MediaInfoView(
-                                    title = stringResource(R.string.volumes),
-                                    info = uiState.mediaDetails.numVolumes.countOrDash(),
-                                    iconVector = Icons.Rounded.Bookmark,
-                                    modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
+                                    title = stringResource(R.string.studios),
+                                    info = uiState.studiosJoined,
+                                    iconVector = Icons.Rounded.Movie,
+                                    modifier = Modifier.weight(1f).defaultPlaceholder(visible = uiState.isLoading)
+                                )
+                                MediaInfoView(
+                                    title = stringResource(R.string.source),
+                                    info = (uiState.mediaDetails as? AnimeDetails)?.source?.localized(),
+                                    iconVector = Icons.Rounded.History,
+                                    modifier = Modifier.weight(1f).defaultPlaceholder(visible = uiState.isLoading)
                                 )
                             }
-                            MediaInfoView(
-                                title = stringResource(R.string.start_date),
-                                info = uiState.mediaDetails?.startDate?.parseDateAndLocalize(),
-                                iconVector = Icons.Rounded.Add,
-                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
-                            )
-                            MediaInfoView(
-                                title = stringResource(R.string.end_date),
-                                info = uiState.mediaDetails?.endDate?.parseDateAndLocalize(),
-                                iconVector = Icons.Rounded.History,
-                                modifier = cellModifier.defaultPlaceholder(visible = uiState.isLoading)
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                MediaInfoView(
+                                    title = stringResource(R.string.start_date),
+                                    info = uiState.mediaDetails?.startDate?.parseDateAndLocalize(),
+                                    iconVector = Icons.Rounded.Add,
+                                    modifier = Modifier.weight(1f).defaultPlaceholder(visible = uiState.isLoading)
+                                )
+                                MediaInfoView(
+                                    title = stringResource(R.string.end_date),
+                                    info = uiState.mediaDetails?.endDate?.parseDateAndLocalize(),
+                                    iconVector = Icons.Rounded.Event,
+                                    modifier = Modifier.weight(1f).defaultPlaceholder(visible = uiState.isLoading)
+                                )
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                MediaInfoView(
+                                    title = stringResource(R.string.season),
+                                    info = (uiState.mediaDetails as? AnimeDetails)?.startSeason?.seasonYearText(),
+                                    iconVector = Icons.Rounded.RssFeed,
+                                    modifier = Modifier.weight(1f).defaultPlaceholder(visible = uiState.isLoading)
+                                )
+                                MediaInfoView(
+                                    title = stringResource(R.string.broadcast),
+                                    info = (uiState.mediaDetails as? AnimeDetails)?.broadcast?.timeText(
+                                        isAiring = false
+                                    ),
+                                    iconVector = Icons.Rounded.LiveTv,
+                                    modifier = Modifier.weight(1f).defaultPlaceholder(visible = uiState.isLoading)
+                                )
+                            }
+                        } else {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                MediaInfoView(
+                                    title = stringResource(R.string.authors),
+                                    info = (uiState.mediaDetails as? MangaDetails)?.authors
+                                        ?.joinToString { "${it.node.firstName} ${it.node.lastName}" },
+                                    iconVector = Icons.Rounded.Movie,
+                                    modifier = Modifier.weight(1f).defaultPlaceholder(visible = uiState.isLoading)
+                                )
+                                MediaInfoView(
+                                    title = stringResource(R.string.serialization),
+                                    info = uiState.serializationJoined,
+                                    iconVector = Icons.Rounded.Bookmark,
+                                    modifier = Modifier.weight(1f).defaultPlaceholder(visible = uiState.isLoading)
+                                )
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                MediaInfoView(
+                                    title = stringResource(R.string.start_date),
+                                    info = uiState.mediaDetails?.startDate?.parseDateAndLocalize(),
+                                    iconVector = Icons.Rounded.Add,
+                                    modifier = Modifier.weight(1f).defaultPlaceholder(visible = uiState.isLoading)
+                                )
+                                MediaInfoView(
+                                    title = stringResource(R.string.end_date),
+                                    info = uiState.mediaDetails?.endDate?.parseDateAndLocalize(),
+                                    iconVector = Icons.Rounded.Event,
+                                    modifier = Modifier.weight(1f).defaultPlaceholder(visible = uiState.isLoading)
+                                )
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                MediaInfoView(
+                                    title = stringResource(R.string.status),
+                                    info = uiState.mediaDetails?.status?.localized(),
+                                    iconVector = Icons.Rounded.Info,
+                                    modifier = Modifier.weight(1f).defaultPlaceholder(visible = uiState.isLoading)
+                                )
+                                MediaInfoView(
+                                    title = stringResource(R.string.volumes),
+                                    info = (uiState.mediaDetails as? MangaDetails)?.numVolumes.countOrDash(),
+                                    iconVector = Icons.AutoMirrored.Rounded.MenuBook,
+                                    modifier = Modifier.weight(1f).defaultPlaceholder(visible = uiState.isLoading)
+                                )
+                            }
                         }
                     }
                 }
-            }
 
-            // ---------- Title Languages ----------
-            InfoTitle(text = stringResource(R.string.title_language))
-            ElevatedCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    SelectionContainer {
-                        MediaInfoView(
-                            title = stringResource(R.string.romaji),
-                            info = uiState.mediaDetails?.title,
-                            iconVector = Icons.Rounded.Translate,
-                            modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading)
-                        )
-                    }
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), thickness = 0.5.dp)
-                    SelectionContainer {
-                        MediaInfoView(
-                            title = stringResource(R.string.jp_title),
-                            info = uiState.mediaDetails?.alternativeTitles?.ja,
-                            iconVector = Icons.Rounded.Language,
-                            modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading)
-                        )
-                    }
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), thickness = 0.5.dp)
-                    SelectionContainer {
-                        MediaInfoView(
-                            title = stringResource(R.string.english),
-                            info = uiState.mediaDetails?.alternativeTitles?.en,
-                            iconVector = Icons.Rounded.Abc,
-                            modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading)
-                        )
-                    }
-                }
             }
 
             // ---------- Related Section ----------
@@ -646,7 +668,7 @@ private fun MediaDetailsContent(
                 navActionManager = navActionManager
             )
 
-            // ---------- Characters (anime only) ----------
+            // ---------- Characters ----------
             if (uiState.isAnime) {
                 InfoTitle(text = stringResource(R.string.characters))
                 if (uiState.characters.isNotEmpty() || uiState.isLoadingCharacters) {
@@ -659,24 +681,20 @@ private fun MediaDetailsContent(
                             items = uiState.characters,
                             contentType = { it }
                         ) { item ->
-                            Box {
-                                MediaItemVertical(
-                                    imageUrl = item.node.mainPicture?.medium,
-                                    title = item.fullName(),
-                                    subtitle = {},
-                                    minLines = 2,
-                                    onClick = {
-                                        context.openLink(CHARACTER_URL + item.node.id)
-                                    }
-                                )
-                                CharacterRolePill(
-                                    role = item.role?.localized().orEmpty(),
-                                    isMain = item.role?.name.equals("MAIN", ignoreCase = true),
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(top = 8.dp, end = 8.dp)
-                                )
-                            }
+                            MediaItemVertical(
+                                imageUrl = item.node.mainPicture?.medium,
+                                title = item.fullName(),
+                                subtitle = {
+                                    CharacterRolePill(
+                                        role = item.role?.localized().orEmpty(),
+                                        isMain = item.role?.name.equals("MAIN", ignoreCase = true)
+                                    )
+                                },
+                                minLines = 2,
+                                onClick = {
+                                    context.openLink(CHARACTER_URL + item.node.id)
+                                }
+                            )
                         }
                         if (uiState.isLoadingCharacters && uiState.characters.isEmpty()) {
                             items(4) {
@@ -689,14 +707,15 @@ private fun MediaDetailsContent(
                         onClick = { event?.getCharacters() },
                         modifier = Modifier
                             .padding(horizontal = 16.dp, vertical = 8.dp)
-                            .fillMaxWidth()
+                            .fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp)
                     ) {
                         Text(text = stringResource(R.string.view_characters))
                     }
                 }
             }
 
-            // ---------- Themes / Music (anime only) ----------
+            // ---------- Themes ----------
             if (uiState.mediaDetails is AnimeDetails) {
                 val openings = uiState.mediaDetails.openingThemes?.map { it.text }.orEmpty()
                 val endings = uiState.mediaDetails.endingThemes?.map { it.text }.orEmpty()
@@ -710,13 +729,14 @@ private fun MediaDetailsContent(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         if (openings.isNotEmpty()) {
-                            FilledTonalButton(
+                            Button(
                                 onClick = {
                                     themesSheetTitle = openingLabel
                                     themesSheetItems = openings
                                     showThemesSheet = true
                                 },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(20.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.MusicNote,
@@ -730,13 +750,14 @@ private fun MediaDetailsContent(
                             }
                         }
                         if (endings.isNotEmpty()) {
-                            FilledTonalButton(
+                            OutlinedButton(
                                 onClick = {
                                     themesSheetTitle = endingLabel
                                     themesSheetItems = endings
                                     showThemesSheet = true
                                 },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(20.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.MusicNote,
@@ -755,13 +776,14 @@ private fun MediaDetailsContent(
 
             // ---------- Stats Section ----------
             InfoTitle(text = stringResource(R.string.stats))
-            ElevatedCard(
+            Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(20.dp)
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(24.dp)) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -770,17 +792,17 @@ private fun MediaDetailsContent(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         MetricItem(
-                            value = uiState.mediaDetails?.rankText().orEmpty(),
+                            value = uiState.mediaDetails?.rankText() ?: UNKNOWN_CHAR,
                             label = stringResource(R.string.top_ranked),
                             icon = Icons.Rounded.BarChart
                         )
-                        VerticalDivider(modifier = Modifier.height(40.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                        VerticalDivider(modifier = Modifier.height(32.dp), color = MaterialTheme.colorScheme.outlineVariant)
                         MetricItem(
-                            value = "# ${uiState.mediaDetails?.popularity}",
+                            value = uiState.mediaDetails?.popularity?.let { "# $it" } ?: UNKNOWN_CHAR,
                             label = stringResource(R.string.popularity),
                             icon = Icons.AutoMirrored.Rounded.TrendingUp
                         )
-                        VerticalDivider(modifier = Modifier.height(40.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                        VerticalDivider(modifier = Modifier.height(32.dp), color = MaterialTheme.colorScheme.outlineVariant)
                         MetricItem(
                             value = uiState.mediaDetails?.numListUsers?.format() ?: UNKNOWN_CHAR,
                             label = stringResource(R.string.members),
@@ -788,23 +810,33 @@ private fun MediaDetailsContent(
                         )
                     }
 
-                    (uiState.mediaDetails as? AnimeDetails)?.statistics?.status?.toStats()?.let { stats ->
-                        Spacer(modifier = Modifier.height(24.dp))
+                    if (uiState.isLoadingStatusDistribution || uiState.statusDistribution != null) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 16.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
                         Text(
                             text = stringResource(R.string.status_distribution),
-                            style = MaterialTheme.typography.titleSmall,
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(bottom = 12.dp)
+                            modifier = Modifier.padding(bottom = 16.dp)
                         )
-                        val total = remember(stats) { stats.sumOf { it.value.toDouble() } }
-                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            stats.forEach { stat ->
-                                StatusBarRow(
-                                    color = stat.type.primaryColor(),
-                                    label = stat.type.localized(),
-                                    value = stat.value.toDouble(),
-                                    total = total
-                                )
+                        if (uiState.isLoadingStatusDistribution) {
+                            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                repeat(5) { StatusDistributionShimmerRow() }
+                            }
+                        } else {
+                            val stats = uiState.statusDistribution!!
+                            val total = remember(stats) { stats.sumOf { it.value.toDouble() } }
+                            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                stats.forEach { stat ->
+                                    StatusBarRow(
+                                        color = stat.type.primaryColor(),
+                                        label = stat.type.localized(),
+                                        value = stat.value.toDouble(),
+                                        total = total
+                                    )
+                                }
                             }
                         }
                     }
@@ -815,36 +847,41 @@ private fun MediaDetailsContent(
 }
 
 @Composable
-private fun ActionDock(
-    isLoggedIn: Boolean,
-    isNewEntry: Boolean,
-    listStatusLabel: String?,
-    onEditClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Button(
-            onClick = onEditClick,
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(16.dp),
-            contentPadding = PaddingValues(vertical = 12.dp)
+private fun StatusDistributionShimmerRow() {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Icon(
-                imageVector = if (isNewEntry) Icons.Rounded.Add else Icons.Rounded.Edit,
-                contentDescription = null
+            Spacer(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .defaultPlaceholder(visible = true)
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = if (isNewEntry) stringResource(R.string.add)
-                else listStatusLabel ?: stringResource(R.string.edit),
-                style = MaterialTheme.typography.labelLarge
+            Spacer(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(14.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .defaultPlaceholder(visible = true)
+            )
+            Spacer(
+                modifier = Modifier
+                    .width(52.dp)
+                    .height(14.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .defaultPlaceholder(visible = true)
             )
         }
+        Spacer(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(CircleShape)
+                .defaultPlaceholder(visible = true)
+        )
     }
 }
 
@@ -860,8 +897,8 @@ private fun StatusBarRow(
     total: Double,
 ) {
     val fraction = if (total > 0) (value / total).toFloat() else 0f
-    val percent = (fraction * 100).format() ?: "0"
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    val percentString = (fraction * 100).format() ?: "0"
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -869,7 +906,7 @@ private fun StatusBarRow(
             Surface(
                 shape = CircleShape,
                 color = color,
-                modifier = Modifier.size(10.dp)
+                modifier = Modifier.size(8.dp)
             ) {}
             Text(
                 text = label,
@@ -877,10 +914,10 @@ private fun StatusBarRow(
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = 8.dp)
+                    .padding(start = 10.dp)
             )
             Text(
-                text = "$percent%",
+                text = "$percentString%",
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -894,8 +931,8 @@ private fun StatusBarRow(
             progress = { fraction },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(6.dp)
-                .clip(RoundedCornerShape(3.dp)),
+                .height(8.dp)
+                .clip(CircleShape),
             color = color,
             trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
             gapSize = (-1).dp,
@@ -908,7 +945,8 @@ private fun StatusBarRow(
 private fun MetricItem(
     value: String,
     label: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    iconTint: Color = MaterialTheme.colorScheme.primary
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -917,13 +955,13 @@ private fun MetricItem(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(20.dp)
+            tint = iconTint,
+            modifier = Modifier.size(22.dp)
         )
         Text(
             text = value,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.ExtraBold
         )
         Text(
             text = label,
@@ -937,7 +975,6 @@ private fun MetricItem(
 private fun CharacterRolePill(
     role: String,
     isMain: Boolean,
-    modifier: Modifier = Modifier,
 ) {
     if (role.isEmpty()) return
     val container = if (isMain) MaterialTheme.colorScheme.primaryContainer
@@ -945,9 +982,8 @@ private fun CharacterRolePill(
     val content = if (isMain) MaterialTheme.colorScheme.onPrimaryContainer
     else MaterialTheme.colorScheme.onSurfaceVariant
     Surface(
-        modifier = modifier,
         shape = CircleShape,
-        color = container.copy(alpha = 0.9f),
+        color = container,
         tonalElevation = 2.dp,
     ) {
         Text(
@@ -955,7 +991,7 @@ private fun CharacterRolePill(
             color = content,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
         )
     }
 }
@@ -1111,7 +1147,7 @@ private fun RelatedSection(
                     title = row.title,
                     subtitle = {
                         Surface(
-                            shape = RoundedCornerShape(6.dp),
+                            shape = RoundedCornerShape(8.dp),
                             color = MaterialTheme.colorScheme.primaryContainer
                         ) {
                             Text(
@@ -1119,7 +1155,7 @@ private fun RelatedSection(
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
                     },
@@ -1132,97 +1168,82 @@ private fun RelatedSection(
     }
 
     if (others.isNotEmpty()) {
-        var isRelatedExpanded by remember { mutableStateOf(false) }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { isRelatedExpanded = !isRelatedExpanded },
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(modifier = Modifier.weight(1f)) {
-                InfoTitle(text = stringResource(R.string.related_anime))
-            }
-            Icon(
-                imageVector = if (isRelatedExpanded) Icons.Rounded.KeyboardArrowUp
-                else Icons.Rounded.KeyboardArrowDown,
-                contentDescription = null,
-                modifier = Modifier.padding(end = 16.dp)
-            )
-        }
+        InfoTitle(
+            text = if (uiState.isAnime) stringResource(R.string.related_anime)
+            else stringResource(R.string.related_manga)
+        )
 
         val categories = listOf<String?>(null) + others.map { it.relation }.distinct()
         var selectedCategory by remember { mutableStateOf<String?>(null) }
         val filtered = if (selectedCategory == null) others
         else others.filter { it.relation == selectedCategory }
 
-        AnimatedVisibility(
-            visible = isRelatedExpanded,
-            enter = expandVertically(
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioLowBouncy,
-                    stiffness = Spring.StiffnessLow
-                )
-            ) + fadeIn(animationSpec = tween(durationMillis = 220)),
-            exit = shrinkVertically(
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioNoBouncy,
-                    stiffness = Spring.StiffnessMedium
-                )
-            ) + fadeOut(animationSpec = tween(durationMillis = 150))
-        ) {
-            Column {
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(vertical = 4.dp)
-                ) {
-                    items(categories) { category ->
-                        val selected = selectedCategory == category
-                        FilterChip(
-                            selected = selected,
-                            onClick = { selectedCategory = category },
-                            label = {
-                                Text(text = category ?: stringResource(R.string.all))
-                            },
-                            leadingIcon = if (selected) {
-                                {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Check,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            } else null
-                        )
-                    }
-                }
+        var showAll by remember { mutableStateOf(false) }
+        LaunchedEffect(selectedCategory) { showAll = false }
+        val displayItems = if (showAll || filtered.size <= 5) filtered else filtered.take(5)
 
-                LazyRow(
-                    modifier = Modifier.padding(top = 8.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(
-                        items = filtered,
-                        key = { "${it.mediaType}-${it.id}" }
-                    ) { row ->
-                        MediaItemVertical(
-                            imageUrl = row.imageUrl,
-                            title = row.title,
-                            subtitle = {
-                                Text(
-                                    text = row.relation,
-                                    color = MaterialTheme.colorScheme.outline,
-                                    style = MaterialTheme.typography.labelMedium
-                                )
-                            },
-                            onClick = dropUnlessResumed {
-                                navActionManager.toMediaDetails(row.mediaType, row.id)
-                            }
-                        )
-                    }
-                }
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(vertical = 4.dp)
+        ) {
+            items(categories) { category ->
+                val selected = selectedCategory == category
+                InputChip(
+                    selected = selected,
+                    onClick = { selectedCategory = category },
+                    label = {
+                        Text(text = category ?: stringResource(R.string.all))
+                    },
+                    leadingIcon = if (selected) {
+                        {
+                            Icon(
+                                imageVector = Icons.Rounded.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    } else null
+                )
             }
+        }
+
+        LazyRow(
+            modifier = Modifier.padding(top = 8.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(
+                items = displayItems,
+                key = { "${it.mediaType}-${it.id}" }
+            ) { row ->
+                MediaItemVertical(
+                    imageUrl = row.imageUrl,
+                    title = row.title,
+                    subtitle = {
+                        Text(
+                            text = row.relation,
+                            color = MaterialTheme.colorScheme.outline,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    },
+                    onClick = dropUnlessResumed {
+                        navActionManager.toMediaDetails(row.mediaType, row.id)
+                    }
+                )
+            }
+        }
+
+        if (filtered.size > 5) {
+            Text(
+                text = if (showAll) stringResource(R.string.show_less)
+                else stringResource(R.string.show_more),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .padding(start = 16.dp, top = 4.dp, bottom = 8.dp)
+                    .clickable { showAll = !showAll }
+            )
         }
     }
 }
@@ -1230,6 +1251,15 @@ private fun RelatedSection(
 /** Formats a nullable count as the number, or "-" when null/non-positive. */
 private fun Int?.countOrDash(): String =
     if (this != null && this > 0) this.toString() else "-"
+
+@Composable
+private fun MediaStatus.statusColor() = when (this) {
+    MediaStatus.AIRING, MediaStatus.PUBLISHING -> MaterialTheme.colorScheme.primary
+    MediaStatus.NOT_AIRED -> MaterialTheme.colorScheme.tertiary
+    MediaStatus.HIATUS -> MaterialTheme.colorScheme.secondary
+    MediaStatus.DISCONTINUED -> MaterialTheme.colorScheme.error
+    MediaStatus.FINISHED_AIRING, MediaStatus.FINISHED -> MaterialTheme.colorScheme.outline
+}
 
 /** Fires a system share sheet for the given text. */
 private fun android.content.Context.shareText(text: String) {
@@ -1253,4 +1283,4 @@ fun MediaDetailsPreview() {
             )
         }
     }
-}   
+}

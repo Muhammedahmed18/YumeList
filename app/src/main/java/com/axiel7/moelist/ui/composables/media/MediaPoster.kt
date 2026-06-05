@@ -1,12 +1,12 @@
 package com.axiel7.moelist.ui.composables.media
 
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.ColorPainter
+import com.axiel7.moelist.ui.theme.ShapePoster
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -42,7 +42,6 @@ fun MediaPoster(
         fallback = ColorPainter(MaterialTheme.colorScheme.surfaceContainerHighest),
         contentScale = contentScale,
         modifier = modifier
-            .clip(RoundedCornerShape(20.dp)) // Updated for M3/ColorOS consistency
     )
 }
 
@@ -54,6 +53,7 @@ fun MediaPosterPreview() {
             url = "https://cdn.myanimelist.net/images/anime/1170/124312l.jpg",
             modifier = Modifier
                 .size(width = MEDIA_POSTER_SMALL_WIDTH.dp, height = MEDIA_POSTER_SMALL_HEIGHT.dp)
+                .clip(ShapePoster)
         )
     }
 }

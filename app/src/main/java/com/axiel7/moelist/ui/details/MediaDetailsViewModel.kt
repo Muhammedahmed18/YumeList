@@ -152,9 +152,15 @@ class MediaDetailsViewModel(
                     .plus(mediaDetails.pictures?.map { it.large ?: it.medium.orEmpty() }
                         .orEmpty())
 
+                val animeStatusDistribution = if (mediaType == MediaType.ANIME) {
+                    mediaDetails.statistics?.status?.toStats(true)
+                } else null
+
                 mutableUiState.update {
                     it.copy(
                         mediaDetails = mediaDetails,
+                        statusDistribution = animeStatusDistribution,
+                        isLoadingStatusDistribution = mediaType == MediaType.MANGA,
                         relatedAnime = mediaDetails.relatedAnime.orEmpty(),
                         relatedManga = mediaDetails.relatedManga.orEmpty(),
                         recommendations = recommendations,
@@ -167,6 +173,16 @@ class MediaDetailsViewModel(
                     && defaultPreferencesRepository.loadCharacters.first()
                 ) {
                     getCharacters()
+                }
+
+                if (mediaType == MediaType.MANGA) {
+                    val mangaStats = mangaRepository.getMangaStatistics(mediaId)
+                    mutableUiState.update {
+                        it.copy(
+                            statusDistribution = mangaStats?.toStats(),
+                            isLoadingStatusDistribution = false
+                        )
+                    }
                 }
             }
         }
