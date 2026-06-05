@@ -2,11 +2,16 @@ package com.axiel7.moelist.ui.more
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -56,72 +61,112 @@ private fun MoreViewContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .verticalScroll(scrollState)
             .padding(padding)
     ) {
         Column(
-            modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 16.dp)
+            modifier = Modifier.padding(
+                start = 24.dp,
+                end = 24.dp,
+                top = 24.dp,
+                bottom = 8.dp
+            )
         ) {
             Text(
                 text = stringResource(R.string.more),
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = stringResource(R.string.more_info),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp)
             )
         }
 
-        MoreItem(
-            title = stringResource(R.string.anime_manga_news),
-            subtitle = stringResource(R.string.news_summary),
-            icon = R.drawable.ic_new_releases,
-            onClick = { context.openCustomTab(MAL_NEWS_URL) }
-        )
+        Spacer(Modifier.height(16.dp))
 
-        MoreItem(
-            title = stringResource(R.string.mal_announcements),
-            subtitle = stringResource(R.string.mal_announcements_summary),
-            icon = R.drawable.ic_campaign,
-            onClick = { context.openCustomTab(MAL_ANNOUNCEMENTS_URL) }
-        )
+        // Discover: external news links
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            shape = MaterialTheme.shapes.extraLarge,
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            )
+        ) {
+            MoreItem(
+                title = stringResource(R.string.anime_manga_news),
+                subtitle = stringResource(R.string.news_summary),
+                icon = R.drawable.ic_new_releases,
+                onClick = { context.openCustomTab(MAL_NEWS_URL) }
+            )
+            MoreItem(
+                title = stringResource(R.string.mal_announcements),
+                subtitle = stringResource(R.string.mal_announcements_summary),
+                icon = R.drawable.ic_campaign,
+                onClick = { context.openCustomTab(MAL_ANNOUNCEMENTS_URL) }
+            )
+        }
 
-        HorizontalDivider()
+        Spacer(Modifier.height(12.dp))
 
-        MoreItem(
-            title = stringResource(R.string.notifications),
-            icon = R.drawable.round_notifications_24,
-            onClick = dropUnlessResumed { navActionManager.toNotifications() }
-        )
-
-        MoreItem(
-            title = stringResource(R.string.settings),
-            icon = R.drawable.ic_round_settings_24,
-            onClick = dropUnlessResumed { navActionManager.toSettings() }
-        )
-
-        MoreItem(
-            title = stringResource(R.string.about),
-            icon = R.drawable.ic_info,
-            onClick = dropUnlessResumed { navActionManager.toAbout() }
-        )
+        // App navigation
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            shape = MaterialTheme.shapes.extraLarge,
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            )
+        ) {
+            MoreItem(
+                title = stringResource(R.string.notifications),
+                icon = R.drawable.round_notifications_24,
+                onClick = dropUnlessResumed { navActionManager.toNotifications() }
+            )
+            MoreItem(
+                title = stringResource(R.string.settings),
+                icon = R.drawable.ic_round_settings_24,
+                onClick = dropUnlessResumed { navActionManager.toSettings() }
+            )
+            MoreItem(
+                title = stringResource(R.string.about),
+                icon = R.drawable.ic_info,
+                onClick = dropUnlessResumed { navActionManager.toAbout() }
+            )
+        }
 
         if (isLoggedIn) {
-            HorizontalDivider()
+            Spacer(Modifier.height(12.dp))
 
-            MoreItem(
-                title = stringResource(R.string.logout),
-                subtitle = stringResource(R.string.logout_summary),
-                icon = R.drawable.ic_round_power_settings_new_24,
-                onClick = {
-                    event?.logOut()
-                }
-            )
+            // Logout — standalone destructive card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = MaterialTheme.shapes.extraLarge,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                MoreItem(
+                    title = stringResource(R.string.logout),
+                    subtitle = stringResource(R.string.logout_summary),
+                    icon = R.drawable.ic_round_power_settings_new_24,
+                    isDestructive = true,
+                    showTrailingArrow = false,
+                    onClick = { event?.logOut() }
+                )
+            }
         }
+
+        Spacer(Modifier.height(24.dp))
     }
 }
 

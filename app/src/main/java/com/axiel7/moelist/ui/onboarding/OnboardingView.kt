@@ -60,8 +60,6 @@ fun OnboardingView(
 
     val theme by viewModel.theme.collectAsState()
     val useBlackColors by viewModel.useBlackColors.collectAsState(false)
-    val useMonochrome by viewModel.useMonochrome.collectAsState(false)
-    
     val profilePicture by viewModel.profilePicture.collectAsState()
     val username by viewModel.username.collectAsState()
 
@@ -93,13 +91,11 @@ fun OnboardingView(
             isLoggingIn = isLoggingIn,
             theme = theme,
             useBlackColors = useBlackColors,
-            useMonochrome = useMonochrome,
             profilePicture = profilePicture,
             username = username,
             onStepChange = { currentStep = it },
             onThemeChange = viewModel::setTheme,
             onBlackColorsChange = viewModel::setUseBlackColors,
-            onMonochromeChange = viewModel::setUseMonochrome,
             onLoginClick = {
                 scope.launch {
                     val url = viewModel.generateLoginUrl()
@@ -118,13 +114,11 @@ fun OnboardingContent(
     isLoggingIn: Boolean,
     theme: ThemeStyle,
     useBlackColors: Boolean,
-    useMonochrome: Boolean,
     profilePicture: String?,
     username: String?,
     onStepChange: (Int) -> Unit,
     onThemeChange: (ThemeStyle) -> Unit,
     onBlackColorsChange: (Boolean) -> Unit,
-    onMonochromeChange: (Boolean) -> Unit,
     onLoginClick: () -> Unit,
     onFinished: () -> Unit
 ) {
@@ -195,10 +189,8 @@ fun OnboardingContent(
                         modifier = Modifier.padding(padding),
                         theme = theme,
                         useBlackColors = useBlackColors,
-                        useMonochrome = useMonochrome,
                         onThemeChange = onThemeChange,
-                        onBlackColorsChange = onBlackColorsChange,
-                        onMonochromeChange = onMonochromeChange
+                        onBlackColorsChange = onBlackColorsChange
                     )
                     3 -> LoginStep(
                         modifier = Modifier.padding(padding),
@@ -352,7 +344,6 @@ fun FeatureItem(
 fun ThemePreviewMockup(
     theme: ThemeStyle,
     useBlackColors: Boolean,
-    useMonochrome: Boolean,
     modifier: Modifier = Modifier
 ) {
     val isDark = when (theme) {
@@ -372,7 +363,6 @@ fun ThemePreviewMockup(
         MoeListTheme(
             darkTheme = isDark,
             useBlackColors = useBlackColors,
-            useMonochrome = useMonochrome,
             dynamicColor = false
         ) {
             Scaffold(
@@ -444,10 +434,8 @@ fun AppearanceStep(
     modifier: Modifier = Modifier,
     theme: ThemeStyle,
     useBlackColors: Boolean,
-    useMonochrome: Boolean,
     onThemeChange: (ThemeStyle) -> Unit,
     onBlackColorsChange: (Boolean) -> Unit,
-    onMonochromeChange: (Boolean) -> Unit
 ) {
     var show by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { show = true }
@@ -467,7 +455,6 @@ fun AppearanceStep(
             ThemePreviewMockup(
                 theme = theme,
                 useBlackColors = useBlackColors,
-                useMonochrome = useMonochrome,
                 modifier = Modifier.padding(bottom = 32.dp)
             )
         }
@@ -551,34 +538,6 @@ fun AppearanceStep(
                             Text("Pure black background", style = MaterialTheme.typography.bodySmall)
                         }
                         Switch(checked = useBlackColors, onCheckedChange = onBlackColorsChange)
-                    }
-
-                    AnimatedVisibility(visible = useBlackColors) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth().height(56.dp)
-                        ) {
-                            Surface(
-                                modifier = Modifier.size(36.dp),
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_round_color_lens_24),
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
-                            Spacer(Modifier.width(16.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("Monochrome Theme", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-                                Text("Black and white style", style = MaterialTheme.typography.bodySmall)
-                            }
-                            Switch(checked = useMonochrome, onCheckedChange = onMonochromeChange)
-                        }
                     }
                 }
             }
@@ -932,13 +891,11 @@ fun OnboardingWelcomePreview() {
             isLoggingIn = false,
             theme = ThemeStyle.FOLLOW_SYSTEM,
             useBlackColors = false,
-            useMonochrome = false,
             profilePicture = null,
             username = null,
             onStepChange = {},
             onThemeChange = {},
             onBlackColorsChange = {},
-            onMonochromeChange = {},
             onLoginClick = {},
             onFinished = {}
         )
@@ -955,13 +912,11 @@ fun OnboardingAppearancePreview() {
             isLoggingIn = false,
             theme = ThemeStyle.FOLLOW_SYSTEM,
             useBlackColors = false,
-            useMonochrome = false,
             profilePicture = null,
             username = null,
             onStepChange = {},
             onThemeChange = {},
             onBlackColorsChange = {},
-            onMonochromeChange = {},
             onLoginClick = {},
             onFinished = {}
         )
@@ -978,13 +933,11 @@ fun OnboardingLoginPreview() {
             isLoggingIn = false,
             theme = ThemeStyle.FOLLOW_SYSTEM,
             useBlackColors = false,
-            useMonochrome = false,
             profilePicture = null,
             username = null,
             onStepChange = {},
             onThemeChange = {},
             onBlackColorsChange = {},
-            onMonochromeChange = {},
             onLoginClick = {},
             onFinished = {}
         )
@@ -1001,13 +954,11 @@ fun OnboardingSuccessPreview() {
             isLoggingIn = false,
             theme = ThemeStyle.FOLLOW_SYSTEM,
             useBlackColors = false,
-            useMonochrome = false,
             profilePicture = "https://myanimelist.net/images/userimages/1.jpg",
             username = "Axiel7",
             onStepChange = {},
             onThemeChange = {},
             onBlackColorsChange = {},
-            onMonochromeChange = {},
             onLoginClick = {},
             onFinished = {}
         )
@@ -1024,13 +975,11 @@ fun OnboardingDarkThemePreview() {
             isLoggingIn = false,
             theme = ThemeStyle.DARK,
             useBlackColors = true,
-            useMonochrome = false,
             profilePicture = null,
             username = null,
             onStepChange = {},
             onThemeChange = {},
             onBlackColorsChange = {},
-            onMonochromeChange = {},
             onLoginClick = {},
             onFinished = {}
         )
