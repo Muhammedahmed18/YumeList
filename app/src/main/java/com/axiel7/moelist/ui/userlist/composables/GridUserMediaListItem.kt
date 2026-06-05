@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import com.axiel7.moelist.ui.theme.ShapePoster
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -83,6 +84,7 @@ fun GridUserMediaListItem(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(MEDIA_POSTER_MEDIUM_HEIGHT.dp)
+                        .clip(ShapePoster)
                 )
 
                 Row(

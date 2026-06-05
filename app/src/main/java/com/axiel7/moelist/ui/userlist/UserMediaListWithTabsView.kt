@@ -110,8 +110,7 @@ fun UserMediaListWithTabsView(
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                shadowElevation = 4.dp,
-                tonalElevation = 4.dp
+                tonalElevation = 3.dp
             ) {
                 Column {
                     TabRowWithPager(
