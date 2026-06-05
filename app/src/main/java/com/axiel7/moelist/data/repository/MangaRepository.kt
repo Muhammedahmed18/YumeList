@@ -6,12 +6,14 @@ import com.axiel7.moelist.data.model.manga.MangaDetails
 import com.axiel7.moelist.data.model.manga.MangaList
 import com.axiel7.moelist.data.model.manga.MangaNode
 import com.axiel7.moelist.data.model.manga.MangaRanking
+import com.axiel7.moelist.data.model.manga.MangaStatisticsData
 import com.axiel7.moelist.data.model.manga.MyMangaListStatus
 import com.axiel7.moelist.data.model.manga.UserMangaList
 import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.MediaSort
 import com.axiel7.moelist.data.model.media.RankingType
 import com.axiel7.moelist.data.network.Api
+import com.axiel7.moelist.data.network.JikanApi
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +25,7 @@ import java.time.Instant
 
 class MangaRepository(
     private val api: Api,
+    private val jikanApi: JikanApi,
     private val defaultPreferencesRepository: DefaultPreferencesRepository
 ) {
 
@@ -38,7 +41,7 @@ class MangaRepository(
                     "my_list_status{$LIST_STATUS_FIELDS},num_chapters,num_volumes,source,authors{first_name,last_name}," +
                     "serialization,related_anime{media_type,alternative_titles{en,ja}}," +
                     "related_manga{media_type,alternative_titles{en,ja}}," +
-                    "recommendations{alternative_titles{en,ja}},background"
+                    "recommendations{alternative_titles{en,ja}},background,statistics{status}"
         private const val USER_MANGA_LIST_FIELDS =
             "alternative_titles{en,ja},list_status{$LIST_STATUS_FIELDS},num_chapters,num_volumes,media_type,status"
         private const val SEARCH_FIELDS =
@@ -59,6 +62,16 @@ class MangaRepository(
     ): MangaDetails? {
         return try {
             api.getMangaDetails(mangaId, MANGA_DETAILS_FIELDS)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    suspend fun getMangaStatistics(
+        mangaId: Int
+    ): MangaStatisticsData? {
+        return try {
+            jikanApi.getMangaStatistics(mangaId).data
         } catch (_: Exception) {
             null
         }
