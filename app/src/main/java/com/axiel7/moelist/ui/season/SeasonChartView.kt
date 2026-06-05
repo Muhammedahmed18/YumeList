@@ -55,7 +55,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -68,6 +67,7 @@ import com.axiel7.moelist.data.model.anime.AnimeSeasonal
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.BackIconButton
+import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
 import com.axiel7.moelist.ui.composables.EmptyState
 import com.axiel7.moelist.ui.composables.ErrorState
 import com.axiel7.moelist.ui.composables.LoadingState
@@ -79,7 +79,6 @@ import com.axiel7.moelist.ui.editmedia.EditMediaSheet
 import com.axiel7.moelist.ui.season.composables.SeasonChartFilterSheet
 import com.axiel7.moelist.ui.season.composables.SeasonChartFormatSheet
 import com.axiel7.moelist.ui.theme.MoeListTheme
-import com.axiel7.moelist.utils.ContextExtensions.showToast
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -104,9 +103,9 @@ private fun SeasonChartViewContent(
     event: SeasonChartEvent?,
     navActionManager: NavActionManager?
 ) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
+    val snackbarHostState = LocalSnackbarHostState.current
 
     val filterSheetState = rememberModalBottomSheetState()
     var showFilterSheet by remember { mutableStateOf(false) }
@@ -164,7 +163,7 @@ private fun SeasonChartViewContent(
 
     LaunchedEffect(uiState.message) {
         if (uiState.message != null) {
-            context.showToast(uiState.message)
+            snackbarHostState.showSnackbar(uiState.message)
             event?.onMessageDisplayed()
         }
     }
@@ -198,7 +197,7 @@ private fun SeasonChartViewContent(
                         BackIconButton(onClick = { navActionManager?.goBack() })
                     },
                     scrollBehavior = scrollBehavior,
-                    colors = TopAppBarDefaults.mediumTopAppBarColors(
+                    colors = TopAppBarDefaults.topAppBarColors(
                         scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
                     )
                 )
