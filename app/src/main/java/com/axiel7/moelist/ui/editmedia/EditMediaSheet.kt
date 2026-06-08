@@ -89,6 +89,7 @@ import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.ListStatus.Companion.listStatusValues
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
+import com.axiel7.moelist.ui.composables.showSnackbarShort
 import com.axiel7.moelist.ui.composables.media.MediaPoster
 import com.axiel7.moelist.ui.composables.score.ScoreSlider
 import com.axiel7.moelist.ui.editmedia.composables.DeleteMediaEntryDialog
@@ -177,7 +178,7 @@ private fun EditMediaSheetContent(
 
     LaunchedEffect(uiState.message) {
         if (uiState.message != null) {
-            snackbarHostState.showSnackbar(uiState.message)
+            snackbarHostState.showSnackbarShort(uiState.message)
             event?.onMessageDisplayed()
         }
     }

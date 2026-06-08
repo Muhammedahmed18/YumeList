@@ -58,6 +58,7 @@ import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
+import com.axiel7.moelist.ui.composables.showSnackbarShort
 import com.axiel7.moelist.ui.profile.composables.UserStatsView
 import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.utils.ContextExtensions.openLink
@@ -96,7 +97,7 @@ private fun ProfileViewContent(
 
     LaunchedEffect(uiState.message) {
         if (uiState.message != null) {
-            snackbarHostState.showSnackbar(uiState.message)
+            snackbarHostState.showSnackbarShort(uiState.message)
             event?.onMessageDisplayed()
         }
     }

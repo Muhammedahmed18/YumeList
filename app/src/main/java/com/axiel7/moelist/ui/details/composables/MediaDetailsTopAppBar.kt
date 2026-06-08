@@ -27,6 +27,7 @@ import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.anime.AnimeDetails
 import com.axiel7.moelist.data.model.media.MediaStatus
 import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
+import com.axiel7.moelist.ui.composables.showSnackbarShort
 import com.axiel7.moelist.ui.details.MediaDetailsEvent
 import com.axiel7.moelist.ui.details.MediaDetailsUiState
 import com.axiel7.moelist.utils.DateUtils.parseDate
@@ -78,7 +79,7 @@ fun MediaDetailsTopAppBar(
                         weekDay = details.broadcast.dayOfTheWeek,
                         jpHour = LocalTime.parse(details.broadcast.startTime)
                     )
-                    scope.launch { snackbarHostState.showSnackbar(airingNotificationEnabledMessage) }
+                    scope.launch { snackbarHostState.showSnackbarShort(airingNotificationEnabledMessage) }
                 } else if (details.status == MediaStatus.NOT_AIRED && details.startDate != null) {
                     val startDate = details.startDate.parseDate()
                     if (startDate != null) {
@@ -87,22 +88,22 @@ fun MediaDetailsTopAppBar(
                             animeId = details.id,
                             startDate = startDate
                         )
-                        scope.launch { snackbarHostState.showSnackbar(startAiringNotificationEnabledMessage) }
+                        scope.launch { snackbarHostState.showSnackbarShort(startAiringNotificationEnabledMessage) }
                     } else {
-                        scope.launch { snackbarHostState.showSnackbar(invalidStartDateMessage) }
+                        scope.launch { snackbarHostState.showSnackbarShort(invalidStartDateMessage) }
                     }
                 } else {
                     if (details.broadcast?.dayOfTheWeek == null
                         || details.broadcast.startTime == null
                     ) {
-                        scope.launch { snackbarHostState.showSnackbar(invalidBroadcastMessage) }
+                        scope.launch { snackbarHostState.showSnackbarShort(invalidBroadcastMessage) }
                     } else if (details.startDate == null) {
-                        scope.launch { snackbarHostState.showSnackbar(invalidStartDateMessage) }
+                        scope.launch { snackbarHostState.showSnackbarShort(invalidStartDateMessage) }
                     }
                 }
             } else {
                 event?.removeAiringAnimeNotification(animeId = details.id)
-                scope.launch { snackbarHostState.showSnackbar(notificationDisabledMessage) }
+                scope.launch { snackbarHostState.showSnackbarShort(notificationDisabledMessage) }
             }
         }
     }

@@ -61,6 +61,7 @@ import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.base.navigation.NavActionManager.Companion.rememberNavActionManager
 import com.axiel7.moelist.ui.base.navigation.Route
 import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
+import com.axiel7.moelist.ui.composables.YumeListSnackbar
 import com.axiel7.moelist.ui.main.composables.MainBottomNavBar
 import com.axiel7.moelist.ui.main.composables.MainNavigationRail
 import com.axiel7.moelist.ui.onboarding.OnboardingView
@@ -285,7 +286,11 @@ fun MainView(
                 )
             }
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { snackbarData ->
+                YumeListSnackbar(snackbarData)
+            }
+        },
         contentWindowInsets = WindowInsets.systemBars
             .only(WindowInsetsSides.Horizontal)
     ) { padding ->

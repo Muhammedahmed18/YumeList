@@ -48,6 +48,7 @@ import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.EmptyState
 import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
+import com.axiel7.moelist.ui.composables.showSnackbarShort
 import com.axiel7.moelist.ui.composables.ErrorState
 import com.axiel7.moelist.ui.composables.LoadingState
 import com.axiel7.moelist.ui.composables.OnBottomReached
@@ -115,7 +116,7 @@ fun SearchViewContent(
 
     LaunchedEffect(uiState.message) {
         if (uiState.message != null) {
-            snackbarHostState.showSnackbar(uiState.message)
+            snackbarHostState.showSnackbarShort(uiState.message)
             event?.onMessageDisplayed()
         }
     }

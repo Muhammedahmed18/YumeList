@@ -110,6 +110,7 @@ import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_BIG_WIDTH
 import com.axiel7.moelist.ui.composables.media.MediaItemVertical
 import com.axiel7.moelist.ui.composables.media.MediaPoster
 import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
+import com.axiel7.moelist.ui.composables.showSnackbarShort
 import com.axiel7.moelist.ui.details.composables.MediaDetailsTopAppBar
 import com.axiel7.moelist.ui.details.composables.MediaInfoView
 import com.axiel7.moelist.ui.details.composables.MusicStreamingSheet
@@ -232,7 +233,7 @@ private fun MediaDetailsContent(
 
     LaunchedEffect(uiState.message) {
         if (uiState.message != null) {
-            snackbarHostState.showSnackbar(uiState.message)
+            snackbarHostState.showSnackbarShort(uiState.message)
             event?.onMessageDisplayed()
         }
     }
@@ -267,7 +268,7 @@ private fun MediaDetailsContent(
                         if (isLoggedIn) {
                             showSheet = true
                         } else {
-                            scope.launch { snackbarHostState.showSnackbar(pleaseLoginMessage) }
+                            scope.launch { snackbarHostState.showSnackbarShort(pleaseLoginMessage) }
                         }
                     },
                     icon = {

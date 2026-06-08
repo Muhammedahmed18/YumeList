@@ -21,6 +21,7 @@ import com.axiel7.moelist.R
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.DefaultScaffoldWithTopAppBar
 import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
+import com.axiel7.moelist.ui.composables.showSnackbarShort
 import com.axiel7.moelist.ui.composables.preferences.PlainPreferenceView
 import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.utils.ContextExtensions.openAction
@@ -52,7 +53,7 @@ fun AboutView(
                 icon = R.drawable.ic_yumelist_logo,
                 onClick = {
                     if (versionClicks >= 7) {
-                        scope.launch { snackbarHostState.showSnackbar("✧◝(⁰▿⁰)◜✧") }
+                        scope.launch { snackbarHostState.showSnackbarShort("✧◝(⁰▿⁰)◜✧") }
                         versionClicks = 0
                     } else versionClicks++
                 }

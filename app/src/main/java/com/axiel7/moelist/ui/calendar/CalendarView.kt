@@ -36,6 +36,7 @@ import com.axiel7.moelist.data.model.media.WeekDay
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.DefaultScaffoldWithTopAppBar
 import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
+import com.axiel7.moelist.ui.composables.showSnackbarShort
 import com.axiel7.moelist.ui.composables.TabRowWithPager
 import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_SMALL_WIDTH
 import com.axiel7.moelist.ui.composables.media.MediaItemVertical
@@ -68,7 +69,7 @@ private fun CalendarContent(
 
     LaunchedEffect(uiState.message) {
         if (uiState.message != null) {
-            snackbarHostState.showSnackbar(uiState.message)
+            snackbarHostState.showSnackbarShort(uiState.message)
             event?.onMessageDisplayed()
         }
     }
