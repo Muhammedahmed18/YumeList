@@ -3,10 +3,14 @@ package com.axiel7.moelist.ui.editmedia
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
@@ -18,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -359,46 +364,66 @@ private fun EditMediaSheetContent(
                     color = MaterialTheme.colorScheme.surfaceContainer,
                     shape = RoundedCornerShape(32.dp)
                 ) {
-                    Row(
+                    val selectedIndex = statusValues.indexOf(uiState.status).coerceAtLeast(0)
+
+                    BoxWithConstraints(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(8.dp)
                     ) {
-                        statusValues.forEach { status ->
-                            val isSelected = uiState.status == status
-                            val containerColor by animateColorAsState(
-                                targetValue = if (isSelected)
-                                    MaterialTheme.colorScheme.primaryContainer
-                                else Color.Transparent,
-                                label = "statusContainer"
-                            )
-                            val contentColor by animateColorAsState(
-                                targetValue = if (isSelected)
-                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                else MaterialTheme.colorScheme.onSurfaceVariant,
-                                label = "statusContent"
-                            )
+                        val pillWidth = maxWidth / statusValues.size
+                        val pillOffset by animateDpAsState(
+                            targetValue = pillWidth * selectedIndex,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            ),
+                            label = "pillOffset"
+                        )
 
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp)
-                                    .clip(CircleShape)
-                                    .background(containerColor)
-                                    .clickable {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        event?.onChangeStatus(status)
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = status.icon,
-                                    contentDescription = status.localized(),
-                                    tint = contentColor,
-                                    modifier = Modifier.size(24.dp)
+                        // Sliding pill behind the icons
+                        Box(
+                            modifier = Modifier
+                                .offset(x = pillOffset)
+                                .size(width = pillWidth, height = 48.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer)
+                        )
+
+                        // Icon buttons on top
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(0.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            statusValues.forEach { status ->
+                                val isSelected = uiState.status == status
+                                val contentColor by animateColorAsState(
+                                    targetValue = if (isSelected)
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    animationSpec = spring(stiffness = Spring.StiffnessMedium),
+                                    label = "statusIconTint"
                                 )
+
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(48.dp)
+                                        .clip(CircleShape)
+                                        .clickable {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            event?.onChangeStatus(status)
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = status.icon,
+                                        contentDescription = status.localized(),
+                                        tint = contentColor,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
                             }
                         }
                     }
