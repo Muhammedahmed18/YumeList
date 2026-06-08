@@ -211,7 +211,7 @@ class UserMediaListViewModel(
             }
             if (success) {
                 mutableUiState.update { state ->
-                    state.copy(message = "Updated ${item.node.userPreferredTitle()}") 
+                    state.copy(message = "Updated · ${item.node.userPreferredTitle()}") 
                 }
             }
         }
