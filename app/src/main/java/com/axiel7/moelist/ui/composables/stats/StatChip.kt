@@ -28,7 +28,7 @@ fun <T : LocalizableAndColorable> StatChip(
 ) {
     val tooltipState = rememberTooltipState()
     TooltipBox(
-        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
         tooltip = {
             if (tooltipText != null) {
                 PlainTooltip {

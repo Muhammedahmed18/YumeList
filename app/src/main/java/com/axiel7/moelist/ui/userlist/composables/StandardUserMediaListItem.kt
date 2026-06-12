@@ -74,7 +74,6 @@ import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_MEDIUM_WIDTH
 import com.axiel7.moelist.ui.composables.media.MediaPoster
 import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrUnknown
-import com.axiel7.moelist.utils.UNKNOWN_CHAR
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -88,6 +87,7 @@ fun StandardUserMediaListItem(
 ) {
     val totalProgress = remember { item.totalProgress() }
     val userProgress = item.userProgress()
+    val score = item.listStatus?.score?.takeIf { it > 0 }
     val broadcast = remember { (item.node as? AnimeNode)?.broadcast }
     val isAiring = remember { item.isAiring }
     val isNotYetAired = remember { (item.node as? AnimeNode)?.status == MediaStatus.NOT_AIRED }
@@ -127,29 +127,31 @@ fun StandardUserMediaListItem(
                         .clip(RoundedCornerShape(16.dp))
                 )
 
-                // Score Badge — bottom-left overlay
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(4.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.92f))
-                        .padding(horizontal = 6.dp, vertical = 3.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Star,
-                        contentDescription = "star",
-                        modifier = Modifier.size(11.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Spacer(modifier = Modifier.width(3.dp))
-                    Text(
-                        text = item.listStatus?.score?.takeIf { it > 0 }?.toString() ?: UNKNOWN_CHAR,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold
-                    )
+                // Score Badge — bottom-left overlay (only when score is given)
+                if (score != null) {
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(4.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.92f))
+                            .padding(horizontal = 6.dp, vertical = 3.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Star,
+                            contentDescription = "star",
+                            modifier = Modifier.size(11.dp),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text(
+                            text = score.toString(),
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 

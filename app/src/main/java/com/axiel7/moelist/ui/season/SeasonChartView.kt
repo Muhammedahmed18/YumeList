@@ -36,13 +36,12 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,7 +53,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -127,7 +125,6 @@ private fun SeasonChartViewContent(
     }
 
     val bottomBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
     if (showFilterSheet) {
         SeasonChartFilterSheet(
@@ -170,14 +167,13 @@ private fun SeasonChartViewContent(
     }
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             Column(
                 modifier = Modifier.background(MaterialTheme.colorScheme.surface)
             ) {
-                MediumTopAppBar(
+                TopAppBar(
                     title = {
-                        Column {
+                        Column(verticalArrangement = Arrangement.Center) {
                             Text(
                                 text = uiState.season.seasonYearText(),
                                 maxLines = 1,
@@ -197,8 +193,8 @@ private fun SeasonChartViewContent(
                     navigationIcon = {
                         BackIconButton(onClick = { navActionManager?.goBack() })
                     },
-                    scrollBehavior = scrollBehavior,
                     colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
                         scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
                     )
                 )

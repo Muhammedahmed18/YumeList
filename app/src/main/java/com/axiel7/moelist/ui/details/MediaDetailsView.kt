@@ -327,7 +327,16 @@ private fun MediaDetailsContent(
                         fontWeight = FontWeight.Bold,
                         maxLines = 4,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.defaultPlaceholder(visible = uiState.isLoading)
+                        modifier = Modifier
+                            .defaultPlaceholder(visible = uiState.isLoading)
+                            .combinedClickable(
+                                onLongClick = {
+                                    uiState.mediaDetails?.userPreferredTitle()?.let {
+                                        context.copyToClipBoard(it)
+                                    }
+                                },
+                                onClick = {}
+                            )
                     )
                     val altTitle = if (App.titleLanguage == TitleLanguage.ENGLISH) {
                         uiState.mediaDetails?.title
