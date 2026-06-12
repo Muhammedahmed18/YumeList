@@ -1,12 +1,13 @@
 package com.axiel7.moelist.ui.ranking.list
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -45,7 +46,7 @@ import com.axiel7.moelist.ui.composables.OnBottomReached
 import com.axiel7.moelist.ui.composables.TextIconHorizontal
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailed
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailedPlaceholder
-import com.axiel7.moelist.ui.composables.media.PosterStatusBadge
+import com.axiel7.moelist.ui.composables.media.MediaStatusIndicator
 import com.axiel7.moelist.ui.ranking.MediaRankingEvent
 import com.axiel7.moelist.ui.ranking.MediaRankingUiState
 import com.axiel7.moelist.ui.ranking.MediaRankingViewModel
@@ -96,6 +97,7 @@ private fun MediaRankingListViewContent(
 
     @Composable
     fun ItemView(item: BaseRanking) {
+        val status = item.node.myListStatus?.status
         MediaItemDetailed(
             title = item.node.userPreferredTitle(),
             imageUrl = item.node.mainPicture?.large,
@@ -111,9 +113,6 @@ private fun MediaRankingListViewContent(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            },
-            badgeContent = item.node.myListStatus?.status?.let { status ->
-                { PosterStatusBadge(status = status, iconSize = 20.dp) }
             },
             subtitle1 = {
                 Text(
@@ -146,6 +145,10 @@ private fun MediaRankingListViewContent(
                     style = MaterialTheme.typography.bodySmall,
                     iconSize = 16.dp
                 )
+                if (status != null) {
+                    Spacer(modifier = Modifier.width(12.dp))
+                    MediaStatusIndicator(status = status)
+                }
             },
             onClick = dropUnlessResumed {
                 navActionManager.toMediaDetails(mediaType, item.node.id)
