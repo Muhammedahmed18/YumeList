@@ -35,7 +35,10 @@ import com.axiel7.moelist.ui.more.about.AboutView
 import com.axiel7.moelist.ui.more.credits.CreditsView
 import com.axiel7.moelist.ui.more.notifications.NotificationsView
 import com.axiel7.moelist.ui.more.settings.SettingsView
+import com.axiel7.moelist.ui.more.settings.appearance.AppearanceView
+import com.axiel7.moelist.ui.more.settings.content.ContentSettingsView
 import com.axiel7.moelist.ui.more.settings.list.ListStyleSettingsView
+import com.axiel7.moelist.ui.more.settings.navigation.NavigationSettingsView
 import com.axiel7.moelist.ui.profile.ProfileView
 import com.axiel7.moelist.ui.ranking.MediaRankingView
 import com.axiel7.moelist.ui.recommendations.RecommendationsView
@@ -119,7 +122,8 @@ fun MainNavigation(
                     isCompactScreen = isCompactScreen,
                     navActionManager = navActionManager,
                     padding = padding,
-                    onSortClickTrigger = onSortClickTrigger // Pass down
+                    useListTabs = useListTabs,
+                    onSortClickTrigger = onSortClickTrigger
                 )
             }
         }
@@ -139,7 +143,8 @@ fun MainNavigation(
                     isCompactScreen = isCompactScreen,
                     navActionManager = navActionManager,
                     padding = padding,
-                    onSortClickTrigger = onSortClickTrigger // Pass down
+                    useListTabs = useListTabs,
+                    onSortClickTrigger = onSortClickTrigger
                 )
             }
         }
@@ -193,8 +198,26 @@ fun MainNavigation(
             )
         }
 
+        composable<Route.Appearance> {
+            AppearanceView(
+                navActionManager = navActionManager
+            )
+        }
+
         composable<Route.ListStyleSettings> {
             ListStyleSettingsView(
+                navActionManager = navActionManager
+            )
+        }
+
+        composable<Route.NavigationSettings> {
+            NavigationSettingsView(
+                navActionManager = navActionManager
+            )
+        }
+
+        composable<Route.ContentSettings> {
+            ContentSettingsView(
                 navActionManager = navActionManager
             )
         }
@@ -238,7 +261,8 @@ fun MainNavigation(
                 isCompactScreen = isCompactScreen,
                 navActionManager = navActionManager,
                 padding = padding,
-                onSortClickTrigger = onSortClickTrigger // Pass down
+                useListTabs = useListTabs,
+                onSortClickTrigger = onSortClickTrigger
             )
         }
 

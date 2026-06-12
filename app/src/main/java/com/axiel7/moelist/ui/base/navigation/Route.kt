@@ -53,7 +53,16 @@ sealed interface Route {
     data object Settings : Route
 
     @Serializable
+    data object Appearance : Route
+
+    @Serializable
     data object ListStyleSettings : Route
+
+    @Serializable
+    data object NavigationSettings : Route
+
+    @Serializable
+    data object ContentSettings : Route
 
     @Serializable
     data object Notifications : Route

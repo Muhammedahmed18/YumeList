@@ -55,6 +55,7 @@ import com.axiel7.moelist.App
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.BottomDestination.Companion.isBottomDestination
 import com.axiel7.moelist.ui.base.BottomDestination.Companion.toBottomDestinationIndex
+import com.axiel7.moelist.ui.base.ColorPalette
 import com.axiel7.moelist.ui.base.TabletMode
 import com.axiel7.moelist.ui.base.ThemeStyle
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
@@ -96,20 +97,23 @@ class MainActivity : AppCompatActivity() {
 
         val lastTabOpened = findLastTabOpened()
         val initialTheme = runBlocking { viewModel.theme.first() }
-        val initialUseBlackColors = runBlocking { viewModel.useBlackColors.first() }
+        val initialColorPalette = runBlocking { viewModel.colorPalette.first() }
         val initialTabletMode = runBlocking { viewModel.tabletMode.first() }
         val initialOnboardingCompleted = runBlocking { viewModel.isOnboardingCompleted.first() }
 
         setContent {
             val theme by viewModel.theme.collectAsStateWithLifecycle(initialValue = initialTheme)
-            val useBlackColors by viewModel.useBlackColors.collectAsStateWithLifecycle(
-                initialValue = initialUseBlackColors
+            val colorPalette by viewModel.colorPalette.collectAsStateWithLifecycle(
+                initialValue = initialColorPalette
             )
             val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsStateWithLifecycle(
                 initialValue = initialOnboardingCompleted
             )
-            val isDark = if (theme == ThemeStyle.FOLLOW_SYSTEM) isSystemInDarkTheme()
-            else theme == ThemeStyle.DARK
+            val isDark = when (theme) {
+                ThemeStyle.FOLLOW_SYSTEM -> isSystemInDarkTheme()
+                ThemeStyle.LIGHT -> false
+                else -> true
+            }
 
             val navController = rememberNavController()
             val navActionManager = rememberNavActionManager(navController)
@@ -131,7 +135,8 @@ class MainActivity : AppCompatActivity() {
 
             MoeListTheme(
                 darkTheme = isDark,
-                useBlackColors = useBlackColors,
+                useBlackColors = theme == ThemeStyle.AMOLED,
+                colorPalette = colorPalette,
             ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
