@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalContext
+import com.axiel7.moelist.ui.base.ColorPalette
 
 private val LightColors = lightColorScheme(
     primary = md_theme_light_primary,
@@ -98,20 +99,26 @@ private fun ColorScheme.toBlack() = this.copy(
 @Composable
 fun MoeListTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
     useBlackColors: Boolean = false,
+    colorPalette: ColorPalette = ColorPalette.DYNAMIC,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
-    val colorScheme = remember(dynamicColor, darkTheme, useBlackColors) {
-        var scheme = when {
-            dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-                if (darkTheme) dynamicDarkColorScheme(context)
-                else dynamicLightColorScheme(context)
+    val colorScheme = remember(colorPalette, darkTheme, useBlackColors) {
+        var scheme = when (colorPalette) {
+            ColorPalette.DYNAMIC -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    if (darkTheme) dynamicDarkColorScheme(context)
+                    else dynamicLightColorScheme(context)
+                } else {
+                    if (darkTheme) DarkColors else LightColors
+                }
             }
-
-            darkTheme -> DarkColors
-            else -> LightColors
+            ColorPalette.ONE_PIECE -> if (darkTheme) OnePieceDarkColors else OnePieceLightColors
+            ColorPalette.DEMON_SLAYER -> if (darkTheme) DemonSlayerDarkColors else DemonSlayerLightColors
+            ColorPalette.ATTACK_ON_TITAN -> if (darkTheme) AttackOnTitanDarkColors else AttackOnTitanLightColors
+            ColorPalette.NARUTO -> if (darkTheme) NarutoDarkColors else NarutoLightColors
+            ColorPalette.BLEACH -> if (darkTheme) BleachDarkColors else BleachLightColors
         }
 
         if (darkTheme && useBlackColors) {
