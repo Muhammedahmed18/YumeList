@@ -47,6 +47,7 @@ import com.axiel7.moelist.data.model.media.BaseMediaList
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.EmptyState
+import com.axiel7.moelist.ui.composables.TextIconHorizontal
 import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
 import com.axiel7.moelist.ui.composables.showSnackbarShort
 import com.axiel7.moelist.ui.composables.ErrorState
@@ -54,11 +55,11 @@ import com.axiel7.moelist.ui.composables.LoadingState
 import com.axiel7.moelist.ui.composables.OnBottomReached
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailed
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailedPlaceholder
-import com.axiel7.moelist.ui.composables.media.PosterStatusBadge
+import com.axiel7.moelist.ui.composables.media.MediaStatusIndicator
 import com.axiel7.moelist.ui.composables.score.PersonalScoreBadge
-import com.axiel7.moelist.ui.composables.score.PosterScoreChip
 import com.axiel7.moelist.utils.DateUtils.parseDateAndLocalize
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrNull
+import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrUnknown
 import com.axiel7.moelist.utils.UNKNOWN_CHAR
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -163,20 +164,14 @@ fun SearchViewContent(
     fun ItemView(item: BaseMediaList) {
         val userScore = item.node.myListStatus?.score ?: 0
         val meanScore = item.node.mean
+        val status = item.node.myListStatus?.status
+        val showScore = !uiState.hideScore
         MediaItemDetailed(
             title = item.node.userPreferredTitle(),
             imageUrl = item.node.mainPicture?.large,
             topBadgeContent = if (userScore > 0) {
                 { PersonalScoreBadge(score = userScore) }
             } else null,
-            badgeContent = {
-                item.node.myListStatus?.status?.let { status ->
-                    PosterStatusBadge(status = status, iconSize = 20.dp)
-                }
-                if (!uiState.hideScore && meanScore != null && meanScore > 0f) {
-                    PosterScoreChip(score = meanScore)
-                }
-            },
             subtitle1 = {
                 Text(
                     text = buildString {
@@ -203,7 +198,23 @@ fun SearchViewContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
-            subtitle3 = {},
+            subtitle3 = if (showScore || status != null) {
+                {
+                    if (showScore) {
+                        TextIconHorizontal(
+                            text = meanScore.toStringPositiveValueOrUnknown(),
+                            icon = R.drawable.ic_round_details_star_24,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
+                            iconSize = 16.dp
+                        )
+                    }
+                    if (status != null) {
+                        if (showScore) Spacer(modifier = Modifier.width(12.dp))
+                        MediaStatusIndicator(status = status)
+                    }
+                }
+            } else null,
             onClick = dropUnlessResumed {
                 navActionManager.toMediaDetails(uiState.mediaType, item.node.id)
             }
