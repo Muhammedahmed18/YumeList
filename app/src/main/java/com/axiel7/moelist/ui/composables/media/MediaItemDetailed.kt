@@ -38,7 +38,7 @@ fun MediaItemDetailed(
     badgeContent: @Composable (RowScope.() -> Unit)? = null,
     subtitle1: @Composable RowScope.() -> Unit,
     subtitle2: @Composable RowScope.() -> Unit,
-    subtitle3: @Composable RowScope.() -> Unit,
+    subtitle3: (@Composable RowScope.() -> Unit)? = null,
     onClick: () -> Unit,
 ) {
     Card(
@@ -90,7 +90,7 @@ fun MediaItemDetailed(
                 modifier = Modifier
                     .fillMaxHeight()
                     .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.SpaceBetween
+                verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically)
             ) {
                 Text(
                     text = title,
@@ -112,10 +112,12 @@ fun MediaItemDetailed(
                         verticalAlignment = Alignment.CenterVertically,
                         content = subtitle2
                     )
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        content = subtitle3
-                    )
+                    if (subtitle3 != null) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            content = subtitle3
+                        )
+                    }
                 }
             }
         }
@@ -149,7 +151,7 @@ fun MediaItemDetailedPlaceholder() {
                 modifier = Modifier
                     .fillMaxHeight()
                     .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.SpaceBetween
+                verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically)
             ) {
                 Text(
                     text = "This is a placeholder text for a long title",
