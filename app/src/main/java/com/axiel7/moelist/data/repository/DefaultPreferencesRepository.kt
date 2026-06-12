@@ -13,6 +13,7 @@ import com.axiel7.moelist.data.model.media.MediaSort
 import com.axiel7.moelist.data.model.media.TitleLanguage
 import com.axiel7.moelist.di.getValue
 import com.axiel7.moelist.di.setValue
+import com.axiel7.moelist.ui.base.ColorPalette
 import com.axiel7.moelist.ui.base.ItemsPerRow
 import com.axiel7.moelist.ui.base.ListStyle
 import com.axiel7.moelist.ui.base.StartTab
@@ -82,9 +83,10 @@ class DefaultPreferencesRepository(
         dataStore.setValue(THEME_KEY, value.name)
     }
 
-    val useBlackColors = dataStore.getValue(USE_BLACK_COLORS_KEY, false)
-    suspend fun setUseBlackColors(value: Boolean) {
-        dataStore.setValue(USE_BLACK_COLORS_KEY, value)
+    val colorPalette = dataStore.getValue(COLOR_PALETTE_KEY, ColorPalette.DYNAMIC.name)
+        .map { ColorPalette.valueOfOrNull(it) ?: ColorPalette.DYNAMIC }
+    suspend fun setColorPalette(value: ColorPalette) {
+        dataStore.setValue(COLOR_PALETTE_KEY, value.name)
     }
 
     val isOnboardingCompleted = dataStore.getValue(ONBOARDING_COMPLETED_KEY, false)
@@ -353,7 +355,7 @@ class DefaultPreferencesRepository(
         private val NSFW_KEY = booleanPreferencesKey("nsfw")
         private val HIDE_SCORES_KEY = booleanPreferencesKey("hide_scores")
         private val THEME_KEY = stringPreferencesKey("theme")
-        private val USE_BLACK_COLORS_KEY = booleanPreferencesKey("use_black_colors")
+        private val COLOR_PALETTE_KEY = stringPreferencesKey("color_palette")
         private val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
         private val LAST_TAB_KEY = intPreferencesKey("last_tab")
         private val PINNED_NAV_BAR_KEY = booleanPreferencesKey("pinned_nav_bar")

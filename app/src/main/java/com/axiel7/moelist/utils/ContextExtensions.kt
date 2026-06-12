@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
+import android.content.pm.verify.domain.DomainVerificationManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -125,6 +126,16 @@ object ContextExtensions {
         } else {
             queryIntentActivities(intent, flags)
         }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    fun Context.isMalLinkHandlingEnabled(): Boolean {
+        return try {
+            val manager = getSystemService(DomainVerificationManager::class.java)
+            manager.getDomainVerificationUserState(packageName)?.isLinkHandlingAllowed == true
+        } catch (e: Exception) {
+            false
+        }
+    }
 
     @RequiresApi(Build.VERSION_CODES.S)
     fun Context.openByDefaultSettings() {
