@@ -6,6 +6,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
     id("com.google.devtools.ksp")
+    id("com.google.android.gms.oss-licenses-plugin")
 }
 
 val privateProps = Properties().also {
@@ -162,6 +163,9 @@ dependencies {
     implementation("io.insert-koin:koin-androidx-compose-navigation")
     implementation("io.insert-koin:koin-androidx-workmanager")
     implementation("io.insert-koin:koin-androidx-startup")
+
+    //OSS Licenses
+    implementation("com.google.android.gms:play-services-oss-licenses:17.0.1")
 
     //Room
     val roomVersion = "2.7.1"
