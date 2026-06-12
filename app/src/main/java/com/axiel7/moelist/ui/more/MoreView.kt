@@ -159,7 +159,9 @@ private fun MoreViewContent(
                     title = stringResource(R.string.logout),
                     subtitle = stringResource(R.string.logout_summary),
                     icon = R.drawable.ic_round_power_settings_new_24,
-                    isDestructive = true,
+                    titleColor = MaterialTheme.colorScheme.onErrorContainer,
+                    iconContainerColor = MaterialTheme.colorScheme.error,
+                    iconTint = MaterialTheme.colorScheme.onError,
                     showTrailingArrow = false,
                     onClick = { event?.logOut() }
                 )

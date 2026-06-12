@@ -12,6 +12,9 @@
     <string name="start_date">Start Date</string>
     <string name="end_date">End Date</string>
     <string name="season">Season</string>
+    <string name="season_type">Season Type</string>
+    <string name="year">Year</string>
+    <string name="options">Options</string>
     <string name="broadcast">Broadcast</string>
     <string name="duration">Duration</string>
     <string name="source">Source</string>
@@ -150,6 +153,18 @@
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
     <string name="theme_system">Follow system</string>
+    <string name="theme_amoled">AMOLED</string>
+    <string name="appearance">Appearance</string>
+    <string name="color_palette">Color Palette</string>
+    <string name="anime_style_theme">Anime Style Theme</string>
+    <string name="theme_mode">Theme Mode</string>
+    <string name="palette_dynamic">Dynamic</string>
+    <string name="palette_yume_blue">Yume Blue</string>
+    <string name="palette_one_piece">One Piece</string>
+    <string name="palette_demon_slayer">Demon Slayer</string>
+    <string name="palette_attack_on_titan">Attack on Titan</string>
+    <string name="palette_naruto">Naruto</string>
+    <string name="palette_bleach">Bleach</string>
     <string name="title_details">Details</string>
     <string name="view_on_mal">View on MAL</string>
     <string name="share">Share</string>
@@ -276,6 +291,13 @@
     <string name="navigation">Navigation</string>
     <string name="media_lists">Media Lists</string>
     <string name="app_integration">App Integration</string>
+    <string name="content_filters">Content Filters</string>
+    <string name="navigation_bar">Navigation Bar</string>
+    <string name="pinned_navigation_bar_summary">Stays visible while scrolling</string>
+    <string name="settings_appearance_hint">Theme · Color Palette</string>
+    <string name="settings_navigation_hint">Default tab · Nav bar · Tablet mode</string>
+    <string name="settings_media_lists_hint">List style · Grid · Tabs</string>
+    <string name="settings_content_hint">Title language · Scores · NSFW</string>
     <string name="list_mode_standard">Standard</string>
     <string name="list_mode_compact">Compact</string>
     <string name="list_mode_minimal">Minimal</string>
@@ -299,6 +321,10 @@
         <item quantity="other">%d days</item>
     </plurals>
     <string name="open_mal_links_in_the_app">Open MAL links in the app</string>
+    <string name="app_integration_active">Active</string>
+    <string name="app_integration_not_set_up">Not set up</string>
+    <string name="app_integration_enable">Enable</string>
+    <string name="app_integration_manage">Manage</string>
     <string name="notifications">Notifications</string>
     <string name="delete_all">Delete all</string>
     <string name="manga_stats">Manga Stats</string>
@@ -495,4 +521,31 @@
     <string name="empty_ptr_desc">Add manga you want to read later.</string>
     <string name="search_to_add">Search to add</string>
     <string name="dates">Dates</string>
+
+    <!-- About page -->
+    <string name="app_tagline">Your anime &amp; manga tracker</string>
+    <string name="app_description">YumeList is your open-source anime &amp; manga tracker powered by MyAnimeList. Track, discover, and explore with a beautiful Material 3 experience.</string>
+    <string name="stable_release">Stable Release</string>
+    <string name="changelog">Changelog</string>
+    <string name="changelog_summary">See what\'s new in this release</string>
+    <string name="report_bug">Report a Bug</string>
+    <string name="report_bug_summary">Found something broken? Let us know</string>
+    <string name="open_source_licenses">Open Source Licenses</string>
+    <string name="open_source_licenses_summary">Third-party libraries used in this app</string>
+    <string name="built_on_moelist">Built on MoeList</string>
+    <string name="built_on_moelist_summary">Originally created by axiel7</string>
+    <string name="powered_by_mal">Powered by MyAnimeList</string>
+    <string name="powered_by_mal_summary">Anime &amp; manga data provided by MAL API</string>
+    <string name="links">Links</string>
+    <string name="core_highlights">Core Highlights</string>
+    <string name="connect_and_share">Connect &amp; Share</string>
+    <string name="highlight_track">Track Lists</string>
+    <string name="highlight_track_desc">Anime &amp; manga in one place</string>
+    <string name="highlight_seasonal">Seasonal Charts</string>
+    <string name="highlight_seasonal_desc">Discover what\'s airing now</string>
+    <string name="highlight_discover">Discover</string>
+    <string name="highlight_discover_desc">Rankings, trending &amp; more</string>
+    <string name="highlight_themes">Anime Themes</string>
+    <string name="highlight_themes_desc">Material 3 with anime palettes</string>
+    <string name="copyright">© 2026 YumeList. All rights reserved.</string>
 </resources>

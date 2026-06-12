@@ -27,31 +27,18 @@ fun MoreItem(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     @DrawableRes icon: Int? = null,
-    isDestructive: Boolean = false,
+    titleColor: Color = MaterialTheme.colorScheme.onSurface,
+    iconContainerColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    iconTint: Color = MaterialTheme.colorScheme.onPrimaryContainer,
     showTrailingArrow: Boolean = true,
     onClick: () -> Unit,
 ) {
-    val iconContainerColor = if (isDestructive)
-        MaterialTheme.colorScheme.error
-    else
-        MaterialTheme.colorScheme.primaryContainer
-
-    val iconTint = if (isDestructive)
-        MaterialTheme.colorScheme.onError
-    else
-        MaterialTheme.colorScheme.onPrimaryContainer
-
-    val titleColor = if (isDestructive)
-        MaterialTheme.colorScheme.onErrorContainer
-    else
-        MaterialTheme.colorScheme.onSurface
-
     ListItem(
         headlineContent = {
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                color = titleColor
+                color = titleColor,
             )
         },
         modifier = modifier.clickable(onClick = onClick),
@@ -60,7 +47,7 @@ fun MoreItem(
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         } else null,
@@ -71,13 +58,13 @@ fun MoreItem(
                         .size(40.dp)
                         .clip(CircleShape)
                         .background(iconContainerColor),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         painter = painterResource(icon),
                         contentDescription = null,
                         tint = iconTint,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp),
                     )
                 }
             }
@@ -88,12 +75,12 @@ fun MoreItem(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(16.dp),
                 )
             }
         } else null,
         colors = ListItemDefaults.colors(
-            containerColor = Color.Transparent
-        )
+            containerColor = Color.Transparent,
+        ),
     )
 }

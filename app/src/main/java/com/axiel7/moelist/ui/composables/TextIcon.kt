@@ -174,7 +174,7 @@ fun TextIconVertical(
     val scope = rememberCoroutineScope()
 
     TooltipBox(
-        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
         tooltip = {
             PlainTooltip {
                 Text(text = tooltip)
@@ -210,7 +210,7 @@ fun TextIconVertical(
     val scope = rememberCoroutineScope()
 
     TooltipBox(
-        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
         tooltip = {
             PlainTooltip {
                 Text(text = tooltip)
