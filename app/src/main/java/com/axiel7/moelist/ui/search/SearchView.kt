@@ -47,20 +47,16 @@ import com.axiel7.moelist.data.model.media.BaseMediaList
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.EmptyState
-import com.axiel7.moelist.ui.composables.TextIconHorizontal
 import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
 import com.axiel7.moelist.ui.composables.showSnackbarShort
 import com.axiel7.moelist.ui.composables.ErrorState
 import com.axiel7.moelist.ui.composables.LoadingState
 import com.axiel7.moelist.ui.composables.OnBottomReached
-import com.axiel7.moelist.ui.composables.media.MediaItemDetailed
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailedPlaceholder
-import com.axiel7.moelist.ui.composables.media.MediaStatusIndicator
-import com.axiel7.moelist.ui.composables.score.PersonalScoreBadge
+import com.axiel7.moelist.ui.composables.media.MediaItemSearch
 import com.axiel7.moelist.utils.DateUtils.parseDateAndLocalize
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrNull
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrUnknown
-import com.axiel7.moelist.utils.UNKNOWN_CHAR
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -163,58 +159,26 @@ fun SearchViewContent(
     @Composable
     fun ItemView(item: BaseMediaList) {
         val userScore = item.node.myListStatus?.score ?: 0
-        val meanScore = item.node.mean
         val status = item.node.myListStatus?.status
         val showScore = !uiState.hideScore
-        MediaItemDetailed(
+
+        val format = item.node.mediaFormat?.localized()
+        val episodes = if (item.node.totalDuration().toStringPositiveValueOrNull() != null) {
+            item.node.durationText()
+        } else null
+        val date = when (item) {
+            is AnimeList -> item.node.startSeason?.seasonYearText()
+            is MangaList -> item.node.startDate?.parseDateAndLocalize()
+            else -> null
+        }
+
+        MediaItemSearch(
             title = item.node.userPreferredTitle(),
             imageUrl = item.node.mainPicture?.large,
-            topBadgeContent = if (userScore > 0) {
-                { PersonalScoreBadge(score = userScore) }
-            } else null,
-            subtitle1 = {
-                Text(
-                    text = buildString {
-                        append(item.node.mediaFormat?.localized() ?: UNKNOWN_CHAR)
-                        if (item.node.totalDuration().toStringPositiveValueOrNull() != null) {
-                            append(" (${item.node.durationText()})")
-                        }
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            subtitle2 = {
-                Text(
-                    text = when (item) {
-                        is AnimeList -> item.node.startSeason?.seasonYearText()
-                            ?: stringResource(R.string.unknown)
-
-                        is MangaList -> item.node.startDate?.parseDateAndLocalize()
-                            ?: stringResource(R.string.unknown)
-                        else -> stringResource(R.string.unknown)
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            subtitle3 = if (showScore || status != null) {
-                {
-                    if (showScore) {
-                        TextIconHorizontal(
-                            text = meanScore.toStringPositiveValueOrUnknown(),
-                            icon = R.drawable.ic_round_details_star_24,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodySmall,
-                            iconSize = 16.dp
-                        )
-                    }
-                    if (status != null) {
-                        if (showScore) Spacer(modifier = Modifier.width(12.dp))
-                        MediaStatusIndicator(status = status)
-                    }
-                }
-            } else null,
+            chips = listOfNotNull(format, episodes, date),
+            meanScore = if (showScore) item.node.mean.toStringPositiveValueOrUnknown() else null,
+            personalScore = userScore,
+            status = status,
             onClick = dropUnlessResumed {
                 navActionManager.toMediaDetails(uiState.mediaType, item.node.id)
             }
