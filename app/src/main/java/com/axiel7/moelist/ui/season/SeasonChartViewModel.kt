@@ -3,7 +3,6 @@ package com.axiel7.moelist.ui.season
 import androidx.lifecycle.viewModelScope
 import com.axiel7.moelist.data.model.anime.MyAnimeListStatus
 import com.axiel7.moelist.data.model.anime.Season
-import com.axiel7.moelist.data.model.anime.SeasonType
 import com.axiel7.moelist.data.model.anime.StartSeason
 import com.axiel7.moelist.data.model.media.BasicMyListStatus
 import com.axiel7.moelist.data.model.media.ListStatus
@@ -15,7 +14,6 @@ import com.axiel7.moelist.ui.base.viewmodel.BaseViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
@@ -39,19 +37,7 @@ class SeasonChartViewModel(
                 year != null -> uiState.season.copy(year = year)
                 else -> uiState.season
             }
-            uiState.copy(
-                season = startSeason,
-                seasonType = SeasonType.entries.find { it.season == startSeason }
-            )
-        }
-    }
-
-    override fun setSeason(type: SeasonType) {
-        mutableUiState.update {
-            it.copy(
-                season = type.season,
-                seasonType = type
-            )
+            uiState.copy(season = startSeason)
         }
     }
 
@@ -134,16 +120,7 @@ class SeasonChartViewModel(
     }
 
     init {
-        mutableUiState
-            .distinctUntilChanged { old, new ->
-                old.season == new.season
-                        && old.sort == new.sort
-                        && old.isNew == new.isNew
-            }
-            .onEach { 
-                fetchFullSeason()
-            }
-            .launchIn(viewModelScope)
+        fetchFullSeason()
 
         defaultPreferencesRepository.hideScores
             .onEach { value ->

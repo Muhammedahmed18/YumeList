@@ -24,16 +24,17 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.EventBusy
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ExpandMore
-import androidx.compose.material.icons.rounded.FilterList
+import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -106,7 +107,7 @@ private fun SeasonChartViewContent(
     val haptic = LocalHapticFeedback.current
     val snackbarHostState = LocalSnackbarHostState.current
 
-    val filterSheetState = rememberModalBottomSheetState()
+    val filterSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showFilterSheet by remember { mutableStateOf(false) }
     fun hideFilterSheet() {
         scope.launch { filterSheetState.hide() }.invokeOnCompletion { showFilterSheet = false }
@@ -203,43 +204,69 @@ private fun SeasonChartViewContent(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     val selectedFormatText = uiState.selectedFormat?.localized() ?: stringResource(R.string.all)
                     val count = uiState.formatCounts[uiState.selectedFormat] ?: 0
-                    
-                    FilterChip(
-                        selected = uiState.selectedFormat != null,
+
+                    AssistChip(
                         onClick = { showFormatSheet = true },
                         label = {
-                            Text(text = "$selectedFormatText ($count)")
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(text = selectedFormatText)
+                                Surface(
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.primary
+                                ) {
+                                    Text(
+                                        text = count.toString(),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 1.dp)
+                                    )
+                                }
+                            }
                         },
                         trailingIcon = {
                             Icon(
                                 imageVector = Icons.Rounded.ExpandMore,
                                 contentDescription = null,
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                modifier = Modifier.size(AssistChipDefaults.IconSize)
                             )
                         },
-                        shape = MaterialTheme.shapes.large
+                        shape = CircleShape,
+                        border = null,
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            labelColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            trailingIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
                     )
 
-                    FilterChip(
-                        selected = false,
+                    AssistChip(
                         onClick = { showFilterSheet = true },
                         label = {
                             Text(text = stringResource(R.string.filters))
                         },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Rounded.FilterList,
+                                imageVector = Icons.Rounded.Tune,
                                 contentDescription = null,
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                modifier = Modifier.size(AssistChipDefaults.IconSize)
                             )
                         },
-                        shape = MaterialTheme.shapes.large
+                        shape = CircleShape,
+                        border = null,
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            leadingIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     )
                 }
             }
