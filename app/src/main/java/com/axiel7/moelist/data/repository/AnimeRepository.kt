@@ -17,6 +17,7 @@ import com.axiel7.moelist.data.model.media.MediaStatus
 import com.axiel7.moelist.data.model.media.RankingType
 import com.axiel7.moelist.data.network.Api
 import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -101,6 +102,8 @@ class AnimeRepository(
             } else {
                 result
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Response(message = e.message)
         }

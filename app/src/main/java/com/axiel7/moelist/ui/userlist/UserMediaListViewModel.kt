@@ -202,7 +202,7 @@ class UserMediaListViewModel(
                         volumesRead = progress.takeIf { isVolumeProgress },
                         status = newStatus,
                         startDate = nowDate.takeIf {
-                            isPlanning || item.listStatus?.progress.isGreaterThanZero()
+                            isPlanning || !item.listStatus?.progress.isGreaterThanZero()
                         },
                         endDate = nowDate.takeIf { isCompleted }
                     )
