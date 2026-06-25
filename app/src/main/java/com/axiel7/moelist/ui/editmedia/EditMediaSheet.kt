@@ -617,7 +617,9 @@ private fun EditMediaSheetContent(
                                 date = uiState.startDate,
                                 icon = Icons.Rounded.CalendarToday,
                                 onClick = {
-                                    datePickerState.selectedDateMillis = uiState.startDate?.toEpochMillis()
+                                    val millis = (uiState.startDate ?: LocalDate.now()).toEpochMillis()
+                                    datePickerState.selectedDateMillis = millis
+                                    datePickerState.displayedMonthMillis = millis
                                     event?.openStartDatePicker()
                                 },
                                 onClear = { event?.onChangeStartDate(null) },
@@ -628,7 +630,9 @@ private fun EditMediaSheetContent(
                                 date = uiState.finishDate,
                                 icon = Icons.Rounded.EventAvailable,
                                 onClick = {
-                                    datePickerState.selectedDateMillis = uiState.finishDate?.toEpochMillis()
+                                    val millis = (uiState.finishDate ?: LocalDate.now()).toEpochMillis()
+                                    datePickerState.selectedDateMillis = millis
+                                    datePickerState.displayedMonthMillis = millis
                                     event?.openFinishDatePicker()
                                 },
                                 onClear = { event?.onChangeFinishDate(null) },
