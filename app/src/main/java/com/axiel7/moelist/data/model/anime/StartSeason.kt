@@ -14,4 +14,14 @@ data class StartSeason(
 
     @Composable
     fun seasonYearText() = "${season.localized()} $year"
+
+    /** The season chronologically after this one, rolling the year over after fall. */
+    fun next(): StartSeason =
+        if (season == Season.FALL) StartSeason(year + 1, Season.WINTER)
+        else StartSeason(year, season.next)
+
+    /** The season chronologically before this one, rolling the year back before winter. */
+    fun previous(): StartSeason =
+        if (season == Season.WINTER) StartSeason(year - 1, Season.FALL)
+        else StartSeason(year, season.previous)
 }
