@@ -206,7 +206,9 @@ fun CompactUserMediaListItem(
                             )
                         }
 
-                        if (listStatus?.isCurrent() == true) {
+                        if (listStatus?.isCurrent() == true ||
+                            (listStatus?.isPlanning() == true && item.hasStarted)
+                        ) {
                             OutlinedButton(
                                 onClick = onClickPlus,
                                 modifier = Modifier.height(28.dp),

@@ -177,11 +177,16 @@ fun UserMediaListView(
     fun GridItemView(item: BaseUserMediaList<out BaseMediaNode>, modifier: Modifier = Modifier) {
         GridUserMediaListItem(
             item = item,
+            listStatus = uiState.listStatus,
             onClick = dropUnlessResumed {
                 navActionManager.toMediaDetails(uiState.mediaType, item.node.id)
             },
             onLongClick = {
                 onShowEditSheet(item)
+            },
+            onClickPlus = {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                event?.onUpdateProgress(item)
             },
             modifier = modifier
         )

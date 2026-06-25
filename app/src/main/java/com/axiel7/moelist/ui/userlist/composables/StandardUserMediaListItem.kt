@@ -286,7 +286,9 @@ fun StandardUserMediaListItem(
                         }
                     }
 
-                    if (listStatus?.isCurrent() == true) {
+                    if (listStatus?.isCurrent() == true ||
+                        (listStatus?.isPlanning() == true && item.hasStarted)
+                    ) {
                         FilledTonalIconButton(
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.Confirm)
@@ -301,7 +303,7 @@ fun StandardUserMediaListItem(
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Add,
-                                contentDescription = null,
+                                contentDescription = stringResource(R.string.plus_one),
                                 modifier = Modifier.size(20.dp)
                             )
                         }

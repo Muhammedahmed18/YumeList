@@ -16,8 +16,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.Card
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,8 +56,10 @@ import com.axiel7.moelist.utils.UNKNOWN_CHAR
 @Composable
 fun GridUserMediaListItem(
     item: BaseUserMediaList<out BaseMediaNode>,
+    listStatus: ListStatus?,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
+    onClickPlus: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val userProgress = item.userProgress()
@@ -115,6 +121,30 @@ fun GridUserMediaListItem(
                         tint = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }//:Row
+
+                if (listStatus?.isCurrent() == true ||
+                    (listStatus?.isPlanning() == true && item.hasStarted)
+                ) {
+                    FilledIconButton(
+                        onClick = onClickPlus,
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(4.dp)
+                            .size(32.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.92f),
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Add,
+                            contentDescription = stringResource(R.string.plus_one),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+
                 if (isAiring) {
                     Row(
                         modifier = Modifier
@@ -217,8 +247,10 @@ fun GridUserMediaListItemPreview() {
             items(3) {
                 GridUserMediaListItem(
                     item = exampleUserAnimeList,
+                    listStatus = ListStatus.WATCHING,
                     onClick = { },
-                    onLongClick = { }
+                    onLongClick = { },
+                    onClickPlus = { }
                 )
             }
             items(3) {

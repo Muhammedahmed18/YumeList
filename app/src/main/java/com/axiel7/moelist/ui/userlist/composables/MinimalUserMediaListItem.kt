@@ -200,7 +200,9 @@ fun MinimalUserMediaListItem(
                 }//:Row
             }//:Column
 
-            if (listStatus?.isCurrent() == true) {
+            if (listStatus?.isCurrent() == true ||
+                (listStatus?.isPlanning() == true && item.hasStarted)
+            ) {
                 OutlinedButton(
                     onClick = onClickPlus,
                     modifier = Modifier
