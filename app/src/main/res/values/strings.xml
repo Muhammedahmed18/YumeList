@@ -29,6 +29,8 @@
     <string name="back">Back</string>
     <string name="cancel">Cancel</string>
     <string name="apply">Apply</string>
+    <string name="reset">Reset</string>
+    <string name="show">Show</string>
     <string name="episodes">Episodes</string>
     <string name="episode">Episode</string>
     <plurals name="num_episodes">
@@ -454,9 +456,6 @@
     <string name="mode_never">Never</string>
     <string name="tablet_mode">Tablet mode</string>
     <string name="refresh">Refresh</string>
-    <string name="use_system_font">App Font</string>
-    <string name="system_default">System Default</string>
-    <string name="nunito">Nunito</string>
 
     <string name="plus_one_episode">+1 Episode</string>
     <string name="plus_one_chapter">+1 Chapter</string>
