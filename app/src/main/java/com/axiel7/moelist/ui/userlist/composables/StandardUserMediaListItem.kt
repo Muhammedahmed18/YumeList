@@ -3,7 +3,6 @@ package com.axiel7.moelist.ui.userlist.composables
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -20,8 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.rounded.Add
@@ -35,14 +32,16 @@ import androidx.compose.material.icons.rounded.Tv
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.axiel7.moelist.data.model.media.MediaFormat
 import com.axiel7.moelist.data.model.media.MediaStatus
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -50,12 +49,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -73,6 +70,11 @@ import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_MEDIUM_HEIGHT
 import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_MEDIUM_WIDTH
 import com.axiel7.moelist.ui.composables.media.MediaPoster
 import com.axiel7.moelist.ui.theme.MoeListTheme
+import com.axiel7.moelist.ui.theme.ShapeExtraLarge
+import com.axiel7.moelist.ui.theme.ShapeFull
+import com.axiel7.moelist.ui.theme.ShapeMedium
+import com.axiel7.moelist.ui.theme.ShapePoster
+import com.axiel7.moelist.ui.theme.ShapeSmall
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrUnknown
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -96,7 +98,7 @@ fun StandardUserMediaListItem(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 12.dp, vertical = 6.dp)
             .combinedClickable(
                 onLongClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -104,7 +106,7 @@ fun StandardUserMediaListItem(
                 },
                 onClick = onClick
             ),
-        shape = RoundedCornerShape(24.dp),
+        shape = ShapeExtraLarge,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
@@ -124,7 +126,7 @@ fun StandardUserMediaListItem(
                     modifier = Modifier
                         .height(MEDIA_POSTER_MEDIUM_HEIGHT.dp)
                         .width(MEDIA_POSTER_MEDIUM_WIDTH.dp)
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(ShapePoster)
                 )
 
                 // Score Badge — bottom-left overlay (only when score is given)
@@ -133,7 +135,7 @@ fun StandardUserMediaListItem(
                         modifier = Modifier
                             .align(Alignment.BottomStart)
                             .padding(4.dp)
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(ShapeSmall)
                             .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.92f))
                             .padding(horizontal = 6.dp, vertical = 3.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -181,74 +183,83 @@ fun StandardUserMediaListItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     item.node.mediaFormat?.localized()?.let { format ->
-                        ExpressiveBadge(
-                            text = format,
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            paddingValues = PaddingValues(horizontal = 6.dp, vertical = 3.dp),
-                            content = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = item.node.mediaFormat?.toIcon() ?: Icons.Rounded.Tv,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(11.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = format,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
+                        SuggestionChip(
+                            onClick = {},
+                            label = {
+                                Text(
+                                    text = format,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = item.node.mediaFormat?.toIcon() ?: Icons.Rounded.Tv,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(11.dp)
+                                )
+                            },
+                            colors = SuggestionChipDefaults.suggestionChipColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                iconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                            border = null,
+                            elevation = null
                         )
                     }
 
                     if (isAiring) {
-                        ExpressiveBadge(
-                            text = broadcast?.airingInString() ?: stringResource(R.string.airing),
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                            paddingValues = PaddingValues(horizontal = 6.dp, vertical = 3.dp),
-                            content = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Schedule,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(11.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = broadcast?.airingInString() ?: stringResource(R.string.airing),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
+                        AssistChip(
+                            onClick = {},
+                            label = {
+                                Text(
+                                    text = broadcast?.airingInString() ?: stringResource(R.string.airing),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.Schedule,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(11.dp)
+                                )
+                            },
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                labelColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                leadingIconContentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                            ),
+                            border = null,
+                            elevation = null
                         )
                     }
 
                     if (isNotYetAired) {
-                        ExpressiveBadge(
-                            text = stringResource(R.string.not_yet_aired),
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                            paddingValues = PaddingValues(horizontal = 6.dp, vertical = 3.dp),
-                            content = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Schedule,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(11.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = stringResource(R.string.not_yet_aired),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
+                        AssistChip(
+                            onClick = {},
+                            label = {
+                                Text(
+                                    text = stringResource(R.string.not_yet_aired),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.Schedule,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(11.dp)
+                                )
+                            },
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                labelColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                leadingIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            ),
+                            border = null,
+                            elevation = null
                         )
                     }
                 }
@@ -289,17 +300,13 @@ fun StandardUserMediaListItem(
                     if (listStatus?.isCurrent() == true ||
                         (listStatus?.isPlanning() == true && item.hasStarted)
                     ) {
-                        FilledTonalIconButton(
+                        FilledIconButton(
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                                 onClickPlus()
                             },
                             modifier = Modifier.size(36.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
-                            )
+                            shape = ShapeMedium,
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Add,
@@ -335,7 +342,7 @@ fun StandardUserMediaListItem(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(6.dp)
-                            .clip(RoundedCornerShape(50)),
+                            .clip(ShapeFull),
                         color = progressBarColor,
                         trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                         strokeCap = StrokeCap.Round
@@ -346,49 +353,14 @@ fun StandardUserMediaListItem(
     }
 }
 
-@Composable
-fun ExpressiveBadge(
-    text: String,
-    containerColor: Color,
-    contentColor: Color,
-    modifier: Modifier = Modifier,
-    textStyle: TextStyle = MaterialTheme.typography.labelSmall,
-    paddingValues: PaddingValues = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-    border: BorderStroke? = null,
-    tonalElevation: androidx.compose.ui.unit.Dp = 0.dp,
-    content: @Composable (() -> Unit)? = null
-) {
-    if (text.isEmpty() && content == null) return
-
-    Surface(
-        modifier = modifier,
-        color = containerColor,
-        contentColor = contentColor,
-        shape = RoundedCornerShape(8.dp),
-        border = border,
-        tonalElevation = tonalElevation
-    ) {
-        Box(modifier = Modifier.padding(paddingValues)) {
-            if (content != null) {
-                content()
-            } else {
-                Text(
-                    text = text,
-                    style = textStyle,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-    }
-}
 
 @Composable
 fun StandardUserMediaListItemPlaceholder() {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(24.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        shape = ShapeExtraLarge,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         )
@@ -404,7 +376,7 @@ fun StandardUserMediaListItemPlaceholder() {
                     modifier = Modifier
                         .height(MEDIA_POSTER_MEDIUM_HEIGHT.dp)
                         .width(MEDIA_POSTER_MEDIUM_WIDTH.dp)
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(ShapePoster)
                         .defaultPlaceholder(visible = true)
                 )
 
@@ -418,7 +390,7 @@ fun StandardUserMediaListItemPlaceholder() {
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(20.dp)
-                            .clip(CircleShape)
+                            .clip(ShapeSmall)
                             .defaultPlaceholder(visible = true)
                     )
 
@@ -428,7 +400,7 @@ fun StandardUserMediaListItemPlaceholder() {
                         modifier = Modifier
                             .width(100.dp)
                             .height(16.dp)
-                            .clip(CircleShape)
+                            .clip(ShapeSmall)
                             .defaultPlaceholder(visible = true)
                     )
 
@@ -438,7 +410,7 @@ fun StandardUserMediaListItemPlaceholder() {
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(40.dp)
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(ShapeMedium)
                             .defaultPlaceholder(visible = true)
                     )
                 }

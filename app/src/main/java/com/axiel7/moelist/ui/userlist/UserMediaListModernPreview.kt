@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Search
@@ -37,6 +37,9 @@ import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.ui.base.TabRowItem
 import com.axiel7.moelist.ui.composables.TabRowWithPager
 import com.axiel7.moelist.ui.theme.MoeListTheme
+import com.axiel7.moelist.ui.theme.ShapeExtraLarge
+import com.axiel7.moelist.ui.userlist.composables.CompactUserMediaListItem
+import com.axiel7.moelist.ui.userlist.composables.MinimalUserMediaListItem
 import com.axiel7.moelist.ui.userlist.composables.StandardUserMediaListItem
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,10 +66,10 @@ fun UserMediaListModernPreview() {
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .shadow(2.dp, RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp))
+                        .shadow(2.dp, ShapeExtraLarge)
                         .zIndex(1f),
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    shape = RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp),
+                    shape = ShapeExtraLarge,
                     border = BorderStroke(
                         width = 0.5.dp, 
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
@@ -133,8 +136,50 @@ fun UserMediaListModernPreview() {
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
                 ) {
-                    items(5) {
+                    item {
+                        Text(
+                            text = "Standard",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                        )
+                    }
+                    items(2) {
                         StandardUserMediaListItem(
+                            item = exampleUserAnimeList,
+                            listStatus = ListStatus.WATCHING,
+                            onClick = {},
+                            onLongClick = {},
+                            onClickPlus = {}
+                        )
+                    }
+                    item {
+                        Text(
+                            text = "Compact",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                        )
+                    }
+                    items(2) {
+                        CompactUserMediaListItem(
+                            item = exampleUserAnimeList,
+                            listStatus = ListStatus.WATCHING,
+                            onClick = {},
+                            onLongClick = {},
+                            onClickPlus = {}
+                        )
+                    }
+                    item {
+                        Text(
+                            text = "Minimal",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                        )
+                    }
+                    items(2) {
+                        MinimalUserMediaListItem(
                             item = exampleUserAnimeList,
                             listStatus = ListStatus.WATCHING,
                             onClick = {},

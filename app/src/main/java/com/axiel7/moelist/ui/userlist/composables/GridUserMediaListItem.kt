@@ -15,13 +15,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.shape.RoundedCornerShape
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Bookmark
+import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,9 +31,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
-import com.axiel7.moelist.ui.theme.ShapePoster
 import androidx.compose.ui.res.stringResource
+import com.axiel7.moelist.ui.theme.ShapePoster
+import com.axiel7.moelist.ui.theme.ShapeSmall
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -96,7 +98,7 @@ fun GridUserMediaListItem(
                 Row(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .clip(RoundedCornerShape(topEnd = 8.dp))
+                        .clip(ShapeSmall)
                         .background(MaterialTheme.colorScheme.primaryContainer),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -113,7 +115,7 @@ fun GridUserMediaListItem(
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Icon(
-                        painter = painterResource(R.drawable.ic_round_star_16),
+                        imageVector = Icons.Rounded.Star,
                         contentDescription = "star",
                         modifier = Modifier
                             .padding(end = 4.dp)
@@ -131,11 +133,7 @@ fun GridUserMediaListItem(
                             .align(Alignment.BottomEnd)
                             .padding(4.dp)
                             .size(32.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.92f),
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        )
+                        shape = ShapeSmall,
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Add,
@@ -150,13 +148,13 @@ fun GridUserMediaListItem(
                         modifier = Modifier
                             .fillMaxWidth()
                             .align(Alignment.TopCenter)
-                            .clip(RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp))
+                            .clip(ShapeSmall)
                             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f)),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_round_rss_feed_24),
+                            imageVector = Icons.Rounded.Schedule,
                             contentDescription = stringResource(R.string.airing),
                             modifier = Modifier
                                 .padding(start = 6.dp, end = 4.dp)
@@ -197,7 +195,7 @@ fun GridUserMediaListItem(
                 )
                 if ((item as? UserMangaList)?.listStatus?.isUsingVolumeProgress() == true) {
                     Icon(
-                        painter = painterResource(R.drawable.round_bookmark_24),
+                        imageVector = Icons.Rounded.Bookmark,
                         contentDescription = stringResource(R.string.volumes),
                         modifier = Modifier
                             .padding(start = 4.dp)
@@ -220,7 +218,7 @@ fun GridUserMediaListItemPlaceholder() {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(MEDIA_POSTER_MEDIUM_HEIGHT.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(ShapePoster)
                 .defaultPlaceholder(visible = true)
         )
         Text(

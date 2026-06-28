@@ -261,7 +261,7 @@ fun UserMediaListView(
                                 end = contentPadding.calculateEndPadding(layoutDirection) + 8.dp,
                                 bottom = contentPadding.calculateBottomPadding() + 8.dp
                             ),
-                            verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Bottom),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
                         ) {
                             items(
@@ -494,7 +494,7 @@ fun LoadingPlaceholder(
                 end = contentPadding.calculateEndPadding(layoutDirection) + 8.dp,
                 bottom = contentPadding.calculateBottomPadding() + 8.dp
             ),
-            verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Bottom),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             userScrollEnabled = false
         ) {

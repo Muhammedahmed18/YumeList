@@ -1,6 +1,5 @@
 package com.axiel7.moelist.ui.userlist.composables
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -12,19 +11,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -41,6 +43,8 @@ import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.MediaStatus
 import com.axiel7.moelist.ui.composables.defaultPlaceholder
 import com.axiel7.moelist.ui.theme.MoeListTheme
+import com.axiel7.moelist.ui.theme.ShapeMedium
+import com.axiel7.moelist.ui.theme.ShapeSmall
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrUnknown
 import com.axiel7.moelist.utils.UNKNOWN_CHAR
 
@@ -67,30 +71,23 @@ fun MinimalUserMediaListItem(
 
     val interactionSource = remember { MutableInteractionSource() }
 
-    val statusColor = currentStatus?.primaryColor() ?: Color.Transparent
-    val borderStroke = if (currentStatus != null) {
-        BorderStroke(
-            width = 1.dp,
-            color = statusColor.copy(alpha = 0.3f)
-        )
-    } else null
+    val statusColor = currentStatus?.primaryColor()
 
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp)
             .combinedClickable(
                 onLongClick = onLongClick,
                 onClick = onClick,
                 interactionSource = interactionSource,
                 indication = ripple()
             ),
-        shape = RoundedCornerShape(12.dp),
-        border = borderStroke,
+        shape = ShapeMedium,
         colors = CardDefaults.cardColors(
-            containerColor = if (currentStatus != null) {
-                statusColor.copy(alpha = 0.05f)
-            } else MaterialTheme.colorScheme.surface
+            containerColor = if (statusColor != null) {
+                statusColor.copy(alpha = 0.10f).compositeOver(MaterialTheme.colorScheme.surfaceContainerLow)
+            } else MaterialTheme.colorScheme.surfaceContainerLow
         )
     ) {
         Row(
@@ -188,7 +185,7 @@ fun MinimalUserMediaListItem(
                                 color = MaterialTheme.colorScheme.secondary
                             )
                             Icon(
-                                painter = painterResource(R.drawable.ic_round_star_16),
+                                imageVector = Icons.Rounded.Star,
                                 contentDescription = "star",
                                 modifier = Modifier
                                     .padding(start = 2.dp)
@@ -203,17 +200,17 @@ fun MinimalUserMediaListItem(
             if (listStatus?.isCurrent() == true ||
                 (listStatus?.isPlanning() == true && item.hasStarted)
             ) {
-                OutlinedButton(
+                FilledIconButton(
                     onClick = onClickPlus,
                     modifier = Modifier
                         .padding(start = 8.dp)
-                        .height(32.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp)
+                        .size(32.dp),
+                    shape = ShapeSmall,
                 ) {
-                    Text(
-                        text = stringResource(R.string.plus_one),
-                        style = MaterialTheme.typography.labelLarge
+                    Icon(
+                        imageVector = Icons.Rounded.Add,
+                        contentDescription = stringResource(R.string.plus_one),
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
@@ -226,7 +223,7 @@ fun MinimalUserMediaListItemPlaceholder() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+            .padding(horizontal = 12.dp, vertical = 4.dp),
     ) {
         Column(
             modifier = Modifier

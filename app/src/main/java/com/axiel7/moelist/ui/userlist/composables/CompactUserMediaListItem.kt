@@ -13,11 +13,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import com.axiel7.moelist.ui.theme.ShapePoster
+import com.axiel7.moelist.ui.theme.ShapeSmall
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -76,7 +79,7 @@ fun CompactUserMediaListItem(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp)
             .combinedClickable(onLongClick = onLongClick, onClick = onClick),
     ) {
         Row(
@@ -100,7 +103,7 @@ fun CompactUserMediaListItem(
 
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(topEnd = 8.dp))
+                        .clip(ShapeSmall)
                         .background(MaterialTheme.colorScheme.primaryContainer),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -117,7 +120,7 @@ fun CompactUserMediaListItem(
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Icon(
-                        painter = painterResource(R.drawable.ic_round_star_16),
+                        imageVector = Icons.Rounded.Star,
                         contentDescription = "star",
                         modifier = Modifier
                             .padding(end = 4.dp)
@@ -209,15 +212,15 @@ fun CompactUserMediaListItem(
                         if (listStatus?.isCurrent() == true ||
                             (listStatus?.isPlanning() == true && item.hasStarted)
                         ) {
-                            OutlinedButton(
+                            FilledIconButton(
                                 onClick = onClickPlus,
-                                modifier = Modifier.height(28.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp)
+                                modifier = Modifier.size(32.dp),
+                                shape = ShapeSmall,
                             ) {
-                                Text(
-                                    text = stringResource(R.string.plus_one),
-                                    style = MaterialTheme.typography.labelMedium
+                                Icon(
+                                    imageVector = Icons.Rounded.Add,
+                                    contentDescription = stringResource(R.string.plus_one),
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
                         }
@@ -233,7 +236,7 @@ fun CompactUserMediaListItemPlaceholder() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+            .padding(horizontal = 12.dp, vertical = 4.dp),
     ) {
         Row(
             modifier = Modifier.height(MEDIA_POSTER_COMPACT_HEIGHT.dp)
@@ -244,7 +247,7 @@ fun CompactUserMediaListItemPlaceholder() {
                         width = MEDIA_POSTER_SMALL_WIDTH.dp,
                         height = MEDIA_POSTER_COMPACT_HEIGHT.dp
                     )
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(ShapeSmall)
                     .defaultPlaceholder(visible = true)
             )
 
