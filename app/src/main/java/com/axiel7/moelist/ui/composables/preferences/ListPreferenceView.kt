@@ -1,8 +1,10 @@
 package com.axiel7.moelist.ui.composables.preferences
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +43,7 @@ fun <T> ListPreferenceView(
     modifier: Modifier = Modifier,
     value: T,
     icon: Any? = null,
+    useTonalContainer: Boolean = false,
     onValueChange: (T) -> Unit
 ) {
     val configuration = LocalConfiguration.current
@@ -52,19 +56,47 @@ fun <T> ListPreferenceView(
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (icon != null) {
-            when (icon) {
-                is Int -> Icon(
-                    painter = painterResource(icon),
-                    contentDescription = "",
-                    modifier = Modifier.padding(16.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                is ImageVector -> Icon(
-                    imageVector = icon,
-                    contentDescription = "",
-                    modifier = Modifier.padding(16.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
+            if (useTonalContainer) {
+                Box(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .size(40.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                            shape = RoundedCornerShape(12.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    when (icon) {
+                        is Int -> Icon(
+                            painter = painterResource(icon),
+                            contentDescription = "",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        is ImageVector -> Icon(
+                            imageVector = icon,
+                            contentDescription = "",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            } else {
+                when (icon) {
+                    is Int -> Icon(
+                        painter = painterResource(icon),
+                        contentDescription = "",
+                        modifier = Modifier.padding(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    is ImageVector -> Icon(
+                        imageVector = icon,
+                        contentDescription = "",
+                        modifier = Modifier.padding(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         } else {
             Spacer(

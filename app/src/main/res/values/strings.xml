@@ -4,14 +4,17 @@
     <string name="title_anime_list">Anime</string>
     <string name="title_manga_list">Manga</string>
     <string name="lorem_ipsun" translatable="false">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</string>
-    <string name="stats">Stats</string>
+    <string name="stats">Community</string>
     <string name="synopsis">Synopsis</string>
-    <string name="more_info">More information</string>
+    <string name="more_info">Details</string>
     <string name="synonyms">Synonyms</string>
     <string name="jp_title">Japanese</string>
     <string name="start_date">Start Date</string>
     <string name="end_date">End Date</string>
     <string name="season">Season</string>
+    <string name="season_type">Season Type</string>
+    <string name="year">Year</string>
+    <string name="options">Options</string>
     <string name="broadcast">Broadcast</string>
     <string name="duration">Duration</string>
     <string name="source">Source</string>
@@ -26,6 +29,8 @@
     <string name="back">Back</string>
     <string name="cancel">Cancel</string>
     <string name="apply">Apply</string>
+    <string name="reset">Reset</string>
+    <string name="show">Show</string>
     <string name="episodes">Episodes</string>
     <string name="episode">Episode</string>
     <plurals name="num_episodes">
@@ -38,6 +43,11 @@
         <item quantity="one">%d chapter</item>
         <item quantity="other">%d chapters</item>
     </plurals>
+    <plurals name="num_tracks">
+        <item quantity="one">%d track</item>
+        <item quantity="other">%d tracks</item>
+    </plurals>
+    <string name="show_all_count">Show all %1$d ›</string>
     <string name="delete">Delete</string>
     <string name="watching">Watching</string>
     <string name="reading">Reading</string>
@@ -54,6 +64,11 @@
     <string name="today">Today</string>
     <string name="nothing_today">Nothing today\n( ≧Д≦)</string>
     <string name="this_season">This Season</string>
+    <string name="discover">Discover</string>
+    <string name="top_rated">Top rated</string>
+    <string name="top_manga">Top manga</string>
+    <string name="weekly_schedule">Weekly schedule</string>
+    <string name="see_all">See all</string>
     <string name="recommendations">Recommendations</string>
     <string name="total_entries">Total: %s</string>
     <string name="anime_count">%d Anime</string>
@@ -71,6 +86,11 @@
     <string name="members">Members</string>
     <string name="users_scores">Users scores</string>
     <string name="popularity">Popularity</string>
+    <string name="score">Score</string>
+    <string name="ranked">Ranked</string>
+    <string name="community">Community</string>
+    <string name="sign_in_to_track">Sign in to track</string>
+    <string name="add_to_list">Add to list</string>
     <string name="error_server">Error connecting to server</string>
     <string name="tv">TV</string>
     <string name="ova">OVA</string>
@@ -135,6 +155,18 @@
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
     <string name="theme_system">Follow system</string>
+    <string name="theme_amoled">AMOLED</string>
+    <string name="appearance">Appearance</string>
+    <string name="color_palette">Color Palette</string>
+    <string name="anime_style_theme">Anime Style Theme</string>
+    <string name="theme_mode">Theme Mode</string>
+    <string name="palette_dynamic">Dynamic</string>
+    <string name="palette_yume_blue">Yume Blue</string>
+    <string name="palette_one_piece">One Piece</string>
+    <string name="palette_demon_slayer">Demon Slayer</string>
+    <string name="palette_attack_on_titan">Attack on Titan</string>
+    <string name="palette_naruto">Naruto</string>
+    <string name="palette_bleach">Bleach</string>
     <string name="title_details">Details</string>
     <string name="view_on_mal">View on MAL</string>
     <string name="share">Share</string>
@@ -207,6 +239,8 @@
     <string name="discontinued">Discontinued</string>
     <string name="opening">Opening Themes</string>
     <string name="ending">Ending Themes</string>
+    <string name="openings">Openings</string>
+    <string name="endings">Endings</string>
     <string name="copied">Copied!</string>
     <string name="login_browser_warning">Try with another browser if you can\'t login.</string>
     <string name="parent_story">Parent story</string>
@@ -250,8 +284,22 @@
     <string name="chinese_simplified_native" translatable="false">简体中文</string>
     <string name="related_anime">Related Anime</string>
     <string name="related_manga">Related Manga</string>
-    <string name="franchise_timeline">Franchise Timeline</string>
+    <string name="franchise_timeline">Related</string>
+    <string name="show_more">Show more</string>
+    <string name="show_less">Show less</string>
+    <string name="more_count">+%d more</string>
+    <string name="ratings_count">%s ratings</string>
     <string name="content">Content</string>
+    <string name="navigation">Navigation</string>
+    <string name="media_lists">Media Lists</string>
+    <string name="app_integration">App Integration</string>
+    <string name="content_filters">Content Filters</string>
+    <string name="navigation_bar">Navigation Bar</string>
+    <string name="pinned_navigation_bar_summary">Stays visible while scrolling</string>
+    <string name="settings_appearance_hint">Theme · Color Palette</string>
+    <string name="settings_navigation_hint">Default tab · Nav bar · Tablet mode</string>
+    <string name="settings_media_lists_hint">List style · Grid · Tabs</string>
+    <string name="settings_content_hint">Title language · Scores · NSFW</string>
     <string name="list_mode_standard">Standard</string>
     <string name="list_mode_compact">Compact</string>
     <string name="list_mode_minimal">Minimal</string>
@@ -275,6 +323,10 @@
         <item quantity="other">%d days</item>
     </plurals>
     <string name="open_mal_links_in_the_app">Open MAL links in the app</string>
+    <string name="app_integration_active">Active</string>
+    <string name="app_integration_not_set_up">Not set up</string>
+    <string name="app_integration_enable">Enable</string>
+    <string name="app_integration_manage">Manage</string>
     <string name="notifications">Notifications</string>
     <string name="delete_all">Delete all</string>
     <string name="manga_stats">Manga Stats</string>
@@ -304,6 +356,9 @@
     <string name="ten" translatable="false">10</string>
     <string name="airing_notification_enabled">Airing notification enabled</string>
     <string name="start_airing_notification_enabled">Start airing notification enabled</string>
+    <string name="notification_disabled">Notification disabled</string>
+    <string name="enable_notification">Enable notification</string>
+    <string name="disable_notification">Disable notification</string>
     <string name="invalid_start_date">Invalid start date</string>
     <string name="invalid_broadcast">Invalid broadcast</string>
     <string name="synopsis_background">Background</string>
@@ -328,6 +383,8 @@
     <string name="role_supporting">Supporting</string>
     <string name="view_characters">View Characters (Beta)</string>
     <string name="characters">Characters</string>
+    <string name="genres">Genres</string>
+    <string name="titles">Titles</string>
     <string name="genre_adult_cast">Adult Cast</string>
     <string name="genre_avant_garde">Avant Garde</string>
     <string name="genre_award_winning">Award Winning</string>
@@ -384,6 +441,7 @@
     <string name="current_season">Current</string>
     <string name="next_season">Next</string>
     <string name="status_distribution">Status distribution</string>
+    <string name="status">Status</string>
     <string name="tv_special">TV Special</string>
     <string name="cm">CM</string>
     <string name="pv">PV</string>
@@ -413,4 +471,80 @@
     <string name="format">Format</string>
     <string name="all">All</string>
     <string name="reindexing_media_list">Reindexing %s List…</string>
+
+    <!-- Error / empty state messaging -->
+    <string name="network_error">Can\'t reach MyAnimeList</string>
+    <string name="network_error_desc">Check your internet connection and try again.</string>
+    <string name="session_expired">Session expired</string>
+    <string name="session_expired_desc">Please sign in again to continue.</string>
+    <string name="sign_in_again">Sign in again</string>
+    <string name="not_found">Not found</string>
+    <string name="error_server_desc">MyAnimeList is having trouble. Try again in a moment.</string>
+    <string name="something_went_wrong_desc">An unexpected error occurred. Please try again.</string>
+
+    <!-- Home empty -->
+    <string name="nothing_airing_today">Nothing airing today</string>
+    <string name="nothing_airing_today_desc">No anime from your list airs today.</string>
+    <string name="no_anime_this_season">No anime this season</string>
+    <string name="no_anime_this_season_desc">Try a different season or refresh.</string>
+
+    <!-- Search empty -->
+    <string name="no_matches_for_query">No matches found</string>
+    <string name="try_different_keywords">Try different keywords for \"%1$s\".</string>
+
+    <!-- Season / Ranking empty -->
+    <string name="no_anime_found">No anime found</string>
+    <string name="no_anime_found_desc">Try adjusting your filters.</string>
+    <string name="reset_filters">Reset filters</string>
+
+    <!-- Per-tab empty: anime -->
+    <string name="empty_watching_title">Nothing watching</string>
+    <string name="empty_watching_desc">Anime you start watching will appear here.</string>
+    <string name="empty_reading_title">Nothing reading</string>
+    <string name="empty_reading_desc">Manga you start reading will appear here.</string>
+    <string name="empty_completed_anime_title">Nothing completed yet</string>
+    <string name="empty_completed_anime_desc">Anime you finish will live here.</string>
+    <string name="empty_completed_manga_title">Nothing completed yet</string>
+    <string name="empty_completed_manga_desc">Manga you finish will live here.</string>
+    <string name="empty_on_hold_anime_title">Nothing on hold</string>
+    <string name="empty_on_hold_anime_desc">Move an anime here when you\'re taking a break.</string>
+    <string name="empty_on_hold_manga_title">Nothing on hold</string>
+    <string name="empty_on_hold_manga_desc">Move a manga here when you\'re taking a break.</string>
+    <string name="empty_dropped_anime_title">Nothing dropped</string>
+    <string name="empty_dropped_anime_desc">Anime you give up on will appear here.</string>
+    <string name="empty_dropped_manga_title">Nothing dropped</string>
+    <string name="empty_dropped_manga_desc">Manga you give up on will appear here.</string>
+    <string name="empty_ptw_title">Your plan-to-watch list is empty</string>
+    <string name="empty_ptw_desc">Add anime you want to watch later.</string>
+    <string name="empty_ptr_title">Your plan-to-read list is empty</string>
+    <string name="empty_ptr_desc">Add manga you want to read later.</string>
+    <string name="search_to_add">Search to add</string>
+    <string name="dates">Dates</string>
+
+    <!-- About page -->
+    <string name="app_tagline">Your anime &amp; manga tracker</string>
+    <string name="app_description">YumeList is your open-source anime &amp; manga tracker powered by MyAnimeList. Track, discover, and explore with a beautiful Material 3 experience.</string>
+    <string name="stable_release">Stable Release</string>
+    <string name="changelog">Changelog</string>
+    <string name="changelog_summary">See what\'s new in this release</string>
+    <string name="report_bug">Report a Bug</string>
+    <string name="report_bug_summary">Found something broken? Let us know</string>
+    <string name="open_source_licenses">Open Source Licenses</string>
+    <string name="open_source_licenses_summary">Third-party libraries used in this app</string>
+    <string name="built_on_moelist">Built on MoeList</string>
+    <string name="built_on_moelist_summary">Originally created by axiel7</string>
+    <string name="powered_by_mal">Powered by MyAnimeList</string>
+    <string name="powered_by_mal_summary">Anime &amp; manga data provided by MAL API</string>
+    <string name="links">Links</string>
+    <string name="core_highlights">Core Highlights</string>
+    <string name="connect_and_share">Connect &amp; Share</string>
+    <string name="highlight_track">Track Lists</string>
+    <string name="highlight_track_desc">Anime &amp; manga in one place</string>
+    <string name="highlight_seasonal">Seasonal Charts</string>
+    <string name="highlight_seasonal_desc">Discover what\'s airing now</string>
+    <string name="highlight_discover">Discover</string>
+    <string name="highlight_discover_desc">Rankings, trending &amp; more</string>
+    <string name="highlight_themes">Anime Themes</string>
+    <string name="highlight_themes_desc">Material 3 with anime palettes</string>
+    <string name="copyright">© 2026 YumeList. All rights reserved.</string>
 </resources>

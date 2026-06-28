@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -22,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -90,6 +92,7 @@ fun EmptyState(
     description: String? = null,
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null,
+    compact: Boolean = false,
 ) {
     val isPreview = LocalInspectionMode.current
     var visible by remember { mutableStateOf(isPreview) }
@@ -104,56 +107,28 @@ fun EmptyState(
             animationSpec = tween(500)
         )
     ) {
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.weight(1f))
-
-            Surface(
-                modifier = Modifier.size(96.dp),
-                shape = RoundedCornerShape(32.dp),
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = title,
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center
+        if (compact) {
+            CompactStateLayout(
+                modifier = modifier,
+                icon = icon,
+                iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
+                title = title,
+                description = description,
+                actionLabel = actionLabel,
+                onAction = onAction,
             )
-
-            if (description != null) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            if (actionLabel != null && onAction != null) {
-                Spacer(modifier = Modifier.height(24.dp))
-                FilledTonalButton(onClick = onAction) {
-                    Text(text = actionLabel)
-                }
-            }
-
-            Spacer(modifier = Modifier.weight(2f))
+        } else {
+            FullStateLayout(
+                modifier = modifier,
+                icon = icon,
+                iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
+                title = title,
+                description = description,
+                actionLabel = actionLabel,
+                onAction = onAction,
+            )
         }
     }
 }
@@ -165,7 +140,8 @@ fun ErrorState(
     title: String = stringResource(R.string.something_went_wrong),
     message: String? = null,
     actionLabel: String = stringResource(R.string.retry),
-    onAction: () -> Unit
+    onAction: () -> Unit,
+    compact: Boolean = false,
 ) {
     val isPreview = LocalInspectionMode.current
     var visible by remember { mutableStateOf(isPreview) }
@@ -180,57 +156,168 @@ fun ErrorState(
             animationSpec = tween(500)
         )
     ) {
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.weight(1f))
-
-            Surface(
-                modifier = Modifier.size(96.dp),
-                shape = RoundedCornerShape(32.dp),
-                color = MaterialTheme.colorScheme.errorContainer
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = title,
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center
+        if (compact) {
+            CompactStateLayout(
+                modifier = modifier,
+                icon = icon,
+                iconContainerColor = MaterialTheme.colorScheme.errorContainer,
+                iconTint = MaterialTheme.colorScheme.onErrorContainer,
+                title = title,
+                description = message,
+                actionLabel = actionLabel,
+                onAction = onAction,
             )
+        } else {
+            FullStateLayout(
+                modifier = modifier,
+                icon = icon,
+                iconContainerColor = MaterialTheme.colorScheme.errorContainer,
+                iconTint = MaterialTheme.colorScheme.onErrorContainer,
+                title = title,
+                description = message,
+                actionLabel = actionLabel,
+                onAction = onAction,
+            )
+        }
+    }
+}
 
-            if (message != null) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
+@Composable
+private fun FullStateLayout(
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+    iconContainerColor: androidx.compose.ui.graphics.Color,
+    iconTint: androidx.compose.ui.graphics.Color,
+    title: String,
+    description: String?,
+    actionLabel: String?,
+    onAction: (() -> Unit)?,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(modifier = Modifier.weight(1f))
+
+        Surface(
+            modifier = Modifier.size(96.dp),
+            shape = RoundedCornerShape(32.dp),
+            color = iconContainerColor
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp),
+                    tint = iconTint
                 )
             }
+        }
 
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center
+        )
+
+        if (description != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        if (actionLabel != null && onAction != null) {
             Spacer(modifier = Modifier.height(24.dp))
-
             FilledTonalButton(onClick = onAction) {
                 Text(text = actionLabel)
             }
+        }
 
-            Spacer(modifier = Modifier.weight(2f))
+        Spacer(modifier = Modifier.weight(2f))
+    }
+}
+
+@Composable
+private fun CompactStateLayout(
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+    iconContainerColor: androidx.compose.ui.graphics.Color,
+    iconTint: androidx.compose.ui.graphics.Color,
+    title: String,
+    description: String?,
+    actionLabel: String?,
+    onAction: (() -> Unit)?,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Surface(
+            modifier = Modifier.size(56.dp),
+            shape = RoundedCornerShape(18.dp),
+            color = iconContainerColor
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp),
+                    tint = iconTint
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center
+        )
+
+        if (description != null) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                maxLines = 2
+            )
+        }
+
+        if (actionLabel != null && onAction != null) {
+            Spacer(modifier = Modifier.height(6.dp))
+            TextButton(onClick = onAction) {
+                Text(text = actionLabel)
+            }
         }
     }
+}
+
+/**
+ * Returns `true` when the given (already-localized) message matches the
+ * session-expired string. Call sites can swap the retry action for a
+ * "Sign in again" CTA based on this.
+ */
+@Composable
+fun isSessionExpiredMessage(message: String?): Boolean {
+    if (message == null) return false
+    return message == stringResource(R.string.session_expired)
 }
 
 @Preview(showBackground = true)
@@ -262,5 +349,19 @@ fun ErrorStatePreview() {
             message = "Network error. Please check your internet connection.",
             onAction = {}
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ErrorStateCompactPreview() {
+    MoeListTheme {
+        Box(modifier = Modifier.height(180.dp)) {
+            ErrorState(
+                message = "Can't reach MyAnimeList",
+                onAction = {},
+                compact = true
+            )
+        }
     }
 }

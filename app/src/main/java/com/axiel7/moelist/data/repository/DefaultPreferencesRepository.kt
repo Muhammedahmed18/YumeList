@@ -13,6 +13,7 @@ import com.axiel7.moelist.data.model.media.MediaSort
 import com.axiel7.moelist.data.model.media.TitleLanguage
 import com.axiel7.moelist.di.getValue
 import com.axiel7.moelist.di.setValue
+import com.axiel7.moelist.ui.base.ColorPalette
 import com.axiel7.moelist.ui.base.ItemsPerRow
 import com.axiel7.moelist.ui.base.ListStyle
 import com.axiel7.moelist.ui.base.StartTab
@@ -82,14 +83,10 @@ class DefaultPreferencesRepository(
         dataStore.setValue(THEME_KEY, value.name)
     }
 
-    val useBlackColors = dataStore.getValue(USE_BLACK_COLORS_KEY, false)
-    suspend fun setUseBlackColors(value: Boolean) {
-        dataStore.setValue(USE_BLACK_COLORS_KEY, value)
-    }
-
-    val useMonochrome = dataStore.getValue(USE_MONOCHROME_KEY, false)
-    suspend fun setUseMonochrome(value: Boolean) {
-        dataStore.setValue(USE_MONOCHROME_KEY, value)
+    val colorPalette = dataStore.getValue(COLOR_PALETTE_KEY, ColorPalette.DYNAMIC.name)
+        .map { ColorPalette.valueOfOrNull(it) ?: ColorPalette.DYNAMIC }
+    suspend fun setColorPalette(value: ColorPalette) {
+        dataStore.setValue(COLOR_PALETTE_KEY, value.name)
     }
 
     val isOnboardingCompleted = dataStore.getValue(ONBOARDING_COMPLETED_KEY, false)
@@ -233,18 +230,6 @@ class DefaultPreferencesRepository(
     suspend fun setTitleLang(value: TitleLanguage) {
         dataStore.setValue(TITLE_LANG_KEY, value.name)
         App.titleLanguage = value
-        setAnimeNeedsReindex(true)
-        setMangaNeedsReindex(true)
-    }
-
-    val animeNeedsReindex = dataStore.getValue(ANIME_NEEDS_REINDEX_KEY, false)
-    suspend fun setAnimeNeedsReindex(value: Boolean) {
-        dataStore.setValue(ANIME_NEEDS_REINDEX_KEY, value)
-    }
-
-    val mangaNeedsReindex = dataStore.getValue(MANGA_NEEDS_REINDEX_KEY, false)
-    suspend fun setMangaNeedsReindex(value: Boolean) {
-        dataStore.setValue(MANGA_NEEDS_REINDEX_KEY, value)
     }
 
     val useListTabs = dataStore.getValue(USE_LIST_TABS_KEY, false)
@@ -370,8 +355,7 @@ class DefaultPreferencesRepository(
         private val NSFW_KEY = booleanPreferencesKey("nsfw")
         private val HIDE_SCORES_KEY = booleanPreferencesKey("hide_scores")
         private val THEME_KEY = stringPreferencesKey("theme")
-        private val USE_BLACK_COLORS_KEY = booleanPreferencesKey("use_black_colors")
-        private val USE_MONOCHROME_KEY = booleanPreferencesKey("use_monochrome")
+        private val COLOR_PALETTE_KEY = stringPreferencesKey("color_palette")
         private val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
         private val LAST_TAB_KEY = intPreferencesKey("last_tab")
         private val PINNED_NAV_BAR_KEY = booleanPreferencesKey("pinned_nav_bar")
@@ -396,8 +380,6 @@ class DefaultPreferencesRepository(
         private val START_TAB_KEY = stringPreferencesKey("start_tab")
         private val TABLET_MODE_KEY = stringPreferencesKey("tablet_mode")
         private val TITLE_LANG_KEY = stringPreferencesKey("title_lang")
-        private val ANIME_NEEDS_REINDEX_KEY = booleanPreferencesKey("anime_needs_reindex")
-        private val MANGA_NEEDS_REINDEX_KEY = booleanPreferencesKey("manga_needs_reindex")
         private val USE_LIST_TABS_KEY = booleanPreferencesKey("use_list_tabs")
         private val LOAD_CHARACTERS_KEY = booleanPreferencesKey("load_characters")
         private val RANDOM_LIST_ENTRY_KEY = booleanPreferencesKey("random_list_entry_enabled")

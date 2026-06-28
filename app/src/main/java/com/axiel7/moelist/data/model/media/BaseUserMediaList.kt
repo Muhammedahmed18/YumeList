@@ -46,5 +46,9 @@ abstract class BaseUserMediaList<T : BaseMediaNode> {
         get() = node.status == MediaStatus.AIRING
                 || ((node as? AnimeNode)?.broadcast != null && node.status == MediaStatus.AIRING)
 
+    /** Whether the media already started airing/publishing, so progress can be tracked */
+    val hasStarted
+        get() = node.status != null && node.status != MediaStatus.NOT_AIRED
+
     abstract fun copyProgress(progress: Int): BaseUserMediaList<T>
 }

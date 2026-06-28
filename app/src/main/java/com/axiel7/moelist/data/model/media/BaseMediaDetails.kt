@@ -44,6 +44,7 @@ abstract class BaseMediaDetails : BaseResponse {
     abstract val recommendations: List<Recommendations<*>>?
 
     abstract val myListStatus: BaseMyListStatus?
+    abstract val statistics: Statistics?
 
     override val error: String? = null
     override val message: String? = null

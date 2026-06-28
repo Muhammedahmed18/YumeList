@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.axiel7.moelist.data.repository.DefaultPreferencesRepository
 import com.axiel7.moelist.data.repository.LoginRepository
 import com.axiel7.moelist.data.repository.UserRepository
+import com.axiel7.moelist.ui.base.ColorPalette
 import com.axiel7.moelist.ui.base.ThemeStyle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,9 +47,8 @@ class MainViewModel(
     val theme = defaultPreferencesRepository.theme
         .stateIn(viewModelScope, SharingStarted.Eagerly, ThemeStyle.FOLLOW_SYSTEM)
 
-    val useBlackColors = defaultPreferencesRepository.useBlackColors
-
-    val useMonochrome = defaultPreferencesRepository.useMonochrome
+    val colorPalette = defaultPreferencesRepository.colorPalette
+        .stateIn(viewModelScope, SharingStarted.Eagerly, ColorPalette.DYNAMIC)
 
     val isOnboardingCompleted = defaultPreferencesRepository.isOnboardingCompleted
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
@@ -120,12 +120,8 @@ class MainViewModel(
         defaultPreferencesRepository.setTheme(value)
     }
 
-    fun setUseBlackColors(value: Boolean) = viewModelScope.launch {
-        defaultPreferencesRepository.setUseBlackColors(value)
-    }
-
-    fun setUseMonochrome(value: Boolean) = viewModelScope.launch {
-        defaultPreferencesRepository.setUseMonochrome(value)
+    fun setColorPalette(value: ColorPalette) = viewModelScope.launch {
+        defaultPreferencesRepository.setColorPalette(value)
     }
 
     fun completeOnboarding() = viewModelScope.launch {

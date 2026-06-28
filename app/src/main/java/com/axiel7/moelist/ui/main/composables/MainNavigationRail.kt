@@ -1,28 +1,26 @@
 package com.axiel7.moelist.ui.main.composables
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationRail
-import androidx.compose.material3.NavigationRailItem
-import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.axiel7.moelist.R
 import com.axiel7.moelist.ui.base.BottomDestination
-import com.axiel7.moelist.ui.base.BottomDestination.Companion.Icon
 import com.axiel7.moelist.ui.base.navigation.Route
 
 @Composable
@@ -32,52 +30,51 @@ fun MainNavigationRail(
     modifier: Modifier = Modifier,
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    NavigationRail(
-        modifier = modifier,
-        header = {
-            FloatingActionButton(
-                onClick = {
-                    onItemSelected(-1)
-                    val isInSearch = navBackStackEntry?.destination?.hasRoute(Route.Search::class) == true
-                    if (!isInSearch) {
-                        navController.navigate(Route.Search()) {
-                            launchSingleTop = true
-                        }
-                    }
-                }
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_round_search_24),
-                    contentDescription = stringResource(R.string.search)
-                )
-            }
-        }
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxHeight()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.Bottom
+        Surface(
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            tonalElevation = 6.dp,
+            shadowElevation = 8.dp,
         ) {
-            BottomDestination.railValues.forEachIndexed { index, dest ->
-                val isSelected = navBackStackEntry?.destination?.hierarchy?.any {
-                    it.hasRoute(dest.route::class)
-                } == true
-                NavigationRailItem(
-                    selected = isSelected,
-                    onClick = {
-                        onItemSelected(index)
-                        navController.navigate(dest.route) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                BottomDestination.values.forEachIndexed { index, dest ->
+                    val isSelected = navBackStackEntry?.destination?.hierarchy?.any {
+                        it.hasRoute(dest.route::class)
+                    } == true
+
+                    FloatingNavItem(
+                        destination = dest,
+                        isSelected = isSelected,
+                        onClick = {
+                            if (isSelected) {
+                                if (dest == BottomDestination.More) {
+                                    navController.navigate(Route.Settings)
+                                }
+                            } else {
+                                onItemSelected(index)
+                                navController.navigate(dest.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
-                            launchSingleTop = true
-                            restoreState = true
                         }
-                    },
-                    icon = { dest.Icon(selected = isSelected) },
-                    label = { Text(text = stringResource(dest.title)) }
-                )
+                    )
+                }
             }
         }
     }

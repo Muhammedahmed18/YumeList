@@ -1,8 +1,6 @@
 package com.axiel7.moelist.data.model.media
 
 import android.os.Bundle
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavType
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.base.Localizable
@@ -12,11 +10,11 @@ import kotlinx.serialization.Serializable
 enum class MediaType : Localizable {
     ANIME, MANGA;
 
-    @Composable
-    override fun localized() = when (this) {
-        ANIME -> stringResource(R.string.anime)
-        MANGA -> stringResource(R.string.manga)
-    }
+    override val labelRes: Int
+        get() = when (this) {
+            ANIME -> R.string.anime
+            MANGA -> R.string.manga
+        }
 
     companion object {
         val navType = object : NavType<MediaType>(isNullableAllowed = true) {

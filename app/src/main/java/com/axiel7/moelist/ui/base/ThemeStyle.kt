@@ -3,13 +3,14 @@ package com.axiel7.moelist.ui.base
 import com.axiel7.moelist.R
 
 enum class ThemeStyle {
-    FOLLOW_SYSTEM, LIGHT, DARK;
+    FOLLOW_SYSTEM, LIGHT, DARK, AMOLED;
 
     val stringRes
         get() = when (this) {
             FOLLOW_SYSTEM -> R.string.theme_system
             LIGHT -> R.string.theme_light
             DARK -> R.string.theme_dark
+            AMOLED -> R.string.theme_amoled
         }
 
     companion object {

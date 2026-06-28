@@ -23,11 +23,14 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -35,9 +38,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -52,14 +55,16 @@ import com.axiel7.moelist.App
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.BottomDestination.Companion.isBottomDestination
 import com.axiel7.moelist.ui.base.BottomDestination.Companion.toBottomDestinationIndex
+import com.axiel7.moelist.ui.base.ColorPalette
 import com.axiel7.moelist.ui.base.TabletMode
 import com.axiel7.moelist.ui.base.ThemeStyle
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.base.navigation.NavActionManager.Companion.rememberNavActionManager
 import com.axiel7.moelist.ui.base.navigation.Route
+import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
+import com.axiel7.moelist.ui.composables.YumeListSnackbar
 import com.axiel7.moelist.ui.main.composables.MainBottomNavBar
 import com.axiel7.moelist.ui.main.composables.MainNavigationRail
-import com.axiel7.moelist.ui.main.composables.MainTopAppBar
 import com.axiel7.moelist.ui.onboarding.OnboardingView
 import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.utils.ContextExtensions.openLink
@@ -92,24 +97,23 @@ class MainActivity : AppCompatActivity() {
 
         val lastTabOpened = findLastTabOpened()
         val initialTheme = runBlocking { viewModel.theme.first() }
-        val initialUseBlackColors = runBlocking { viewModel.useBlackColors.first() }
-        val initialUseMonochrome = runBlocking { viewModel.useMonochrome.first() }
+        val initialColorPalette = runBlocking { viewModel.colorPalette.first() }
         val initialTabletMode = runBlocking { viewModel.tabletMode.first() }
         val initialOnboardingCompleted = runBlocking { viewModel.isOnboardingCompleted.first() }
 
         setContent {
             val theme by viewModel.theme.collectAsStateWithLifecycle(initialValue = initialTheme)
-            val useBlackColors by viewModel.useBlackColors.collectAsStateWithLifecycle(
-                initialValue = initialUseBlackColors
-            )
-            val useMonochrome by viewModel.useMonochrome.collectAsStateWithLifecycle(
-                initialValue = initialUseMonochrome
+            val colorPalette by viewModel.colorPalette.collectAsStateWithLifecycle(
+                initialValue = initialColorPalette
             )
             val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsStateWithLifecycle(
                 initialValue = initialOnboardingCompleted
             )
-            val isDark = if (theme == ThemeStyle.FOLLOW_SYSTEM) isSystemInDarkTheme()
-            else theme == ThemeStyle.DARK
+            val isDark = when (theme) {
+                ThemeStyle.FOLLOW_SYSTEM -> isSystemInDarkTheme()
+                ThemeStyle.LIGHT -> false
+                else -> true
+            }
 
             val navController = rememberNavController()
             val navActionManager = rememberNavActionManager(navController)
@@ -131,8 +135,8 @@ class MainActivity : AppCompatActivity() {
 
             MoeListTheme(
                 darkTheme = isDark,
-                useBlackColors = useBlackColors,
-                useMonochrome = useMonochrome
+                useBlackColors = theme == ThemeStyle.AMOLED,
+                colorPalette = colorPalette,
             ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -249,6 +253,7 @@ fun MainView(
     profilePicture: String?,
 ) {
     val density = LocalDensity.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var topBarHeightPx by remember { mutableFloatStateOf(0f) }
     val topBarOffsetY = remember { Animatable(0f) }
@@ -257,7 +262,7 @@ fun MainView(
     val isBottomDestination by remember {
         derivedStateOf { navBackStackEntry?.isBottomDestination() == true }
     }
-    
+
     // Step 1: Logic to show sort icon and handle clicks
     val isUserListTab by remember {
         derivedStateOf {
@@ -268,34 +273,27 @@ fun MainView(
     }
     var sortTrigger by remember { mutableStateOf<(() -> Unit)?>(null) }
 
+    // Hoisted in-place search state for HomeView. Lives here so the bottom nav can hide
+    // while expanded and BackHandler/system back work consistently.
+    var searchActive by rememberSaveable { mutableStateOf(false) }
+
+    CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
     Scaffold(
-        topBar = {
-            if (isCompactScreen) {
-                MainTopAppBar(
-                    isLoggedIn = isLoggedIn,
-                    profilePicture = profilePicture,
-                    isVisible = isBottomDestination && !isUserListTab,
-                    navController = navController,
-                    showSort = isUserListTab,
-                    onSortClick = { sortTrigger?.invoke() },
-                    topBarOffsetY = topBarOffsetY,
-                    topBarHeightPx = topBarHeightPx,
-                    modifier = Modifier
-                        .graphicsLayer {
-                            translationY = topBarOffsetY.value
-                        }
-                )
-            }
-        },
         bottomBar = {
             if (isCompactScreen) {
                 MainBottomNavBar(
                     navController = navController,
                     navBackStackEntry = navBackStackEntry,
-                    isVisible = isBottomDestination || pinnedNavBar,
+                    // Hide bottom nav while the Home search bar is expanded
+                    isVisible = (isBottomDestination || pinnedNavBar) && !searchActive,
                     onItemSelected = saveLastTab,
                     topBarOffsetY = topBarOffsetY,
                 )
+            }
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { snackbarData ->
+                YumeListSnackbar(snackbarData)
             }
         },
         contentWindowInsets = WindowInsets.systemBars
@@ -323,7 +321,9 @@ fun MainView(
                     padding = PaddingValues(),
                     topBarHeightPx = topBarHeightPx,
                     topBarOffsetY = topBarOffsetY,
-                    onSortClickTrigger = { sortTrigger = it }
+                    onSortClickTrigger = { sortTrigger = it },
+                    searchActive = searchActive,
+                    onSearchActiveChange = { searchActive = it },
                 )
             }
         } else {
@@ -350,8 +350,12 @@ fun MainView(
                 ),
                 topBarHeightPx = if (isUserListTab) 0f else topBarHeightPx,
                 topBarOffsetY = topBarOffsetY,
-                onSortClickTrigger = { sortTrigger = it }
+                onSortClickTrigger = { sortTrigger = it },
+                searchActive = searchActive,
+                onSearchActiveChange = { searchActive = it },
+                profilePicture = profilePicture,
             )
         }
     }
+    } // CompositionLocalProvider
 }

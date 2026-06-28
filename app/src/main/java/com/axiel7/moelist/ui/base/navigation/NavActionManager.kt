@@ -53,8 +53,20 @@ class NavActionManager(
         navController.navigate(Route.Settings)
     }
 
+    fun toAppearance() {
+        navController.navigate(Route.Appearance)
+    }
+
     fun toListStyleSettings() {
         navController.navigate(Route.ListStyleSettings)
+    }
+
+    fun toNavigationSettings() {
+        navController.navigate(Route.NavigationSettings)
+    }
+
+    fun toContentSettings() {
+        navController.navigate(Route.ContentSettings)
     }
 
     fun toNotifications() {

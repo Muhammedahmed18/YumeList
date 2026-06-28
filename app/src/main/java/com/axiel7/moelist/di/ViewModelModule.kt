@@ -7,7 +7,9 @@ import com.axiel7.moelist.ui.home.HomeViewModel
 import com.axiel7.moelist.ui.main.MainViewModel
 import com.axiel7.moelist.ui.more.MoreViewModel
 import com.axiel7.moelist.ui.more.notifications.NotificationsViewModel
-import com.axiel7.moelist.ui.more.settings.SettingsViewModel
+import com.axiel7.moelist.ui.more.settings.appearance.AppearanceViewModel
+import com.axiel7.moelist.ui.more.settings.content.ContentSettingsViewModel
+import com.axiel7.moelist.ui.more.settings.navigation.NavigationSettingsViewModel
 import com.axiel7.moelist.ui.more.settings.list.ListStyleSettingsViewModel
 import com.axiel7.moelist.ui.profile.ProfileViewModel
 import com.axiel7.moelist.ui.ranking.MediaRankingViewModel
@@ -21,7 +23,9 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val viewModelModule = module {
-    viewModelOf(::SettingsViewModel)
+    viewModelOf(::AppearanceViewModel)
+    viewModelOf(::ContentSettingsViewModel)
+    viewModelOf(::NavigationSettingsViewModel)
     viewModelOf(::CalendarViewModel)
     viewModelOf(::MediaDetailsViewModel)
     viewModel { params ->

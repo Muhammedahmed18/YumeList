@@ -24,4 +24,13 @@ enum class SeasonType : Localizable {
             CURRENT -> SeasonCalendar.currentStartSeason
             NEXT -> SeasonCalendar.nextStartSeason
         }
+
+    companion object {
+        /**
+         * The relative type matching the given [startSeason] against today, or null when the
+         * season is further away than the immediate previous/current/next window.
+         */
+        fun of(startSeason: StartSeason): SeasonType? =
+            entries.find { it.season == startSeason }
+    }
 }

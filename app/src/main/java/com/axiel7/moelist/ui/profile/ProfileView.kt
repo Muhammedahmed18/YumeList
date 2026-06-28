@@ -57,10 +57,11 @@ import coil3.compose.AsyncImage
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
+import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
+import com.axiel7.moelist.ui.composables.showSnackbarShort
 import com.axiel7.moelist.ui.profile.composables.UserStatsView
 import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.utils.ContextExtensions.openLink
-import com.axiel7.moelist.utils.ContextExtensions.showToast
 import com.axiel7.moelist.utils.DateUtils.parseDateAndLocalize
 import com.axiel7.moelist.utils.MAL_PROFILE_URL
 import org.koin.androidx.compose.koinViewModel
@@ -88,6 +89,7 @@ private fun ProfileViewContent(
     navActionManager: NavActionManager
 ) {
     val context = LocalContext.current
+    val snackbarHostState = LocalSnackbarHostState.current
     val scrollState = rememberScrollState()
     var selectedStatsTab by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
@@ -95,7 +97,7 @@ private fun ProfileViewContent(
 
     LaunchedEffect(uiState.message) {
         if (uiState.message != null) {
-            context.showToast(uiState.message)
+            snackbarHostState.showSnackbarShort(uiState.message)
             event?.onMessageDisplayed()
         }
     }

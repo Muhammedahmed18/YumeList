@@ -2,6 +2,7 @@ package com.axiel7.moelist.data.network
 
 import com.axiel7.moelist.data.model.Response
 import com.axiel7.moelist.data.model.UserStats
+import com.axiel7.moelist.data.model.manga.JikanMangaStatisticsResponse
 import com.axiel7.moelist.utils.JIKAN_API_URL
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -19,6 +20,12 @@ class JikanApi(private val client: HttpClient) {
     suspend fun getUserStats(
         username: String
     ): Response<UserStats> = client.get("${JIKAN_API_URL}users/$username/statistics") {
+        removeOfficialApiHeaders()
+    }.body()
+
+    suspend fun getMangaStatistics(
+        mangaId: Int
+    ): JikanMangaStatisticsResponse = client.get("${JIKAN_API_URL}manga/$mangaId/statistics") {
         removeOfficialApiHeaders()
     }.body()
 }

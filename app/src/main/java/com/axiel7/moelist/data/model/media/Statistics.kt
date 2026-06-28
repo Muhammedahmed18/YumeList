@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Statistics(
     @SerialName("status")
-    val status: StatisticsStatus,
+    val status: StatisticsStatus? = null,
     @SerialName("num_list_users")
-    val numListUsers: Int
+    val numListUsers: Int = 0
 )

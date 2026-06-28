@@ -1,12 +1,13 @@
 package com.axiel7.moelist.ui.ranking.list
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -14,7 +15,10 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CloudOff
+import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -22,7 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -35,16 +39,18 @@ import com.axiel7.moelist.data.model.media.RankingType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.EmptyState
 import com.axiel7.moelist.ui.composables.ErrorState
+import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
+import com.axiel7.moelist.ui.composables.showSnackbarShort
 import com.axiel7.moelist.ui.composables.LoadingState
 import com.axiel7.moelist.ui.composables.OnBottomReached
 import com.axiel7.moelist.ui.composables.TextIconHorizontal
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailed
 import com.axiel7.moelist.ui.composables.media.MediaItemDetailedPlaceholder
+import com.axiel7.moelist.ui.composables.media.MediaStatusIndicator
 import com.axiel7.moelist.ui.ranking.MediaRankingEvent
 import com.axiel7.moelist.ui.ranking.MediaRankingUiState
 import com.axiel7.moelist.ui.ranking.MediaRankingViewModel
 import com.axiel7.moelist.ui.theme.MoeListTheme
-import com.axiel7.moelist.utils.ContextExtensions.showToast
 import com.axiel7.moelist.utils.NumExtensions.format
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrNull
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrUnknown
@@ -80,34 +86,31 @@ private fun MediaRankingListViewContent(
     isCompactScreen: Boolean,
     navActionManager: NavActionManager,
 ) {
-    val context = LocalContext.current
+    val snackbarHostState = LocalSnackbarHostState.current
 
     LaunchedEffect(uiState.message) {
         if (uiState.message != null) {
-            context.showToast(uiState.message)
+            snackbarHostState.showSnackbarShort(uiState.message)
             event?.onMessageDisplayed()
         }
     }
 
     @Composable
     fun ItemView(item: BaseRanking) {
+        val status = item.node.myListStatus?.status
         MediaItemDetailed(
             title = item.node.userPreferredTitle(),
             imageUrl = item.node.mainPicture?.large,
             topBadgeContent = {
-                Text(
-                    text = "#${item.ranking?.rank}",
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            badgeContent = item.node.myListStatus?.status?.let { status ->
-                {
-                    Icon(
-                        imageVector = status.icon,
-                        contentDescription = status.localized(),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(16.dp)
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.85f),
+                ) {
+                    Text(
+                        text = "#${item.ranking?.rank}",
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             },
@@ -142,6 +145,10 @@ private fun MediaRankingListViewContent(
                     style = MaterialTheme.typography.bodySmall,
                     iconSize = 16.dp
                 )
+                if (status != null) {
+                    Spacer(modifier = Modifier.width(12.dp))
+                    MediaStatusIndicator(status = status)
+                }
             },
             onClick = dropUnlessResumed {
                 navActionManager.toMediaDetails(mediaType, item.node.id)
@@ -155,12 +162,16 @@ private fun MediaRankingListViewContent(
         }
         uiState.message != null && uiState.mediaList.isEmpty() -> {
             ErrorState(
+                icon = Icons.Outlined.CloudOff,
                 message = uiState.message,
                 onAction = { event?.loadMore() }
             )
         }
         !uiState.isLoading && uiState.mediaList.isEmpty() -> {
-            EmptyState()
+            EmptyState(
+                icon = Icons.Outlined.Inbox,
+                title = stringResource(R.string.no_results),
+            )
         }
         else -> {
             if (!isCompactScreen) {

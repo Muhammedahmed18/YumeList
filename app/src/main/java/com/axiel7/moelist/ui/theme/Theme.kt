@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalContext
+import com.axiel7.moelist.ui.base.ColorPalette
 
 private val LightColors = lightColorScheme(
     primary = md_theme_light_primary,
@@ -95,57 +96,40 @@ private fun ColorScheme.toBlack() = this.copy(
     surfaceVariant = surfaceVariant.copy(alpha = 0.4f).compositeOver(Color.Black),
 )
 
-private fun ColorScheme.toMonochrome(): ColorScheme {
-    return this.copy(
-        primary = onSurface,
-        onPrimary = surface,
-        primaryContainer = onSurface.copy(alpha = 0.12f).compositeOver(surface),
-        onPrimaryContainer = onSurface,
-        secondary = onSurfaceVariant,
-        onSecondary = surface,
-        secondaryContainer = onSurfaceVariant.copy(alpha = 0.12f).compositeOver(surface),
-        onSecondaryContainer = onSurfaceVariant,
-        tertiary = outline,
-        onTertiary = surface,
-        tertiaryContainer = outline.copy(alpha = 0.12f).compositeOver(surface),
-        onTertiaryContainer = outline,
-    )
-}
-
 @Composable
 fun MoeListTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
     useBlackColors: Boolean = false,
-    useMonochrome: Boolean = false,
+    colorPalette: ColorPalette = ColorPalette.DYNAMIC,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
-    val colorScheme = remember(dynamicColor, darkTheme, useBlackColors, useMonochrome) {
-        var scheme = when {
-            dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-                if (darkTheme) dynamicDarkColorScheme(context)
-                else dynamicLightColorScheme(context)
+    val colorScheme = remember(colorPalette, darkTheme, useBlackColors) {
+        var scheme = when (colorPalette) {
+            ColorPalette.DYNAMIC -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    if (darkTheme) dynamicDarkColorScheme(context)
+                    else dynamicLightColorScheme(context)
+                } else {
+                    if (darkTheme) DarkColors else LightColors
+                }
             }
-
-            darkTheme -> DarkColors
-            else -> LightColors
+            ColorPalette.ONE_PIECE -> if (darkTheme) OnePieceDarkColors else OnePieceLightColors
+            ColorPalette.DEMON_SLAYER -> if (darkTheme) DemonSlayerDarkColors else DemonSlayerLightColors
+            ColorPalette.ATTACK_ON_TITAN -> if (darkTheme) AttackOnTitanDarkColors else AttackOnTitanLightColors
+            ColorPalette.NARUTO -> if (darkTheme) NarutoDarkColors else NarutoLightColors
+            ColorPalette.BLEACH -> if (darkTheme) BleachDarkColors else BleachLightColors
         }
 
-        if (darkTheme) {
-            if (useMonochrome) {
-                scheme = scheme.toMonochrome()
-            }
-            if (useBlackColors) {
-                scheme = scheme.toBlack()
-            }
+        if (darkTheme && useBlackColors) {
+            scheme = scheme.toBlack()
         }
         scheme
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = SystemTypography,
         content = content
     )
 }

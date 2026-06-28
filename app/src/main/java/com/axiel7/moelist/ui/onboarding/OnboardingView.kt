@@ -6,7 +6,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -59,9 +58,6 @@ fun OnboardingView(
     val context = LocalContext.current
 
     val theme by viewModel.theme.collectAsState()
-    val useBlackColors by viewModel.useBlackColors.collectAsState(false)
-    val useMonochrome by viewModel.useMonochrome.collectAsState(false)
-    
     val profilePicture by viewModel.profilePicture.collectAsState()
     val username by viewModel.username.collectAsState()
 
@@ -92,14 +88,10 @@ fun OnboardingView(
             isLoggedIn = isLoggedIn,
             isLoggingIn = isLoggingIn,
             theme = theme,
-            useBlackColors = useBlackColors,
-            useMonochrome = useMonochrome,
             profilePicture = profilePicture,
             username = username,
             onStepChange = { currentStep = it },
             onThemeChange = viewModel::setTheme,
-            onBlackColorsChange = viewModel::setUseBlackColors,
-            onMonochromeChange = viewModel::setUseMonochrome,
             onLoginClick = {
                 scope.launch {
                     val url = viewModel.generateLoginUrl()
@@ -117,14 +109,10 @@ fun OnboardingContent(
     isLoggedIn: Boolean,
     isLoggingIn: Boolean,
     theme: ThemeStyle,
-    useBlackColors: Boolean,
-    useMonochrome: Boolean,
     profilePicture: String?,
     username: String?,
     onStepChange: (Int) -> Unit,
     onThemeChange: (ThemeStyle) -> Unit,
-    onBlackColorsChange: (Boolean) -> Unit,
-    onMonochromeChange: (Boolean) -> Unit,
     onLoginClick: () -> Unit,
     onFinished: () -> Unit
 ) {
@@ -194,11 +182,7 @@ fun OnboardingContent(
                     2 -> AppearanceStep(
                         modifier = Modifier.padding(padding),
                         theme = theme,
-                        useBlackColors = useBlackColors,
-                        useMonochrome = useMonochrome,
                         onThemeChange = onThemeChange,
-                        onBlackColorsChange = onBlackColorsChange,
-                        onMonochromeChange = onMonochromeChange
                     )
                     3 -> LoginStep(
                         modifier = Modifier.padding(padding),
@@ -349,105 +333,10 @@ fun FeatureItem(
 }
 
 @Composable
-fun ThemePreviewMockup(
-    theme: ThemeStyle,
-    useBlackColors: Boolean,
-    useMonochrome: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val isDark = when (theme) {
-        ThemeStyle.LIGHT -> false
-        ThemeStyle.DARK -> true
-        ThemeStyle.FOLLOW_SYSTEM -> isSystemInDarkTheme()
-    }
-
-    Surface(
-        modifier = modifier
-            .width(160.dp)
-            .height(280.dp),
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-        border = BorderStroke(2.dp, MaterialTheme.colorScheme.outlineVariant)
-    ) {
-        MoeListTheme(
-            darkTheme = isDark,
-            useBlackColors = useBlackColors,
-            useMonochrome = useMonochrome,
-            dynamicColor = false
-        ) {
-            Scaffold(
-                topBar = {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth().height(40.dp),
-                        color = MaterialTheme.colorScheme.surface,
-                        tonalElevation = 2.dp
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(modifier = Modifier.size(20.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape))
-                            Spacer(Modifier.width(8.dp))
-                            Box(modifier = Modifier.width(40.dp).height(8.dp).background(MaterialTheme.colorScheme.outlineVariant, CircleShape))
-                        }
-                    }
-                },
-                bottomBar = {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth().height(36.dp),
-                        color = MaterialTheme.colorScheme.surface,
-                        tonalElevation = 2.dp
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            repeat(3) {
-                                Box(modifier = Modifier.size(16.dp).background(if (it == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant, CircleShape))
-                            }
-                        }
-                    }
-                }
-            ) { padding ->
-                Column(
-                    modifier = Modifier
-                        .padding(padding)
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background)
-                        .padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    repeat(4) { index ->
-                        Surface(
-                            modifier = Modifier.fillMaxWidth().height(if (index == 0) 60.dp else 34.dp),
-                            shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Box(modifier = Modifier.width(if (index == 0) 80.dp else 40.dp).height(6.dp).background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), CircleShape))
-                                Box(modifier = Modifier.width(if (index == 0) 60.dp else 30.dp).height(6.dp).background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f), CircleShape))
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun AppearanceStep(
     modifier: Modifier = Modifier,
     theme: ThemeStyle,
-    useBlackColors: Boolean,
-    useMonochrome: Boolean,
     onThemeChange: (ThemeStyle) -> Unit,
-    onBlackColorsChange: (Boolean) -> Unit,
-    onMonochromeChange: (Boolean) -> Unit
 ) {
     var show by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { show = true }
@@ -464,122 +353,73 @@ fun AppearanceStep(
             visible = show,
             enter = fadeIn(tween(600)) + slideInVertically(tween(600)) { -20 }
         ) {
-            ThemePreviewMockup(
-                theme = theme,
-                useBlackColors = useBlackColors,
-                useMonochrome = useMonochrome,
-                modifier = Modifier.padding(bottom = 32.dp)
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Choose Your Theme",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Personalize your experience",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+            }
         }
 
         AnimatedVisibility(
             visible = show,
             enter = fadeIn(tween(600, 200)) + slideInVertically(tween(600, 200)) { 20 }
         ) {
-            Column {
-                SectionHeader(icon = Icons.Default.Settings, title = "Appearance")
-
-                Text(
-                    text = "Personalize your experience",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 24.dp)
-                )
-
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    ThemeCard(
+                    ThemeOptionCard(
                         label = "System",
-                        iconRes = R.drawable.ic_round_settings_24,
+                        description = "Follows device",
+                        swatchColors = listOf(Color(0xFFE8EAF6), Color(0xFF9FA8DA), Color(0xFF1A1A2E)),
                         selected = theme == ThemeStyle.FOLLOW_SYSTEM,
                         modifier = Modifier.weight(1f),
                         onClick = { onThemeChange(ThemeStyle.FOLLOW_SYSTEM) }
                     )
-                    ThemeCard(
+                    ThemeOptionCard(
                         label = "Light",
-                        iconRes = R.drawable.ic_round_home_24,
+                        description = "Always bright",
+                        swatchColors = listOf(Color(0xFFFFFFFF), Color(0xFFF5F5F5), Color(0xFF6650A4)),
                         selected = theme == ThemeStyle.LIGHT,
                         modifier = Modifier.weight(1f),
                         onClick = { onThemeChange(ThemeStyle.LIGHT) }
                     )
-                    ThemeCard(
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    ThemeOptionCard(
                         label = "Dark",
-                        iconRes = R.drawable.ic_round_color_lens_24,
+                        description = "Easy on eyes",
+                        swatchColors = listOf(Color(0xFF1C1C2E), Color(0xFF2C2C3E), Color(0xFF9F85F7)),
                         selected = theme == ThemeStyle.DARK,
                         modifier = Modifier.weight(1f),
                         onClick = { onThemeChange(ThemeStyle.DARK) }
                     )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        AnimatedVisibility(
-            visible = show,
-            enter = fadeIn(tween(600, 400)) + slideInVertically(tween(600, 400)) { 20 }
-        ) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
-                shape = RoundedCornerShape(20.dp)
-            ) {
-                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth().height(56.dp)
-                    ) {
-                        Surface(
-                            modifier = Modifier.size(36.dp),
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_round_refresh_24),
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
-                        Spacer(Modifier.width(16.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("OLED / Black Variant", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-                            Text("Pure black background", style = MaterialTheme.typography.bodySmall)
-                        }
-                        Switch(checked = useBlackColors, onCheckedChange = onBlackColorsChange)
-                    }
-
-                    AnimatedVisibility(visible = useBlackColors) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth().height(56.dp)
-                        ) {
-                            Surface(
-                                modifier = Modifier.size(36.dp),
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_round_color_lens_24),
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
-                            Spacer(Modifier.width(16.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("Monochrome Theme", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-                                Text("Black and white style", style = MaterialTheme.typography.bodySmall)
-                            }
-                            Switch(checked = useMonochrome, onCheckedChange = onMonochromeChange)
-                        }
-                    }
+                    ThemeOptionCard(
+                        label = "AMOLED",
+                        description = "Saves battery",
+                        swatchColors = listOf(Color(0xFF000000), Color(0xFF111111), Color(0xFF7B61FF)),
+                        selected = theme == ThemeStyle.AMOLED,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onThemeChange(ThemeStyle.AMOLED) }
+                    )
                 }
             }
         }
@@ -587,63 +427,76 @@ fun AppearanceStep(
 }
 
 @Composable
-fun ThemeCard(
+fun ThemeOptionCard(
     label: String,
-    iconRes: Int,
+    description: String,
+    swatchColors: List<Color>,
     selected: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val scale by animateFloatAsState(
-        targetValue = if (selected) 1.05f else 1f,
+        targetValue = if (selected) 1.04f else 1f,
         animationSpec = tween(300),
         label = "theme_card_scale"
     )
-
-    val containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-    val contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-    val borderColor = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
+    val borderColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+        animationSpec = tween(300),
+        label = "theme_card_border"
+    )
+    val containerColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+        animationSpec = tween(300),
+        label = "theme_card_bg"
+    )
+    val labelColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = tween(300),
+        label = "theme_card_label"
+    )
 
     Surface(
         onClick = onClick,
         modifier = modifier
-            .height(100.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            },
+            .height(140.dp)
+            .graphicsLayer { scaleX = scale; scaleY = scale },
         shape = RoundedCornerShape(20.dp),
         color = containerColor,
-        contentColor = contentColor,
-        border = BorderStroke(2.dp, borderColor)
+        border = BorderStroke(if (selected) 2.dp else 1.dp, borderColor)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(8.dp)
+            modifier = Modifier.padding(16.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(
-                        if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
-                        CircleShape
-                    ),
-                contentAlignment = Alignment.Center
+            // Color swatch preview
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.padding(bottom = 12.dp)
             ) {
-                Icon(
-                    painter = painterResource(iconRes),
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                swatchColors.forEach { color ->
+                    Box(
+                        modifier = Modifier
+                            .size(width = 20.dp, height = 32.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(color)
+                    )
+                }
             }
-            Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.SemiBold,
+                color = labelColor,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = labelColor.copy(alpha = 0.7f),
+                textAlign = TextAlign.Center
             )
         }
     }
@@ -931,14 +784,10 @@ fun OnboardingWelcomePreview() {
             isLoggedIn = false,
             isLoggingIn = false,
             theme = ThemeStyle.FOLLOW_SYSTEM,
-            useBlackColors = false,
-            useMonochrome = false,
             profilePicture = null,
             username = null,
             onStepChange = {},
             onThemeChange = {},
-            onBlackColorsChange = {},
-            onMonochromeChange = {},
             onLoginClick = {},
             onFinished = {}
         )
@@ -954,14 +803,10 @@ fun OnboardingAppearancePreview() {
             isLoggedIn = false,
             isLoggingIn = false,
             theme = ThemeStyle.FOLLOW_SYSTEM,
-            useBlackColors = false,
-            useMonochrome = false,
             profilePicture = null,
             username = null,
             onStepChange = {},
             onThemeChange = {},
-            onBlackColorsChange = {},
-            onMonochromeChange = {},
             onLoginClick = {},
             onFinished = {}
         )
@@ -977,14 +822,10 @@ fun OnboardingLoginPreview() {
             isLoggedIn = false,
             isLoggingIn = false,
             theme = ThemeStyle.FOLLOW_SYSTEM,
-            useBlackColors = false,
-            useMonochrome = false,
             profilePicture = null,
             username = null,
             onStepChange = {},
             onThemeChange = {},
-            onBlackColorsChange = {},
-            onMonochromeChange = {},
             onLoginClick = {},
             onFinished = {}
         )
@@ -1000,14 +841,10 @@ fun OnboardingSuccessPreview() {
             isLoggedIn = true,
             isLoggingIn = false,
             theme = ThemeStyle.FOLLOW_SYSTEM,
-            useBlackColors = false,
-            useMonochrome = false,
             profilePicture = "https://myanimelist.net/images/userimages/1.jpg",
             username = "Axiel7",
             onStepChange = {},
             onThemeChange = {},
-            onBlackColorsChange = {},
-            onMonochromeChange = {},
             onLoginClick = {},
             onFinished = {}
         )
@@ -1023,14 +860,10 @@ fun OnboardingDarkThemePreview() {
             isLoggedIn = false,
             isLoggingIn = false,
             theme = ThemeStyle.DARK,
-            useBlackColors = true,
-            useMonochrome = false,
             profilePicture = null,
             username = null,
             onStepChange = {},
             onThemeChange = {},
-            onBlackColorsChange = {},
-            onMonochromeChange = {},
             onLoginClick = {},
             onFinished = {}
         )
