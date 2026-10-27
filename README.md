@@ -30,28 +30,28 @@ YumeList is an unofficial Android client for [MyAnimeList](https://myanimelist.n
     <th colspan="4">Onboarding</th>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/01-welcome.jpg" width="200"/><br/><sub>Welcome</sub></td>
-    <td align="center"><img src="screenshots/02-theme.jpg" width="200"/><br/><sub>Choose your theme</sub></td>
-    <td align="center"><img src="screenshots/03-login.jpg" width="200"/><br/><sub>Sync with MyAnimeList</sub></td>
+    <td align="center"><img src="screenshots/01-welcome.jpeg" width="200"/><br/><sub>Welcome</sub></td>
+    <td align="center"><img src="screenshots/02-theme.jpeg" width="200"/><br/><sub>Choose your theme</sub></td>
+    <td align="center"><img src="screenshots/03-login.jpeg" width="200"/><br/><sub>Sync with MyAnimeList</sub></td>
     <td></td>
   </tr>
   <tr>
     <th colspan="4">Your lists</th>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/04-home.jpg" width="200"/><br/><sub>Home</sub></td>
-    <td align="center"><img src="screenshots/05-anime-list.jpg" width="200"/><br/><sub>Anime list</sub></td>
-    <td align="center"><img src="screenshots/06-manga-list.jpg" width="200"/><br/><sub>Manga list</sub></td>
-    <td align="center"><img src="screenshots/07-details.jpg" width="200"/><br/><sub>Details</sub></td>
+    <td align="center"><img src="screenshots/04-home.jpeg" width="200"/><br/><sub>Home</sub></td>
+    <td align="center"><img src="screenshots/05-anime-list.jpeg" width="200"/><br/><sub>Anime list</sub></td>
+    <td align="center"><img src="screenshots/06-manga-list.jpeg" width="200"/><br/><sub>Manga list</sub></td>
+    <td align="center"><img src="screenshots/07-details.jpeg" width="200"/><br/><sub>Details</sub></td>
   </tr>
   <tr>
     <th colspan="4">Discover</th>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/08-seasonal.jpg" width="200"/><br/><sub>Seasonal chart</sub></td>
-    <td align="center"><img src="screenshots/09-calendar.jpg" width="200"/><br/><sub>Calendar</sub></td>
-    <td align="center"><img src="screenshots/10-anime-ranking.jpg" width="200"/><br/><sub>Anime ranking</sub></td>
-    <td align="center"><img src="screenshots/11-manga-ranking.jpg" width="200"/><br/><sub>Manga ranking</sub></td>
+    <td align="center"><img src="screenshots/08-seasonal.jpeg" width="200"/><br/><sub>Seasonal chart</sub></td>
+    <td align="center"><img src="screenshots/09-calendar.jpeg" width="200"/><br/><sub>Calendar</sub></td>
+    <td align="center"><img src="screenshots/10-anime-ranking.jpeg" width="200"/><br/><sub>Anime ranking</sub></td>
+    <td align="center"><img src="screenshots/11-manga-ranking.jpeg" width="200"/><br/><sub>Manga ranking</sub></td>
   </tr>
 </table>
 
