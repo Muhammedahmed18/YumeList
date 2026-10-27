@@ -6,6 +6,7 @@ import com.axiel7.moelist.ui.base.state.UiState
 
 data class AppearanceUiState(
     val theme: ThemeStyle = ThemeStyle.FOLLOW_SYSTEM,
+    val pureBlack: Boolean = false,
     val colorPalette: ColorPalette = ColorPalette.DYNAMIC,
     override val isLoading: Boolean = false,
     override val message: String? = null

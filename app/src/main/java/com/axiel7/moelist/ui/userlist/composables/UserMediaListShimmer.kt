@@ -1,13 +1,6 @@
 package com.axiel7.moelist.ui.userlist.composables
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,41 +19,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_SMALL_HEIGHT
 import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_SMALL_WIDTH
+import com.axiel7.moelist.ui.composables.skeleton
 
-fun Modifier.shimmerEffect(): Modifier = composed {
-    val shimmerColors = listOf(
-        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f),
-        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.2f),
-        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f),
-    )
-
-    val transition = rememberInfiniteTransition(label = "shimmer")
-    val translateAnim = transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1000f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmerTranslate"
-    )
-
-    background(
-        brush = Brush.linearGradient(
-            colors = shimmerColors,
-            start = Offset.Zero,
-            end = Offset(x = translateAnim.value, y = translateAnim.value)
-        )
-    )
-}
+/**
+ * Pulsing loading skeleton. Was a `composed {}` shimmer that rebuilt a gradient brush and
+ * recomposed every frame for every placeholder; now delegates to the lightweight [skeleton]
+ * modifier node, which only re-draws.
+ */
+@Composable
+fun Modifier.shimmerEffect(): Modifier = skeleton()
 
 @Composable
 fun MediaListItemShimmer() {

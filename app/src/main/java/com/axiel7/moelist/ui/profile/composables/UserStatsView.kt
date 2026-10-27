@@ -9,14 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.MenuBook
-import androidx.compose.material.icons.outlined.Book
-import androidx.compose.material.icons.rounded.Event
-import androidx.compose.material.icons.rounded.PlayCircleOutline
-import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.icons.rounded.Repeat
-import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -38,6 +30,14 @@ import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.composables.defaultPlaceholder
+import com.axiel7.moelist.ui.icons.Icons
+import com.axiel7.moelist.ui.icons.automirrored.rounded.MenuBook
+import com.axiel7.moelist.ui.icons.outlined.Book
+import com.axiel7.moelist.ui.icons.rounded.Event
+import com.axiel7.moelist.ui.icons.rounded.PlayCircleOutline
+import com.axiel7.moelist.ui.icons.rounded.Refresh
+import com.axiel7.moelist.ui.icons.rounded.Repeat
+import com.axiel7.moelist.ui.icons.rounded.Star
 import com.axiel7.moelist.ui.profile.ProfileUiState
 import com.axiel7.moelist.utils.NumExtensions.toStringOrZero
 import com.axiel7.moelist.utils.UNKNOWN_CHAR
@@ -130,7 +130,9 @@ fun UserStatsView(
         ) {
             BentoStatCard(
                 title = stringResource(R.string.days),
-                value = if (isError) UNKNOWN_CHAR else days.toStringOrZero(),
+                // Manga "days read" only comes from Jikan: unknown ("─") rather than a fake 0
+                value = if (isError || (mediaType == MediaType.MANGA && days == null)) UNKNOWN_CHAR
+                else days.toStringOrZero(),
                 icon = Icons.Rounded.Event,
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,

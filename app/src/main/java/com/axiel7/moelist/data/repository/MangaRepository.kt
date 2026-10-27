@@ -14,7 +14,6 @@ import com.axiel7.moelist.data.model.media.MediaSort
 import com.axiel7.moelist.data.model.media.RankingType
 import com.axiel7.moelist.data.network.Api
 import com.axiel7.moelist.data.network.JikanApi
-import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,14 +40,14 @@ class MangaRepository(
                     "my_list_status{$LIST_STATUS_FIELDS},num_chapters,num_volumes,source,authors{first_name,last_name}," +
                     "serialization,related_anime{media_type,alternative_titles{en,ja}}," +
                     "related_manga{media_type,alternative_titles{en,ja}}," +
-                    "recommendations{alternative_titles{en,ja}},background,statistics{status}"
+                    "background,statistics{status}"
         private const val USER_MANGA_LIST_FIELDS =
             "alternative_titles{en,ja},list_status{$LIST_STATUS_FIELDS},num_chapters,num_volumes,media_type,status"
         private const val SEARCH_FIELDS =
             "id,title,alternative_titles{en,ja},main_picture,mean,media_type,num_chapters,start_date," +
                     "my_list_status{status,score}"
         private const val RANKING_FIELDS =
-            "alternative_titles{en,ja},mean,media_type,num_chapters,num_list_users,my_list_status{status}"
+            "alternative_titles{en,ja},mean,media_type,num_chapters,num_list_users,my_list_status{status,score}"
     }
 
     fun getStatusForManga(id: Int): Flow<MyMangaListStatus?> {
@@ -215,8 +214,7 @@ class MangaRepository(
         mangaId: Int
     ): Boolean {
         return try {
-            val result = api.deleteMangaEntry(mangaId)
-            if (result.status == HttpStatusCode.OK) {
+            if (api.deleteMangaEntry(mangaId)) {
                 _userMangaList.update { currentList ->
                     currentList.filter { it.node.id != mangaId }
                 }

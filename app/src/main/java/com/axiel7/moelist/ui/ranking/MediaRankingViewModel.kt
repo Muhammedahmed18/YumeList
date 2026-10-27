@@ -42,6 +42,12 @@ class MediaRankingViewModel(
         }
     }
 
+    override fun retry() {
+        // loadMore() needs a next page, which doesn't exist after a failed first load,
+        // so restart from page one
+        mutableUiState.update { it.copy(nextPage = null, loadMore = true, message = null) }
+    }
+
     init {
         viewModelScope.launch(Dispatchers.IO) {
             mutableUiState

@@ -19,7 +19,3 @@ fun SearchHistory.toSearchEntity(): SearchHistoryEntity {
 fun List<SearchHistoryEntity>.toSearchHistoryList(): List<SearchHistory> {
     return map(SearchHistoryEntity::toSearchHistory)
 }
-
-fun List<SearchHistory>.toSearchHistoryEntityList(): List<SearchHistoryEntity> {
-    return map(SearchHistory::toSearchEntity)
-}

@@ -19,9 +19,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CloudOff
-import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -29,7 +26,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -47,13 +43,17 @@ import com.axiel7.moelist.data.model.media.BaseMediaList
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.EmptyState
-import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
-import com.axiel7.moelist.ui.composables.showSnackbarShort
 import com.axiel7.moelist.ui.composables.ErrorState
 import com.axiel7.moelist.ui.composables.LoadingState
 import com.axiel7.moelist.ui.composables.OnBottomReached
-import com.axiel7.moelist.ui.composables.media.MediaItemDetailedPlaceholder
-import com.axiel7.moelist.ui.composables.media.MediaItemSearch
+import com.axiel7.moelist.ui.composables.PosterSection
+import com.axiel7.moelist.ui.composables.media.MediaItemRowPlaceholder
+import com.axiel7.moelist.ui.composables.media.MediaItemRow
+import com.axiel7.moelist.ui.composables.posterSharedKey
+import com.axiel7.moelist.ui.composables.rememberLoadErrorState
+import com.axiel7.moelist.ui.icons.Icons
+import com.axiel7.moelist.ui.icons.outlined.CloudOff
+import com.axiel7.moelist.ui.icons.outlined.SearchOff
 import com.axiel7.moelist.utils.DateUtils.parseDateAndLocalize
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrNull
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrUnknown
@@ -109,14 +109,13 @@ fun SearchViewContent(
     showHistory: Boolean = false,
     onHistoryItemClick: (String) -> Unit = {}
 ) {
-    val snackbarHostState = LocalSnackbarHostState.current
 
-    LaunchedEffect(uiState.message) {
-        if (uiState.message != null) {
-            snackbarHostState.showSnackbarShort(uiState.message)
-            event?.onMessageDisplayed()
-        }
-    }
+    // Full-screen error stays until Retry (snackbar only when content is already showing)
+    val loadError = rememberLoadErrorState(
+        message = uiState.message,
+        hasContent = uiState.mediaList.isNotEmpty(),
+        onMessageConsumed = { event?.onMessageDisplayed() },
+    )
 
     @Composable
     fun FilterRow() {
@@ -172,15 +171,22 @@ fun SearchViewContent(
             else -> null
         }
 
-        MediaItemSearch(
+        val posterKey = posterSharedKey(PosterSection.SEARCH, uiState.mediaType, item.node.id)
+        MediaItemRow(
             title = item.node.userPreferredTitle(),
             imageUrl = item.node.mainPicture?.large,
-            chips = listOfNotNull(format, episodes, date),
+            posterKey = posterKey,
+            tags = listOfNotNull(format, episodes, date),
             meanScore = if (showScore) item.node.mean.toStringPositiveValueOrUnknown() else null,
             personalScore = userScore,
             status = status,
             onClick = dropUnlessResumed {
-                navActionManager.toMediaDetails(uiState.mediaType, item.node.id)
+                navActionManager.toMediaDetails(
+                    uiState.mediaType,
+                    item.node.id,
+                    posterUrl = item.node.mainPicture?.large,
+                    posterKey = posterKey,
+                )
             }
         )
     }
@@ -200,11 +206,14 @@ fun SearchViewContent(
                 uiState.isLoading && uiState.mediaList.isEmpty() -> {
                     LoadingState()
                 }
-                uiState.message != null && uiState.mediaList.isEmpty() -> {
+                loadError.value != null && uiState.mediaList.isEmpty() -> {
                     ErrorState(
                         icon = Icons.Outlined.CloudOff,
-                        message = uiState.message,
-                        onAction = { event?.search(query) }
+                        message = loadError.value,
+                        onAction = {
+                            loadError.value = null
+                            event?.search(query)
+                        }
                     )
                 }
                 uiState.noResults -> {
@@ -226,9 +235,14 @@ fun SearchViewContent(
                         ) {
                             items(
                                 items = uiState.mediaList,
-                                contentType = { it.node }
+                                contentType = { "media" }
                             ) {
                                 ItemView(item = it)
+                            }
+                            if (uiState.isLoading) {
+                                items(4, contentType = { "placeholder" }) {
+                                    MediaItemRowPlaceholder()
+                                }
                             }
                         }
                     } else {
@@ -241,13 +255,13 @@ fun SearchViewContent(
                         ) {
                             items(
                                 items = uiState.mediaList,
-                                contentType = { it.node }
+                                contentType = { "media" }
                             ) {
                                 ItemView(item = it)
                             }
                             if (uiState.isLoading) {
-                                items(5) {
-                                    MediaItemDetailedPlaceholder()
+                                items(5, contentType = { "placeholder" }) {
+                                    MediaItemRowPlaceholder()
                                 }
                             }
                         }

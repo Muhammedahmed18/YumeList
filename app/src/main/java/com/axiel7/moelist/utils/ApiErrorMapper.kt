@@ -44,7 +44,9 @@ object ApiErrorMapper {
                 raw.contains("Connection refused", ignoreCase = true) ->
                 context.getString(R.string.network_error)
 
-            raw.contains("404") || raw.contains("Not Found", ignoreCase = true) ->
+            raw.contains("404") ||
+                raw.contains("Not Found", ignoreCase = true) ||
+                raw.contains("not_found", ignoreCase = true) ->
                 context.getString(R.string.not_found)
 
             raw.contains("500") ||

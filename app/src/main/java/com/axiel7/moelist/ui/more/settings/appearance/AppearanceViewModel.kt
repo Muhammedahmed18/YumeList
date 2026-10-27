@@ -23,6 +23,12 @@ class AppearanceViewModel(
         }
     }
 
+    override fun setPureBlack(value: Boolean) {
+        viewModelScope.launch {
+            defaultPreferencesRepository.setPureBlack(value)
+        }
+    }
+
     override fun setColorPalette(value: ColorPalette) {
         viewModelScope.launch {
             defaultPreferencesRepository.setColorPalette(value)
@@ -32,6 +38,10 @@ class AppearanceViewModel(
     init {
         defaultPreferencesRepository.theme
             .onEach { value -> mutableUiState.update { it.copy(theme = value) } }
+            .launchIn(viewModelScope)
+
+        defaultPreferencesRepository.pureBlack
+            .onEach { value -> mutableUiState.update { it.copy(pureBlack = value) } }
             .launchIn(viewModelScope)
 
         defaultPreferencesRepository.colorPalette

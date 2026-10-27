@@ -19,6 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
+import com.axiel7.moelist.ui.theme.Motion
 
 @Composable
 fun RollingNumberText(
@@ -36,7 +38,12 @@ fun RollingNumberText(
     }
 
     val targetString = targetValue.toString()
-    
+
+    // Read once here: AnimatedContent's transitionSpec isn't @Composable.
+    // Small element -> fast specs; the slide gets a subtle expressive bounce.
+    val digitSlide = Motion.fastSpatial<IntOffset>()
+    val digitFade = Motion.fastEffects<Float>()
+
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
@@ -49,11 +56,11 @@ fun RollingNumberText(
                 targetState = char to key,
                 transitionSpec = {
                     if (isIncreasing) {
-                        (slideInVertically { height -> height } + fadeIn())
-                            .togetherWith(slideOutVertically { height -> -height } + fadeOut())
+                        (slideInVertically(digitSlide) { height -> height } + fadeIn(digitFade))
+                            .togetherWith(slideOutVertically(digitSlide) { height -> -height } + fadeOut(digitFade))
                     } else {
-                        (slideInVertically { height -> -height } + fadeIn())
-                            .togetherWith(slideOutVertically { height -> height } + fadeOut())
+                        (slideInVertically(digitSlide) { height -> -height } + fadeIn(digitFade))
+                            .togetherWith(slideOutVertically(digitSlide) { height -> height } + fadeOut(digitFade))
                     }
                 },
                 label = "digitAnimation"

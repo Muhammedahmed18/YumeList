@@ -13,11 +13,15 @@ import com.axiel7.moelist.data.repository.DefaultPreferencesRepository
 import com.axiel7.moelist.ui.base.viewmodel.BaseViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+/** How long the check stays on a poster after a successful quick-add. */
+private const val QUICK_ADD_CHECK_MILLIS = 1200L
 
 class SeasonChartViewModel(
     private val animeRepository: AnimeRepository,
@@ -58,14 +62,51 @@ class SeasonChartViewModel(
     }
 
     override fun onQuickAddPlanToWatch(animeId: Int) {
+        // Ignore taps while this anime is already being added (or was just added)
+        if (mutableUiState.value.quickAdd.containsKey(animeId)) return
+        setQuickAdd(animeId, QuickAddState.ADDING)
+
         viewModelScope.launch(Dispatchers.IO) {
             val result = animeRepository.updateAnimeEntry(
                 animeId = animeId,
                 status = ListStatus.PLAN_TO_WATCH
             )
-            if (result == null) {
-                mutableUiState.update { it.copy(message = "Failed to add to list") }
+            if (result != null) {
+                setQuickAdd(animeId, QuickAddState.ADDED)
+                mutableUiState.update {
+                    it.copy(quickAddResult = QuickAddResult(animeId, success = true))
+                }
+                // Keep the check on the poster for a moment, then show the normal status badge
+                delay(QUICK_ADD_CHECK_MILLIS)
+                setQuickAdd(animeId, null)
+            } else {
+                setQuickAdd(animeId, null)
+                mutableUiState.update {
+                    it.copy(quickAddResult = QuickAddResult(animeId, success = false))
+                }
             }
+        }
+    }
+
+    override fun onUndoQuickAdd(animeId: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            // The repository drops it from the user list, which brings the "+" back on the poster
+            val removed = animeRepository.deleteAnimeEntry(animeId)
+            if (!removed) {
+                mutableUiState.update { it.copy(message = "Failed to remove from list") }
+            }
+        }
+    }
+
+    override fun onQuickAddResultShown() {
+        mutableUiState.update { it.copy(quickAddResult = null) }
+    }
+
+    private fun setQuickAdd(animeId: Int, state: QuickAddState?) {
+        mutableUiState.update {
+            val map = it.quickAdd.toMutableMap()
+            if (state == null) map.remove(animeId) else map[animeId] = state
+            it.copy(quickAdd = map)
         }
     }
 

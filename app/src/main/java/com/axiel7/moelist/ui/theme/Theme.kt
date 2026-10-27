@@ -3,7 +3,9 @@ package com.axiel7.moelist.ui.theme
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -90,12 +92,22 @@ private val DarkColors = darkColorScheme(
     surfaceContainerHighest = md_theme_dark_surfaceContainerHighest,
 )
 
+/**
+ * AMOLED variant: pure black background/surface. The surfaceContainer* roles are pulled
+ * towards black too, so cards, sheets and bars don't look like grey slabs on a black screen.
+ */
 private fun ColorScheme.toBlack() = this.copy(
     background = Color.Black,
     surface = Color.Black,
     surfaceVariant = surfaceVariant.copy(alpha = 0.4f).compositeOver(Color.Black),
+    surfaceContainerLowest = Color.Black,
+    surfaceContainerLow = surfaceContainerLow.copy(alpha = 0.5f).compositeOver(Color.Black),
+    surfaceContainer = surfaceContainer.copy(alpha = 0.6f).compositeOver(Color.Black),
+    surfaceContainerHigh = surfaceContainerHigh.copy(alpha = 0.7f).compositeOver(Color.Black),
+    surfaceContainerHighest = surfaceContainerHighest.copy(alpha = 0.8f).compositeOver(Color.Black),
 )
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MoeListTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -114,11 +126,8 @@ fun MoeListTheme(
                     if (darkTheme) DarkColors else LightColors
                 }
             }
-            ColorPalette.ONE_PIECE -> if (darkTheme) OnePieceDarkColors else OnePieceLightColors
-            ColorPalette.DEMON_SLAYER -> if (darkTheme) DemonSlayerDarkColors else DemonSlayerLightColors
-            ColorPalette.ATTACK_ON_TITAN -> if (darkTheme) AttackOnTitanDarkColors else AttackOnTitanLightColors
-            ColorPalette.NARUTO -> if (darkTheme) NarutoDarkColors else NarutoLightColors
-            ColorPalette.BLEACH -> if (darkTheme) BleachDarkColors else BleachLightColors
+            // YumeList's own palette (the dynamic switch is off)
+            ColorPalette.YUME -> if (darkTheme) DarkColors else LightColors
         }
 
         if (darkTheme && useBlackColors) {
@@ -127,8 +136,15 @@ fun MoeListTheme(
         scheme
     }
 
-    MaterialTheme(
+    // Material 3 Expressive theme:
+    // - motionScheme: spring-based "expressive" motion used by every M3 component
+    //   (and available to our own animations via MaterialTheme.motionScheme)
+    // - shapes: our token scale, so built-in components match custom ones
+    // - typography: M3 scale + our bolder titles (includes the Emphasized styles)
+    MaterialExpressiveTheme(
         colorScheme = colorScheme,
+        motionScheme = MotionScheme.expressive(),
+        shapes = AppShapes,
         typography = SystemTypography,
         content = content
     )

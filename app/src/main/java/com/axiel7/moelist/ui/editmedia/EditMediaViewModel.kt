@@ -26,6 +26,19 @@ class EditMediaViewModel(
 
     override val mutableUiState = MutableStateFlow(EditMediaUiState(mediaType = mediaType))
 
+    /**
+     * Starts editing [mediaInfo] from a clean state, then loads [myListStatus] if the entry is
+     * already in the list. Everything else (status, score, dates, pickers, dialogs, result flags)
+     * goes back to its default, so nothing carries over from the previously opened entry.
+     */
+    fun startEditing(mediaInfo: BaseMediaNode, myListStatus: BaseMyListStatus?) {
+        mutableUiState.value = EditMediaUiState(
+            mediaType = mediaInfo.mediaType,
+            mediaInfo = mediaInfo,
+        )
+        if (myListStatus != null) setEditVariables(myListStatus)
+    }
+
     override fun setMediaInfo(value: BaseMediaNode) {
         mutableUiState.update { it.copy(mediaInfo = value) }
     }
@@ -194,7 +207,10 @@ class EditMediaViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             mutableUiState.value.run {
                 if (mediaInfo == null) return@launch
-                setLoading(true)
+                // Must call the ViewModel's setLoading: inside this run block a bare
+                // setLoading() resolves to EditMediaUiState.setLoading(), which only
+                // returns a copy and never updates the screen
+                this@EditMediaViewModel.setLoading(true)
 
                 val statusValue = if (status != myListStatus?.status)
                     status else null

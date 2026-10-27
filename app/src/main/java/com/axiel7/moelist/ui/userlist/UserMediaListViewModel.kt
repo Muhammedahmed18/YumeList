@@ -16,6 +16,8 @@ import com.axiel7.moelist.data.repository.DefaultPreferencesRepository
 import com.axiel7.moelist.data.repository.MangaRepository
 import com.axiel7.moelist.ui.base.viewmodel.BaseViewModel
 import com.axiel7.moelist.utils.NumExtensions.isGreaterThanZero
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,8 +32,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class UserMediaListViewModel(
@@ -179,7 +179,14 @@ class UserMediaListViewModel(
                     if (result != null) {
                         success = true
                         if (newStatus == ListStatus.COMPLETED && result.score == 0) {
-                            viewModelScope.launch { toggleSetScoreDialog(true) }
+                            val dismissedIds =
+                                defaultPreferencesRepository.dismissedScoreReminderIds.first()
+                            if (item.node.id.toString() !in dismissedIds) {
+                                mutableUiState.update { state ->
+                                    state.copy(setScoreDialogFinishDate = LocalDate.now())
+                                }
+                                viewModelScope.launch { toggleSetScoreDialog(true) }
+                            }
                         }
                     }
                 }
@@ -211,7 +218,8 @@ class UserMediaListViewModel(
             }
             if (success) {
                 mutableUiState.update { state ->
-                    state.copy(message = "Updated · ${item.node.userPreferredTitle()}") 
+                    // Shown as a success snackbar ("Updated · title"), not through the error message
+                    state.copy(updatedTitle = item.node.userPreferredTitle())
                 }
             }
         }
@@ -260,7 +268,7 @@ class UserMediaListViewModel(
                 )
             }
             mutableUiState.update { state ->
-                state.copy(openSetScoreDialog = false)
+                state.copy(openSetScoreDialog = false, setScoreDialogFinishDate = null)
             }
         }
     }
@@ -275,6 +283,18 @@ class UserMediaListViewModel(
 
     override fun toggleSetScoreDialog(open: Boolean) {
         mutableUiState.update { state -> state.copy(openSetScoreDialog = open) }
+    }
+
+    override fun skipSetScoreDialog() {
+        val item = mutableUiState.value.selectedItem
+        mutableUiState.update { state ->
+            state.copy(openSetScoreDialog = false, setScoreDialogFinishDate = null)
+        }
+        if (item != null) {
+            viewModelScope.launch(Dispatchers.IO) {
+                defaultPreferencesRepository.addDismissedScoreReminderId(item.node.id)
+            }
+        }
     }
 
     override fun toggleActionSheet(open: Boolean) {
@@ -321,7 +341,7 @@ class UserMediaListViewModel(
     }
 
     override fun onMessageDisplayed() {
-        mutableUiState.update { state -> state.copy(message = null) }
+        mutableUiState.update { state -> state.copy(message = null, updatedTitle = null) }
     }
 
     private fun sortMediaList(list: List<BaseUserMediaList<out BaseMediaNode>>, sort: MediaSort): List<BaseUserMediaList<out BaseMediaNode>> {
@@ -363,33 +383,6 @@ class UserMediaListViewModel(
                 state.copy(listSort = sort)
             }
         }
-
-        combine(
-            defaultPreferencesRepository.useGeneralListStyle,
-            defaultPreferencesRepository.generalListStyle
-        ) { useGeneral, generalStyle ->
-            useGeneral to generalStyle
-        }.flatMapLatest { (useGeneral, generalStyle) ->
-            if (useGeneral) {
-                MutableStateFlow(generalStyle)
-            } else {
-                mutableUiState
-                    .filter { it.listStatus != null }
-                    .flatMapLatest { state ->
-                        ListType(state.listStatus!!, state.mediaType)
-                            .stylePreference(defaultPreferencesRepository)
-                    }
-            }
-        }.onEach { listStyle ->
-            mutableUiState.update { state -> state.copy(listStyle = listStyle) }
-        }.launchIn(viewModelScope)
-
-        defaultPreferencesRepository.gridItemsPerRow
-            .onEach { value ->
-                mutableUiState.update { state -> state.copy(itemsPerRow = value) }
-            }
-            .launchIn(viewModelScope)
-
 
         defaultPreferencesRepository.randomListEntryEnabled
             .onEach { value ->

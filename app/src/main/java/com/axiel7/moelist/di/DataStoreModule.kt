@@ -6,9 +6,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.preferencesDataStoreFile
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
 import org.koin.android.ext.koin.androidApplication
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -40,6 +38,3 @@ suspend fun <T> DataStore<Preferences>.setValue(
     if (value != null) it[key] = value
     else it.remove(key)
 }
-
-fun <T> DataStore<Preferences>.getValueBlocking(key: Preferences.Key<T>) =
-    runBlocking { data.first() }[key]

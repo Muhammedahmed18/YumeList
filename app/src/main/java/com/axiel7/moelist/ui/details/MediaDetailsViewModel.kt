@@ -3,15 +3,12 @@ package com.axiel7.moelist.ui.details
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.axiel7.moelist.data.model.Response
 import com.axiel7.moelist.data.model.anime.AnimeDetails
 import com.axiel7.moelist.data.model.anime.MyAnimeListStatus
-import com.axiel7.moelist.data.model.anime.Recommendations
 import com.axiel7.moelist.data.model.manga.MangaDetails
 import com.axiel7.moelist.data.model.manga.MyMangaListStatus
-import com.axiel7.moelist.data.model.media.BaseMediaNode
 import com.axiel7.moelist.data.model.media.BaseMyListStatus
-import com.axiel7.moelist.data.model.media.Character
+import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.data.model.media.WeekDay
 import com.axiel7.moelist.data.repository.AnimeRepository
@@ -68,6 +65,42 @@ class MediaDetailsViewModel(
                 }
 
                 else -> it
+            }
+        }
+    }
+
+    override fun setListStatus(status: ListStatus) {
+        val details = mutableUiState.value.mediaDetails ?: return
+        val previous = details.myListStatus?.status
+        val today = LocalDate.now().toString() // ISO yyyy-MM-dd, as the API expects
+        val isCompleting = status == ListStatus.COMPLETED
+        val isStarting = status.isCurrent() && (previous == null || previous.isPlanning())
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val result: BaseMyListStatus? = when (details) {
+                is AnimeDetails -> animeRepository.updateAnimeEntry(
+                    animeId = details.id,
+                    status = status,
+                    watchedEpisodes = details.numEpisodes?.takeIf { isCompleting && it > 0 },
+                    startDate = today.takeIf { isStarting },
+                    endDate = today.takeIf { isCompleting },
+                )
+
+                is MangaDetails -> mangaRepository.updateMangaEntry(
+                    mangaId = details.id,
+                    status = status,
+                    chaptersRead = details.numChapters?.takeIf { isCompleting && it > 0 },
+                    volumesRead = details.numVolumes?.takeIf { isCompleting && it > 0 },
+                    startDate = today.takeIf { isStarting },
+                    endDate = today.takeIf { isCompleting },
+                )
+
+                else -> null
+            }
+            if (result != null) {
+                onChangedMyListStatus(result)
+            } else {
+                showMessage("Unable to update the status")
             }
         }
     }
@@ -145,9 +178,6 @@ class MediaDetailsViewModel(
             if (mediaDetails == null) showMessage("Unable to reach server")
             else if (mediaDetails.error != null) showMessage(mediaDetails.error)
             else {
-                val recommendations =
-                    (mediaDetails.recommendations as? List<Recommendations<BaseMediaNode>>).orEmpty()
-
                 val picturesUrls = listOf(mediaDetails.mainPicture?.large.orEmpty())
                     .plus(mediaDetails.pictures?.map { it.large ?: it.medium.orEmpty() }
                         .orEmpty())
@@ -163,7 +193,6 @@ class MediaDetailsViewModel(
                         isLoadingStatusDistribution = mediaType == MediaType.MANGA,
                         relatedAnime = mediaDetails.relatedAnime.orEmpty(),
                         relatedManga = mediaDetails.relatedManga.orEmpty(),
-                        recommendations = recommendations,
                         picturesUrls = picturesUrls,
                         isLoading = false
                     )

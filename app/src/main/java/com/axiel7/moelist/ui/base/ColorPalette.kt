@@ -2,22 +2,24 @@ package com.axiel7.moelist.ui.base
 
 import com.axiel7.moelist.R
 
+/**
+ * Where the app's colors come from.
+ *
+ * - [DYNAMIC]: Material You colors from the wallpaper (Android 12+; older versions fall back to
+ *   YumeList's own colors).
+ * - [YUME]: YumeList's own built-in palette.
+ *
+ * The anime palettes were removed. A saved value from them no longer matches, so
+ * [valueOfOrNull] returns null and the app falls back to [DYNAMIC] automatically.
+ */
 enum class ColorPalette {
     DYNAMIC,
-    ONE_PIECE,
-    DEMON_SLAYER,
-    ATTACK_ON_TITAN,
-    NARUTO,
-    BLEACH;
+    YUME;
 
     val stringRes
         get() = when (this) {
             DYNAMIC -> R.string.palette_dynamic
-            ONE_PIECE -> R.string.palette_one_piece
-            DEMON_SLAYER -> R.string.palette_demon_slayer
-            ATTACK_ON_TITAN -> R.string.palette_attack_on_titan
-            NARUTO -> R.string.palette_naruto
-            BLEACH -> R.string.palette_bleach
+            YUME -> R.string.palette_yume_blue
         }
 
     companion object {

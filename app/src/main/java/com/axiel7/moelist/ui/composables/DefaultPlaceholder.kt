@@ -1,18 +1,16 @@
 package com.axiel7.moelist.ui.composables
 
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
-import io.github.fornewid.placeholder.foundation.PlaceholderHighlight
-import io.github.fornewid.placeholder.material3.shimmer
-import io.github.fornewid.placeholder.material3.placeholder
+import com.axiel7.moelist.ui.theme.ShapeSmall
 
+/**
+ * Hides the element behind a pulsing skeleton while [visible] is true.
+ *
+ * Same name and usage as before, but now backed by our own [skeleton] modifier instead of the
+ * `placeholder-material3` library (which used a `composed {}` modifier + shimmer).
+ */
+@Composable
 fun Modifier.defaultPlaceholder(
     visible: Boolean
-) = composed {
-    placeholder(
-        visible = visible,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        highlight = PlaceholderHighlight.shimmer()
-    )
-}
+): Modifier = skeleton(visible = visible, shape = ShapeSmall)

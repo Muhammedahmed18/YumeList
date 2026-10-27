@@ -2,7 +2,6 @@ package com.axiel7.moelist.ui.details
 
 import androidx.compose.runtime.Immutable
 import com.axiel7.moelist.data.model.anime.AnimeDetails
-import com.axiel7.moelist.data.model.anime.Recommendations
 import com.axiel7.moelist.data.model.anime.RelatedAnime
 import com.axiel7.moelist.data.model.manga.MangaDetails
 import com.axiel7.moelist.data.model.manga.RelatedManga
@@ -25,7 +24,6 @@ data class MediaDetailsUiState(
     val hideScore: Boolean = false,
     val relatedAnime: List<RelatedAnime> = emptyList(),
     val relatedManga: List<RelatedManga> = emptyList(),
-    val recommendations: List<Recommendations<BaseMediaNode>> = emptyList(),
     val picturesUrls: List<String> = emptyList(),
     val characters: List<Character> = emptyList(),
     val isLoadingCharacters: Boolean = false,

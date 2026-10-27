@@ -1,20 +1,17 @@
 package com.axiel7.moelist.ui.main.composables
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.material3.WideNavigationRail
+import androidx.compose.material3.WideNavigationRailItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -23,6 +20,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.axiel7.moelist.ui.base.BottomDestination
 import com.axiel7.moelist.ui.base.navigation.Route
 
+/**
+ * Tablet / large-screen navigation: the Material 3 Expressive [WideNavigationRail]
+ * (collapsed form), replacing the hand-built floating pill rail. Same destinations and
+ * behaviour as [MainBottomNavBar].
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MainNavigationRail(
     navController: NavController,
@@ -30,52 +33,50 @@ fun MainNavigationRail(
     modifier: Modifier = Modifier,
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    Box(
-        modifier = modifier
-            .fillMaxHeight()
-            .padding(horizontal = 12.dp, vertical = 12.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Surface(
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            tonalElevation = 6.dp,
-            shadowElevation = 8.dp,
-        ) {
-            Column(
-                modifier = Modifier
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                BottomDestination.values.forEachIndexed { index, dest ->
-                    val isSelected = navBackStackEntry?.destination?.hierarchy?.any {
-                        it.hasRoute(dest.route::class)
-                    } == true
+    val haptic = LocalHapticFeedback.current
 
-                    FloatingNavItem(
-                        destination = dest,
-                        isSelected = isSelected,
-                        onClick = {
-                            if (isSelected) {
-                                if (dest == BottomDestination.More) {
-                                    navController.navigate(Route.Settings)
-                                }
-                            } else {
-                                onItemSelected(index)
-                                navController.navigate(dest.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            }
+    WideNavigationRail(modifier = modifier) {
+        BottomDestination.values.forEachIndexed { index, dest ->
+            val isSelected = navBackStackEntry?.destination?.hierarchy?.any {
+                it.hasRoute(dest.route::class)
+            } == true
+
+            WideNavigationRailItem(
+                // Collapsed rail: icon on top, label underneath (material3 1.5 requires this)
+                railExpanded = false,
+                selected = isSelected,
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    if (isSelected) {
+                        // Tapping "More" again opens Settings (kept from the old rail)
+                        if (dest == BottomDestination.More) {
+                            navController.navigate(Route.Settings)
                         }
+                    } else {
+                        onItemSelected(index)
+                        navController.navigate(dest.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                },
+                icon = {
+                    Icon(
+                        imageVector = if (isSelected) dest.iconSelected else dest.icon,
+                        contentDescription = null,
                     )
-                }
-            }
+                },
+                label = {
+                    Text(
+                        text = stringResource(dest.title),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+            )
         }
     }
 }

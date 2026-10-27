@@ -1,7 +1,6 @@
 package com.axiel7.moelist.data.model.manga
 
 import androidx.compose.runtime.Immutable
-import com.axiel7.moelist.data.model.anime.Recommendations
 import com.axiel7.moelist.data.model.anime.RelatedAnime
 import com.axiel7.moelist.data.model.media.AlternativeTitles
 import com.axiel7.moelist.data.model.media.BaseMediaDetails
@@ -49,7 +48,6 @@ data class MangaDetails(
     override val relatedAnime: List<RelatedAnime>? = null,
     @SerialName("related_manga")
     override val relatedManga: List<RelatedManga>? = null,
-    override val recommendations: List<Recommendations<MangaNode>>? = null,
     @SerialName("my_list_status")
     override val myListStatus: MyMangaListStatus? = null,
     @SerialName("num_volumes")

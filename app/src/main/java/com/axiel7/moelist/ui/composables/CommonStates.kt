@@ -1,7 +1,6 @@
 package com.axiel7.moelist.ui.composables
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.layout.Arrangement
@@ -13,17 +12,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ContainedLoadingIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,7 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
@@ -41,8 +39,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.axiel7.moelist.R
+import com.axiel7.moelist.ui.icons.Icons
+import com.axiel7.moelist.ui.icons.filled.Info
+import com.axiel7.moelist.ui.icons.filled.Warning
 import com.axiel7.moelist.ui.theme.MoeListTheme
+import com.axiel7.moelist.ui.theme.Motion
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LoadingState(
     modifier: Modifier = Modifier
@@ -55,21 +58,10 @@ fun LoadingState(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Surface(
-                modifier = Modifier.size(112.dp),
-                shape = RoundedCornerShape(32.dp),
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                tonalElevation = 2.dp
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(48.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        strokeWidth = 5.dp,
-                        strokeCap = StrokeCap.Round
-                    )
-                }
-            }
+            // M3 Expressive loading indicator: a morphing shape inside a tonal container
+            ContainedLoadingIndicator(
+                modifier = Modifier.size(96.dp),
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -84,6 +76,7 @@ fun LoadingState(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun EmptyState(
     modifier: Modifier = Modifier,
@@ -100,11 +93,14 @@ fun EmptyState(
         if (!isPreview) visible = true
     }
 
+    // Expressive shape for the icon container: a soft "cookie" for empty states
+    val iconShape = MaterialShapes.Cookie9Sided.toShape()
+
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(animationSpec = tween(500)) + scaleIn(
+        enter = fadeIn(animationSpec = Motion.effects()) + scaleIn(
             initialScale = 0.92f,
-            animationSpec = tween(500)
+            animationSpec = Motion.spatial()
         )
     ) {
         if (compact) {
@@ -113,6 +109,7 @@ fun EmptyState(
                 icon = icon,
                 iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
                 iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
+                iconContainerShape = iconShape,
                 title = title,
                 description = description,
                 actionLabel = actionLabel,
@@ -124,6 +121,7 @@ fun EmptyState(
                 icon = icon,
                 iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
                 iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
+                iconContainerShape = iconShape,
                 title = title,
                 description = description,
                 actionLabel = actionLabel,
@@ -133,6 +131,7 @@ fun EmptyState(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ErrorState(
     modifier: Modifier = Modifier,
@@ -149,11 +148,14 @@ fun ErrorState(
         if (!isPreview) visible = true
     }
 
+    // Expressive shape for the icon container: a "soft burst" so errors read differently
+    val iconShape = MaterialShapes.SoftBurst.toShape()
+
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(animationSpec = tween(500)) + scaleIn(
+        enter = fadeIn(animationSpec = Motion.effects()) + scaleIn(
             initialScale = 0.92f,
-            animationSpec = tween(500)
+            animationSpec = Motion.spatial()
         )
     ) {
         if (compact) {
@@ -162,6 +164,7 @@ fun ErrorState(
                 icon = icon,
                 iconContainerColor = MaterialTheme.colorScheme.errorContainer,
                 iconTint = MaterialTheme.colorScheme.onErrorContainer,
+                iconContainerShape = iconShape,
                 title = title,
                 description = message,
                 actionLabel = actionLabel,
@@ -173,6 +176,7 @@ fun ErrorState(
                 icon = icon,
                 iconContainerColor = MaterialTheme.colorScheme.errorContainer,
                 iconTint = MaterialTheme.colorScheme.onErrorContainer,
+                iconContainerShape = iconShape,
                 title = title,
                 description = message,
                 actionLabel = actionLabel,
@@ -188,6 +192,7 @@ private fun FullStateLayout(
     icon: ImageVector,
     iconContainerColor: androidx.compose.ui.graphics.Color,
     iconTint: androidx.compose.ui.graphics.Color,
+    iconContainerShape: Shape,
     title: String,
     description: String?,
     actionLabel: String?,
@@ -203,7 +208,7 @@ private fun FullStateLayout(
 
         Surface(
             modifier = Modifier.size(96.dp),
-            shape = RoundedCornerShape(32.dp),
+            shape = iconContainerShape,
             color = iconContainerColor
         ) {
             Box(contentAlignment = Alignment.Center) {
@@ -252,6 +257,7 @@ private fun CompactStateLayout(
     icon: ImageVector,
     iconContainerColor: androidx.compose.ui.graphics.Color,
     iconTint: androidx.compose.ui.graphics.Color,
+    iconContainerShape: Shape,
     title: String,
     description: String?,
     actionLabel: String?,
@@ -266,7 +272,7 @@ private fun CompactStateLayout(
     ) {
         Surface(
             modifier = Modifier.size(56.dp),
-            shape = RoundedCornerShape(18.dp),
+            shape = iconContainerShape,
             color = iconContainerColor
         ) {
             Box(contentAlignment = Alignment.Center) {

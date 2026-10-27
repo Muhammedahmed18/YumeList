@@ -1,0 +1,56 @@
+/*
+ * Copyright 2025 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.axiel7.moelist.ui.icons.rounded
+
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.axiel7.moelist.ui.icons.Icons
+import com.axiel7.moelist.ui.icons.materialIcon
+import com.axiel7.moelist.ui.icons.materialPath
+
+public val Icons.Rounded.ViewStream: ImageVector
+    get() {
+        if (_viewStream != null) {
+            return _viewStream!!
+        }
+        _viewStream = materialIcon(name = "Rounded.ViewStream") {
+            materialPath {
+                moveTo(3.0f, 17.0f)
+                verticalLineToRelative(-2.0f)
+                curveToRelative(0.0f, -1.1f, 0.9f, -2.0f, 2.0f, -2.0f)
+                horizontalLineToRelative(14.0f)
+                curveToRelative(1.1f, 0.0f, 2.0f, 0.9f, 2.0f, 2.0f)
+                verticalLineToRelative(2.0f)
+                curveToRelative(0.0f, 1.1f, -0.9f, 2.0f, -2.0f, 2.0f)
+                horizontalLineTo(5.0f)
+                curveTo(3.9f, 19.0f, 3.0f, 18.1f, 3.0f, 17.0f)
+                close()
+                moveTo(3.0f, 7.0f)
+                verticalLineToRelative(2.0f)
+                curveToRelative(0.0f, 1.1f, 0.9f, 2.0f, 2.0f, 2.0f)
+                horizontalLineToRelative(14.0f)
+                curveToRelative(1.1f, 0.0f, 2.0f, -0.9f, 2.0f, -2.0f)
+                verticalLineTo(7.0f)
+                curveToRelative(0.0f, -1.1f, -0.9f, -2.0f, -2.0f, -2.0f)
+                horizontalLineTo(5.0f)
+                curveTo(3.9f, 5.0f, 3.0f, 5.9f, 3.0f, 7.0f)
+                close()
+            }
+        }
+        return _viewStream!!
+    }
+
+private var _viewStream: ImageVector? = null

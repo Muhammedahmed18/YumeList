@@ -5,7 +5,9 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 
 /**
@@ -33,9 +35,12 @@ fun LazyListState.OnBottomReached(
         }
     }
 
+    // Always call the latest lambda, even though the effect below only starts once
+    val currentOnLoadMore by rememberUpdatedState(onLoadMore)
+
     LaunchedEffect(shouldLoadMore) {
         snapshotFlow { shouldLoadMore.value }
-            .collect { if (it) onLoadMore() }
+            .collect { if (it) currentOnLoadMore() }
     }
 }
 
@@ -64,8 +69,11 @@ fun LazyGridState.OnBottomReached(
         }
     }
 
+    // Always call the latest lambda, even though the effect below only starts once
+    val currentOnLoadMore by rememberUpdatedState(onLoadMore)
+
     LaunchedEffect(shouldLoadMore) {
         snapshotFlow { shouldLoadMore.value }
-            .collect { if (it) onLoadMore() }
+            .collect { if (it) currentOnLoadMore() }
     }
 }

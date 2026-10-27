@@ -13,5 +13,8 @@ interface SeasonChartEvent : PagedUiEvent {
     fun onChangeFormat(value: MediaFormat?)
     fun onApplyFilters()
     fun onQuickAddPlanToWatch(animeId: Int)
+    /** Removes an anime that was just quick-added (the snackbar's Undo). */
+    fun onUndoQuickAdd(animeId: Int)
+    fun onQuickAddResultShown()
     fun getMyListStatusOf(animeId: Int): MyAnimeListStatus?
-}
+}

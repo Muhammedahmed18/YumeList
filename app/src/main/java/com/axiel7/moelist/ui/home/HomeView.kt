@@ -1,93 +1,104 @@
 package com.axiel7.moelist.ui.home
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.MenuBook
-import androidx.compose.material.icons.automirrored.rounded.TrendingUp
-import androidx.compose.material.icons.outlined.CloudOff
-import androidx.compose.material.icons.outlined.EventBusy
-import androidx.compose.material.icons.outlined.LockReset
-import androidx.compose.material.icons.rounded.AcUnit
-import androidx.compose.material.icons.rounded.AccountCircle
-import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.FilterVintage
-import androidx.compose.material.icons.rounded.LocalFlorist
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.WbSunny
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.SearchBarValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberSearchBarState
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
 import coil3.compose.AsyncImage
 import com.axiel7.moelist.R
-import com.axiel7.moelist.data.model.anime.Season
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.EmptyState
 import com.axiel7.moelist.ui.composables.ErrorState
-import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
-import com.axiel7.moelist.ui.composables.showSnackbarShort
+import com.axiel7.moelist.ui.composables.PosterSection
 import com.axiel7.moelist.ui.composables.isSessionExpiredMessage
-import com.axiel7.moelist.ui.composables.media.MediaItemDetailedPlaceholder
+import com.axiel7.moelist.ui.composables.media.MEDIA_ITEM_VERTICAL_HEIGHT
 import com.axiel7.moelist.ui.composables.media.MediaItemVertical
 import com.axiel7.moelist.ui.composables.media.MediaItemVerticalPlaceholder
-import com.axiel7.moelist.ui.composables.media.PosterStatusBadge
-import com.axiel7.moelist.ui.composables.score.PosterScoreChip
-import com.axiel7.moelist.ui.home.composables.AiringAnimeHorizontalItem
+import com.axiel7.moelist.ui.composables.posterSharedKey
+import com.axiel7.moelist.ui.composables.rememberLoadErrorState
+import com.axiel7.moelist.ui.home.composables.TodayCarousel
+import com.axiel7.moelist.ui.icons.Icons
+import com.axiel7.moelist.ui.icons.automirrored.rounded.MenuBook
+import com.axiel7.moelist.ui.icons.automirrored.rounded.TrendingUp
+import com.axiel7.moelist.ui.icons.outlined.CloudOff
+import com.axiel7.moelist.ui.icons.outlined.EventBusy
+import com.axiel7.moelist.ui.icons.outlined.LockReset
+import com.axiel7.moelist.ui.icons.rounded.AccountCircle
+import com.axiel7.moelist.ui.icons.rounded.CalendarMonth
+import com.axiel7.moelist.ui.icons.rounded.Close
+import com.axiel7.moelist.ui.icons.rounded.Search
 import com.axiel7.moelist.ui.search.SearchViewContent
 import com.axiel7.moelist.ui.search.SearchViewModel
+import com.axiel7.moelist.ui.theme.Motion
 import com.axiel7.moelist.utils.SeasonCalendar
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeView(
     isLoggedIn: Boolean,
@@ -101,26 +112,49 @@ fun HomeView(
     val viewModel: HomeViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    val searchViewModel: SearchViewModel = koinViewModel()
-    val searchUiState by searchViewModel.uiState.collectAsStateWithLifecycle()
+    // The search ViewModel is NOT created here: it lives in HomeSearchResults, which only exists
+    // while search is expanded, so opening Home doesn't start the search pipeline. A search typed
+    // before the results were composed is kept in pendingSearch and run as soon as they are.
+    //
+    // Material 3's SearchBarState + TextFieldState API (the old query/expanded SearchBar is
+    // deprecated). The results are shown inline in Home rather than in the library's
+    // full-screen dialog (ExpandedFullScreenSearchBar): a dialog would stay on top while a
+    // result's details screen opens, and would break the poster shared-element transition.
+    val searchBarState = rememberSearchBarState()
+    val textFieldState = rememberTextFieldState()
+    val query = textFieldState.text.toString()
+    val expanded = searchBarState.targetValue == SearchBarValue.Expanded
+    val scope = rememberCoroutineScope()
 
-    var query by rememberSaveable { mutableStateOf("") }
-    var hasCommittedSearch by rememberSaveable { mutableStateOf(false) }
+    // The query whose results are on screen; typing anything else shows the history again
+    var committedQuery by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingSearch by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingSaveHistory by rememberSaveable { mutableStateOf(false) }
 
     val keyboardController = LocalSoftwareKeyboardController.current
-    val focusRequester = remember { FocusRequester() }
 
+    fun collapse() {
+        keyboardController?.hide()
+        scope.launch { searchBarState.animateToCollapsed() }
+    }
+
+    // Report the state up (MainActivity hides the bottom bar while searching), and follow it
+    // if the parent closes search
+    LaunchedEffect(expanded) { onSearchActiveChange(expanded) }
     LaunchedEffect(searchActive) {
-        if (searchActive) {
-            focusRequester.requestFocus()
-            keyboardController?.show()
+        if (!searchActive && searchBarState.targetValue == SearchBarValue.Expanded) {
+            searchBarState.animateToCollapsed()
         }
     }
 
-    BackHandler(enabled = searchActive) {
-        onSearchActiveChange(false)
-        keyboardController?.hide()
-    }
+    BackHandler(enabled = expanded) { collapse() }
+
+    val barColor by animateColorAsState(
+        targetValue = if (expanded) MaterialTheme.colorScheme.surfaceContainerHighest
+        else MaterialTheme.colorScheme.surfaceContainerHigh,
+        animationSpec = Motion.fastEffects(),
+        label = "searchBarColor"
+    )
 
     Column(
         modifier = Modifier
@@ -130,92 +164,64 @@ fun HomeView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .then(
-                    if (searchActive) Modifier
-                    else Modifier
-                        .statusBarsPadding()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                ),
+                .statusBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            SearchBar(
-                inputField = {
-                    SearchBarDefaults.InputField(
-                        query = query,
-                        onQueryChange = {
-                            query = it
-                            if (hasCommittedSearch) hasCommittedSearch = false
-                        },
-                        onSearch = {
-                            if (it.isNotBlank()) {
-                                searchViewModel.search(it)
-                                searchViewModel.onSaveSearchHistory(it)
-                                hasCommittedSearch = true
-                            }
-                            keyboardController?.hide()
-                        },
-                        expanded = searchActive,
-                        onExpandedChange = onSearchActiveChange,
-                        placeholder = { Text(text = stringResource(R.string.search)) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.Search,
-                                contentDescription = null
-                            )
-                        },
-                        trailingIcon = {
-                            if (searchActive) {
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                color = barColor,
+                modifier = Modifier.weight(1f),
+            ) {
+                SearchBarDefaults.InputField(
+                    textFieldState = textFieldState,
+                    searchBarState = searchBarState,
+                    onSearch = {
+                        if (it.isNotBlank()) {
+                            pendingSearch = it
+                            pendingSaveHistory = true
+                            committedQuery = it
+                        }
+                        keyboardController?.hide()
+                    },
+                    placeholder = { Text(text = stringResource(R.string.search)) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Search,
+                            contentDescription = null
+                        )
+                    },
+                    trailingIcon = {
+                        if (expanded) {
+                            IconButton(
+                                onClick = {
+                                    if (query.isNotEmpty()) textFieldState.clearText()
+                                    else collapse()
+                                }
+                            ) {
                                 Icon(
                                     imageVector = Icons.Rounded.Close,
-                                    contentDescription = "clear",
-                                    modifier = Modifier.clickable {
-                                        if (query.isNotEmpty()) {
-                                            query = ""
-                                        } else {
-                                            onSearchActiveChange(false)
-                                            keyboardController?.hide()
-                                        }
-                                    }
+                                    contentDescription = stringResource(R.string.clear),
                                 )
                             }
-                        },
-                        modifier = Modifier.focusRequester(focusRequester)
-                    )
-                },
-                expanded = searchActive,
-                onExpandedChange = onSearchActiveChange,
-                modifier = if (searchActive) Modifier.fillMaxWidth() else Modifier.weight(1f),
-                colors = SearchBarDefaults.colors(
-                    containerColor = if (searchActive)
-                        MaterialTheme.colorScheme.surface
-                    else
-                        MaterialTheme.colorScheme.surfaceContainerHigh,
-                ),
-                shape = if (searchActive) SearchBarDefaults.fullScreenShape
-                else MaterialTheme.shapes.extraLarge,
-            ) {
-                SearchViewContent(
-                    uiState = searchUiState,
-                    event = searchViewModel,
-                    query = query,
-                    isCompactScreen = isCompactScreen,
-                    navActionManager = navActionManager,
-                    showHistory = query.isEmpty() || !hasCommittedSearch,
-                    onHistoryItemClick = {
-                        query = it
-                        searchViewModel.search(it)
-                        hasCommittedSearch = true
-                        keyboardController?.hide()
-                    }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
 
-            if (!searchActive) {
+            // Package-qualified: the plain (non-scoped) overload, so the outer Column's
+            // ColumnScope.AnimatedVisibility isn't picked up by the implicit receiver
+            androidx.compose.animation.AnimatedVisibility(
+                visible = !expanded,
+                enter = fadeIn(Motion.fastEffects()) + scaleIn(Motion.fastSpatial()),
+                exit = fadeOut(Motion.fastEffects()) + scaleOut(Motion.fastSpatial()),
+            ) {
                 if (isLoggedIn && profilePicture != null) {
                     AsyncImage(
                         model = profilePicture,
-                        contentDescription = "profile",
+                        contentDescription = stringResource(R.string.title_profile),
                         placeholder = painterResource(R.drawable.ic_round_account_circle_24),
                         error = painterResource(R.drawable.ic_round_account_circle_24),
                         modifier = Modifier
@@ -226,7 +232,7 @@ fun HomeView(
                 } else {
                     Icon(
                         painter = painterResource(R.drawable.ic_round_account_circle_24),
-                        contentDescription = "profile",
+                        contentDescription = stringResource(R.string.title_profile),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier
                             .clip(CircleShape)
@@ -237,15 +243,87 @@ fun HomeView(
             }
         }
 
-        HomeViewContent(
-            uiState = uiState,
-            event = viewModel,
-            isLoggedIn = isLoggedIn,
-            navActionManager = navActionManager,
-        )
+        Box(modifier = Modifier.weight(1f)) {
+            // Home stays composed underneath, so its scroll position and data survive a search
+            HomeViewContent(
+                uiState = uiState,
+                event = viewModel,
+                isLoggedIn = isLoggedIn,
+                navActionManager = navActionManager,
+            )
+
+            androidx.compose.animation.AnimatedVisibility(
+                visible = expanded,
+                enter = fadeIn(Motion.effects()),
+                exit = fadeOut(Motion.fastEffects()),
+            ) {
+                Surface(
+                    color = MaterialTheme.colorScheme.surface,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    HomeSearchResults(
+                        query = query,
+                        isCompactScreen = isCompactScreen,
+                        navActionManager = navActionManager,
+                        showHistory = query.isEmpty() || committedQuery != query,
+                        pendingSearch = pendingSearch,
+                        pendingSaveHistory = pendingSaveHistory,
+                        onPendingSearchHandled = {
+                            pendingSearch = null
+                            pendingSaveHistory = false
+                        },
+                        onHistoryItemClick = {
+                            textFieldState.setTextAndPlaceCursorAtEnd(it)
+                            // History items are already saved, so only search
+                            pendingSearch = it
+                            pendingSaveHistory = false
+                            committedQuery = it
+                            keyboardController?.hide()
+                        }
+                    )
+                }
+            }
+        }
     }
 }
 
+/**
+ * Search results inside the expanded search bar. Owns the search ViewModel, so it's only
+ * created when search is first opened (the search bar composes its content only while expanded).
+ */
+@Composable
+private fun HomeSearchResults(
+    query: String,
+    isCompactScreen: Boolean,
+    navActionManager: NavActionManager,
+    showHistory: Boolean,
+    pendingSearch: String?,
+    pendingSaveHistory: Boolean,
+    onPendingSearchHandled: () -> Unit,
+    onHistoryItemClick: (String) -> Unit,
+) {
+    val searchViewModel: SearchViewModel = koinViewModel()
+    val searchUiState by searchViewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(pendingSearch) {
+        val pending = pendingSearch ?: return@LaunchedEffect
+        searchViewModel.search(pending)
+        if (pendingSaveHistory) searchViewModel.onSaveSearchHistory(pending)
+        onPendingSearchHandled()
+    }
+
+    SearchViewContent(
+        uiState = searchUiState,
+        event = searchViewModel,
+        query = query,
+        isCompactScreen = isCompactScreen,
+        navActionManager = navActionManager,
+        showHistory = showHistory,
+        onHistoryItemClick = onHistoryItemClick
+    )
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun HomeViewContent(
     uiState: HomeUiState,
@@ -253,210 +331,193 @@ private fun HomeViewContent(
     isLoggedIn: Boolean,
     navActionManager: NavActionManager,
 ) {
-    val snackbarHostState = LocalSnackbarHostState.current
-    val airingListState = rememberLazyListState()
     val seasonalListState = rememberLazyListState()
 
-    LaunchedEffect(uiState.message) {
-        if (uiState.message != null) {
-            snackbarHostState.showSnackbarShort(uiState.message)
-            event?.onMessageDisplayed()
-        }
-    }
+    // Full-screen (section) errors stay until Retry. Only when both sections already have
+    // content is a new error shown as a snackbar instead.
+    val loadError = rememberLoadErrorState(
+        message = uiState.message,
+        hasContent = uiState.todayAnimes.isNotEmpty() && uiState.seasonalAnimes.isNotEmpty(),
+        onMessageConsumed = { event?.onMessageDisplayed() },
+    )
 
     LaunchedEffect(isLoggedIn) {
         event?.initRequestChain(isLoggedIn)
     }
 
-    val seasonalIcon = when (SeasonCalendar.currentSeason) {
-        Season.WINTER -> Icons.Rounded.AcUnit
-        Season.SPRING -> Icons.Rounded.LocalFlorist
-        Season.SUMMER -> Icons.Rounded.WbSunny
-        Season.FALL -> Icons.Rounded.FilterVintage
+    // Uses the app's own season artwork (same icons as the season chart), picked from the
+    // current anime season, so the tile updates automatically every season
+    val seasonalIcon = ImageVector.vectorResource(SeasonCalendar.currentSeason.icon)
+
+    @Composable
+    fun SectionError(height: androidx.compose.ui.unit.Dp) {
+        val sessionExpired = isSessionExpiredMessage(loadError.value)
+        ErrorState(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(height),
+            icon = if (sessionExpired) Icons.Outlined.LockReset else Icons.Outlined.CloudOff,
+            message = loadError.value,
+            actionLabel = if (sessionExpired) stringResource(R.string.sign_in_again)
+            else stringResource(R.string.retry),
+            onAction = {
+                if (sessionExpired) navActionManager.toLogin()
+                else {
+                    loadError.value = null
+                    event?.initRequestChain(isLoggedIn)
+                }
+            },
+            compact = true,
+        )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+    // Lazy root: sections are composed as they scroll into view (the old Column +
+    // verticalScroll built everything up front)
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 16.dp),
     ) {
-        Text(
-            text = stringResource(R.string.discover),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 12.dp)
-        )
+        item(key = "title", contentType = "title") {
+            Text(
+                text = stringResource(R.string.discover),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 12.dp)
+            )
+        }
 
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+        item(key = "shortcuts", contentType = "shortcuts") {
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                HomeNavTile(
-                    title = stringResource(R.string.anime_ranking),
-                    subtitle = stringResource(R.string.top_rated),
-                    icon = Icons.AutoMirrored.Rounded.TrendingUp,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(64.dp),
-                    onClick = dropUnlessResumed {
-                        navActionManager.toMediaRanking(MediaType.ANIME)
-                    }
-                )
-                HomeNavTile(
-                    title = stringResource(R.string.seasonal_chart),
-                    subtitle = SeasonCalendar.currentStartSeason.seasonYearText(),
-                    icon = seasonalIcon,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(64.dp),
-                    onClick = dropUnlessResumed {
-                        navActionManager.toSeasonChart()
-                    }
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                HomeNavTile(
-                    title = stringResource(R.string.calendar),
-                    subtitle = stringResource(R.string.weekly_schedule),
-                    icon = Icons.Rounded.CalendarMonth,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(64.dp),
-                    onClick = dropUnlessResumed {
-                        navActionManager.toCalendar()
-                    }
-                )
-                HomeNavTile(
-                    title = stringResource(R.string.manga_ranking),
-                    subtitle = stringResource(R.string.top_manga),
-                    icon = Icons.AutoMirrored.Rounded.MenuBook,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(64.dp),
-                    onClick = dropUnlessResumed {
-                        navActionManager.toMediaRanking(MediaType.MANGA)
-                    }
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    HomeNavTile(
+                        title = stringResource(R.string.anime_ranking),
+                        subtitle = stringResource(R.string.top_rated),
+                        icon = Icons.AutoMirrored.Rounded.TrendingUp,
+                        iconShape = MaterialShapes.Sunny.toShape(),
+                        iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        iconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.weight(1f),
+                        onClick = dropUnlessResumed {
+                            navActionManager.toMediaRanking(MediaType.ANIME)
+                        }
+                    )
+                    HomeNavTile(
+                        title = stringResource(R.string.seasonal_chart),
+                        subtitle = SeasonCalendar.currentStartSeason.seasonYearText(),
+                        icon = seasonalIcon,
+                        iconShape = MaterialShapes.Flower.toShape(),
+                        iconContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        iconContentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        modifier = Modifier.weight(1f),
+                        onClick = dropUnlessResumed {
+                            navActionManager.toSeasonChart()
+                        }
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    HomeNavTile(
+                        title = stringResource(R.string.calendar),
+                        subtitle = stringResource(R.string.weekly_schedule),
+                        icon = Icons.Rounded.CalendarMonth,
+                        iconShape = MaterialShapes.Cookie4Sided.toShape(),
+                        iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        iconContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.weight(1f),
+                        onClick = dropUnlessResumed {
+                            navActionManager.toCalendar()
+                        }
+                    )
+                    HomeNavTile(
+                        title = stringResource(R.string.manga_ranking),
+                        subtitle = stringResource(R.string.top_manga),
+                        icon = Icons.AutoMirrored.Rounded.MenuBook,
+                        iconShape = MaterialShapes.Clover4Leaf.toShape(),
+                        iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        iconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.weight(1f),
+                        onClick = dropUnlessResumed {
+                            navActionManager.toMediaRanking(MediaType.MANGA)
+                        }
+                    )
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        item(key = "todayHeader", contentType = "header") {
+            SectionHeader(
+                title = stringResource(R.string.today),
+                onSeeAll = dropUnlessResumed { navActionManager.toCalendar() },
+                modifier = Modifier.padding(top = 12.dp)
+            )
+        }
 
-        SectionHeader(
-            title = stringResource(R.string.today),
-            onSeeAll = dropUnlessResumed { navActionManager.toCalendar() }
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(140.dp)
-        ) {
+        item(key = "today", contentType = "today") {
             when {
                 !isLoggedIn -> LoginPrompt(
                     onClick = dropUnlessResumed { navActionManager.toLogin() },
                     modifier = Modifier
                         .fillMaxWidth()
+                        .height(120.dp)
                         .padding(horizontal = 16.dp, vertical = 4.dp)
                 )
 
-                uiState.message != null && uiState.todayAnimes.isEmpty() && !uiState.isLoading -> {
-                    val sessionExpired = isSessionExpiredMessage(uiState.message)
-                    ErrorState(
-                        modifier = Modifier.fillMaxSize(),
-                        icon = if (sessionExpired) Icons.Outlined.LockReset else Icons.Outlined.CloudOff,
-                        message = uiState.message,
-                        actionLabel = if (sessionExpired) stringResource(R.string.sign_in_again)
-                        else stringResource(R.string.retry),
-                        onAction = {
-                            if (sessionExpired) navActionManager.toLogin()
-                            else event?.initRequestChain(isLoggedIn)
-                        },
-                        compact = true,
-                    )
-                }
+                loadError.value != null && uiState.todayAnimes.isEmpty() && !uiState.isLoading ->
+                    SectionError(height = 140.dp)
 
                 !uiState.isLoading && uiState.todayAnimes.isEmpty() -> EmptyState(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(140.dp),
                     icon = Icons.Outlined.EventBusy,
                     title = stringResource(R.string.nothing_airing_today),
                     description = stringResource(R.string.nothing_airing_today_desc),
                     compact = true,
                 )
 
-                else -> LazyRow(
-                    modifier = Modifier.fillMaxSize(),
-                    state = airingListState,
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    flingBehavior = rememberSnapFlingBehavior(lazyListState = airingListState),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    items(
-                        items = uiState.todayAnimes,
-                        key = { it.node.id },
-                        contentType = { it.node }
-                    ) {
-                        AiringAnimeHorizontalItem(
-                            item = it,
-                            hideScore = uiState.hideScore,
-                            onClick = dropUnlessResumed {
-                                navActionManager.toMediaDetails(MediaType.ANIME, it.node.id)
-                            }
+                else -> TodayCarousel(
+                    items = uiState.todayAnimes,
+                    isLoading = uiState.isLoading,
+                    hideScore = uiState.hideScore,
+                    posterKey = { posterSharedKey(PosterSection.HOME_TODAY, MediaType.ANIME, it.node.id) },
+                    onClick = { item, posterKey ->
+                        navActionManager.toMediaDetails(
+                            MediaType.ANIME,
+                            item.node.id,
+                            posterUrl = item.node.mainPicture?.large ?: item.node.mainPicture?.medium,
+                            posterKey = posterKey,
                         )
-                    }
-                    if (uiState.isLoading) {
-                        items(5) {
-                            MediaItemDetailedPlaceholder()
-                        }
-                    }
-                }
+                    },
+                )
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        item(key = "seasonHeader", contentType = "header") {
+            SectionHeader(
+                title = stringResource(R.string.this_season),
+                onSeeAll = dropUnlessResumed { navActionManager.toSeasonChart() },
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
 
-        SectionHeader(
-            title = stringResource(R.string.this_season),
-            onSeeAll = dropUnlessResumed { navActionManager.toSeasonChart() }
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 230.dp)
-        ) {
+        item(key = "season", contentType = "season") {
             when {
-                uiState.message != null && uiState.seasonalAnimes.isEmpty() && !uiState.isLoading -> {
-                    val sessionExpired = isSessionExpiredMessage(uiState.message)
-                    ErrorState(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(230.dp),
-                        icon = if (sessionExpired) Icons.Outlined.LockReset else Icons.Outlined.CloudOff,
-                        message = uiState.message,
-                        actionLabel = if (sessionExpired) stringResource(R.string.sign_in_again)
-                        else stringResource(R.string.retry),
-                        onAction = {
-                            if (sessionExpired) navActionManager.toLogin()
-                            else event?.initRequestChain(isLoggedIn)
-                        },
-                        compact = true,
-                    )
-                }
+                loadError.value != null && uiState.seasonalAnimes.isEmpty() && !uiState.isLoading ->
+                    SectionError(height = MEDIA_ITEM_VERTICAL_HEIGHT.dp)
 
                 !uiState.isLoading && uiState.seasonalAnimes.isEmpty() -> EmptyState(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(230.dp),
+                        .height(MEDIA_ITEM_VERTICAL_HEIGHT.dp),
                     icon = Icons.Outlined.EventBusy,
                     title = stringResource(R.string.no_anime_this_season),
                     description = stringResource(R.string.no_anime_this_season_desc),
@@ -466,7 +527,7 @@ private fun HomeViewContent(
                 else -> LazyRow(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(230.dp),
+                        .height(MEDIA_ITEM_VERTICAL_HEIGHT.dp),
                     state = seasonalListState,
                     contentPadding = PaddingValues(horizontal = 16.dp),
                     flingBehavior = rememberSnapFlingBehavior(lazyListState = seasonalListState),
@@ -475,33 +536,29 @@ private fun HomeViewContent(
                     items(
                         items = uiState.seasonalAnimes,
                         key = { it.node.id },
-                        contentType = { it.node }
+                        contentType = { "media" }
                     ) {
                         val score = it.node.mean
+                        val posterKey = posterSharedKey(PosterSection.HOME_SEASON, MediaType.ANIME, it.node.id)
                         MediaItemVertical(
                             imageUrl = it.node.mainPicture?.large,
+                            posterKey = posterKey,
                             title = it.node.userPreferredTitle(),
-                            badgeContent = it.node.myListStatus?.status?.let { status ->
-                                { PosterStatusBadge(status) }
-                            },
-                            posterOverlay = if (!uiState.hideScore && score != null && score > 0f) {
-                                {
-                                    PosterScoreChip(
-                                        score = score,
-                                        modifier = Modifier
-                                            .padding(8.dp)
-                                            .align(Alignment.BottomStart)
-                                    )
-                                }
-                            } else null,
+                            status = it.node.myListStatus?.status,
+                            score = score.takeUnless { uiState.hideScore },
                             minLines = 2,
                             onClick = dropUnlessResumed {
-                                navActionManager.toMediaDetails(MediaType.ANIME, it.node.id)
+                                navActionManager.toMediaDetails(
+                                    MediaType.ANIME,
+                                    it.node.id,
+                                    posterUrl = it.node.mainPicture?.large,
+                                    posterKey = posterKey,
+                                )
                             }
                         )
                     }
                     if (uiState.isLoading) {
-                        items(5) {
+                        items(5, contentType = { "placeholder" }) {
                             MediaItemVerticalPlaceholder()
                         }
                     }
@@ -511,40 +568,56 @@ private fun HomeViewContent(
     }
 }
 
+/**
+ * Shortcut tile. The icon sits in an M3 Expressive shape (sunny, flower, cookie, clover), each
+ * tile with its own, and the tile's corners tighten while pressed (Expressive pressed shape).
+ */
 @Composable
 private fun HomeNavTile(
     title: String,
     subtitle: String,
     icon: ImageVector,
+    iconShape: Shape,
+    iconContainerColor: Color,
+    iconContentColor: Color,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val corner by animateDpAsState(
+        targetValue = if (isPressed) TilePressedCorner else TileCorner,
+        animationSpec = Motion.fastSpatial(),
+        label = "tileCorner"
+    )
+
     Surface(
         onClick = onClick,
-        modifier = modifier,
-        shape = MaterialTheme.shapes.extraLarge,
+        modifier = modifier.height(72.dp),
+        shape = RoundedCornerShape(corner),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        interactionSource = interactionSource,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+                .padding(horizontal = 12.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(40.dp)
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(iconShape)
+                    .background(iconContainerColor),
+                contentAlignment = Alignment.Center
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconContentColor,
+                    modifier = Modifier.size(22.dp)
+                )
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -567,13 +640,18 @@ private fun HomeNavTile(
     }
 }
 
+/** Shortcut tile corners: M3 Large, tightening to Medium while pressed. */
+private val TileCorner = 24.dp
+private val TilePressedCorner = 12.dp
+
 @Composable
 private fun SectionHeader(
     title: String,
     onSeeAll: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(start = 20.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -585,7 +663,7 @@ private fun SectionHeader(
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
         )
-        TextButton(onClick = onSeeAll) {
+        TextButton(onClick = onSeeAll, shapes = ButtonDefaults.shapes()) {
             Text(text = stringResource(R.string.see_all))
         }
     }

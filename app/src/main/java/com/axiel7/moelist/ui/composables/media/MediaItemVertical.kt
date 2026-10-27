@@ -1,14 +1,7 @@
 package com.axiel7.moelist.ui.composables.media
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -32,16 +25,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.axiel7.moelist.data.model.media.ListStatus
+import com.axiel7.moelist.ui.composables.score.PosterScoreChip
+import com.axiel7.moelist.ui.composables.skeleton
 import com.axiel7.moelist.ui.theme.MoeListTheme
+import com.axiel7.moelist.ui.theme.Motion
+import com.axiel7.moelist.ui.theme.ShapePoster
 
 const val MEDIA_ITEM_VERTICAL_HEIGHT = 220
 
@@ -51,8 +46,13 @@ fun MediaItemVertical(
     title: String,
     imageUrl: String?,
     modifier: Modifier = Modifier,
+    // Shared-transition key of the poster (see posterSharedKey); null = no shared transition
+    posterKey: String? = null,
     posterOverlay: @Composable (BoxScope.() -> Unit)? = null,
-    badgeContent: @Composable (RowScope.() -> Unit)? = null,
+    // List status, shown as a coloured icon chip at the top-end corner of the poster
+    status: ListStatus? = null,
+    // Community mean score, shown as a chip at the bottom-start corner (null or 0 = hidden)
+    score: Float? = null,
     subtitle: @Composable (() -> Unit)? = null,
     subtitle2: @Composable (() -> Unit)? = null,
     minLines: Int = 1,
@@ -61,7 +61,12 @@ fun MediaItemVertical(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(if (isPressed) 0.95f else 1f, label = "scale")
+    // Press feedback: fast expressive spring so the poster "squishes" and bounces back
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = Motion.fastSpatial(),
+        label = "scale"
+    )
 
     Column(
         modifier = modifier
@@ -83,33 +88,36 @@ fun MediaItemVertical(
             modifier = Modifier.padding(bottom = 8.dp),
             contentAlignment = Alignment.BottomStart
         ) {
+            // MediaPoster clips itself (ShapePoster), so the corners stay rounded in the transition
             MediaPoster(
                 url = imageUrl,
                 showShadow = false,
+                sharedKey = posterKey,
                 modifier = Modifier
                     .size(
                         width = MEDIA_POSTER_SMALL_WIDTH.dp,
                         height = MEDIA_POSTER_SMALL_HEIGHT.dp
                     )
-                    .clip(RoundedCornerShape(24.dp))
             )
+
+            if (score != null && score > 0f) {
+                PosterScoreChip(
+                    score = score,
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .align(Alignment.BottomStart),
+                )
+            }
 
             posterOverlay?.invoke(this)
 
-            if (badgeContent != null) {
-                Surface(
+            if (status != null) {
+                PosterStatusBadge(
+                    status = status,
                     modifier = Modifier
                         .padding(8.dp)
                         .align(Alignment.TopEnd),
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.9f),
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        content = badgeContent
-                    )
-                }
+                )
             }
         }
 
@@ -135,31 +143,13 @@ fun MediaItemVertical(
     }
 }
 
-fun Modifier.shimmerEffect(): Modifier = composed {
-    val transition = rememberInfiniteTransition(label = "shimmer")
-    val translateAnim by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1000f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1200, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmerTranslate"
-    )
-
-    val shimmerColors = listOf(
-        MaterialTheme.colorScheme.surfaceContainerHighest,
-        MaterialTheme.colorScheme.surfaceContainerLow,
-        MaterialTheme.colorScheme.surfaceContainerHighest,
-    )
-
-    val brush = Brush.linearGradient(
-        colors = shimmerColors,
-        start = Offset.Zero,
-        end = Offset(x = translateAnim, y = translateAnim)
-    )
-    background(brush)
-}
+/**
+ * Pulsing loading skeleton. Was a `composed {}` shimmer that rebuilt a gradient brush and
+ * recomposed every frame for every placeholder; now delegates to the lightweight [skeleton]
+ * modifier node, which only re-draws.
+ */
+@Composable
+fun Modifier.shimmerEffect(): Modifier = skeleton()
 
 @Composable
 fun MediaItemVerticalPlaceholder(
@@ -167,7 +157,8 @@ fun MediaItemVerticalPlaceholder(
 ) {
     Column(
         modifier = modifier
-            .width(MEDIA_POSTER_SMALL_WIDTH.dp),
+            .width(MEDIA_POSTER_SMALL_WIDTH.dp)
+            .sizeIn(minHeight = MEDIA_ITEM_VERTICAL_HEIGHT.dp),
         horizontalAlignment = Alignment.Start
     ) {
         Box(
@@ -176,27 +167,22 @@ fun MediaItemVerticalPlaceholder(
                     width = MEDIA_POSTER_SMALL_WIDTH.dp,
                     height = MEDIA_POSTER_SMALL_HEIGHT.dp
                 )
-                .clip(RoundedCornerShape(24.dp))
+                .clip(ShapePoster)
                 .shimmerEffect()
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Box(
-            modifier = Modifier
-                .padding(horizontal = 4.dp)
-                .size(width = 80.dp, height = 12.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .shimmerEffect()
-        )
+        repeat(2) { line ->
+            Box(
+                modifier = Modifier
+                    .padding(start = 4.dp, end = 4.dp, bottom = 6.dp)
+                    .size(width = if (line == 0) 88.dp else 56.dp, height = 12.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .shimmerEffect()
+            )
+        }
     }
-}
-
-@Composable
-fun MediaItemDetailedPlaceholder(
-    modifier: Modifier = Modifier
-) {
-    MediaItemVerticalPlaceholder(modifier = modifier)
 }
 
 @Preview

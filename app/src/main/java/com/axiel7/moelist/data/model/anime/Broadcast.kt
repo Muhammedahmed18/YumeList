@@ -71,6 +71,17 @@ data class Broadcast(
         dateTimeUntilNextBroadcast()?.dayOfWeek
     }.getOrNull()
 
+    fun localDayAndTimeText() = runCatching {
+        val day = localDayOfTheWeek()?.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+        val time = localStartTime()
+        when {
+            day != null && time != null -> "$day, $time"
+            day != null -> day
+            time != null -> time
+            else -> null
+        }
+    }.getOrNull()
+
     @Composable
     fun airingInString() = if (startTime != null && dayOfTheWeek != null) {
         val remaining = remaining()

@@ -6,5 +6,6 @@ import com.axiel7.moelist.ui.base.event.UiEvent
 
 interface AppearanceEvent : UiEvent {
     fun setTheme(value: ThemeStyle)
+    fun setPureBlack(value: Boolean)
     fun setColorPalette(value: ColorPalette)
 }

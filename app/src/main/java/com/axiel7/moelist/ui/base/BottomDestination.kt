@@ -1,16 +1,6 @@
 package com.axiel7.moelist.ui.base
 
 import androidx.annotation.StringRes
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Book
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.LocalMovies
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.rounded.Book
-import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.LocalMovies
-import androidx.compose.material.icons.rounded.MoreHoriz
-import androidx.compose.material.icons.rounded.Person
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -20,6 +10,16 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.Route
+import com.axiel7.moelist.ui.icons.Icons
+import com.axiel7.moelist.ui.icons.outlined.Book
+import com.axiel7.moelist.ui.icons.outlined.Home
+import com.axiel7.moelist.ui.icons.outlined.LocalMovies
+import com.axiel7.moelist.ui.icons.outlined.Person
+import com.axiel7.moelist.ui.icons.rounded.Book
+import com.axiel7.moelist.ui.icons.rounded.Home
+import com.axiel7.moelist.ui.icons.rounded.LocalMovies
+import com.axiel7.moelist.ui.icons.rounded.MoreHoriz
+import com.axiel7.moelist.ui.icons.rounded.Person
 
 sealed class BottomDestination(
     val value: String,

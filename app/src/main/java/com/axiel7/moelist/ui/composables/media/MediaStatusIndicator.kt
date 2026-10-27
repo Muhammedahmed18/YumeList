@@ -30,14 +30,14 @@ fun MediaStatusIndicator(
         Icon(
             imageVector = status.icon,
             contentDescription = status.localized(),
-            tint = MaterialTheme.colorScheme.primary,
+            tint = status.primaryColor(),
             modifier = Modifier.size(16.dp),
         )
         Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = status.localized(),
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.primary,
+            color = status.primaryColor(),
         )
     }
 }

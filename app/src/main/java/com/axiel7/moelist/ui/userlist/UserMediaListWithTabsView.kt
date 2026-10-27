@@ -21,8 +21,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -57,11 +55,13 @@ import com.axiel7.moelist.data.model.media.ListStatus.Companion.listStatusValues
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.TabRowItem
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
-import com.axiel7.moelist.ui.composables.TabRowWithPager
 import com.axiel7.moelist.ui.editmedia.EditMediaSheet
+import com.axiel7.moelist.ui.icons.Icons
+import com.axiel7.moelist.ui.icons.rounded.Check
 import com.axiel7.moelist.ui.userlist.composables.MediaListFormatSheet
 import com.axiel7.moelist.ui.userlist.composables.MediaListItemShimmer
 import com.axiel7.moelist.ui.userlist.composables.MediaListSortDialog
+import com.axiel7.moelist.ui.userlist.composables.StatusTabRow
 import com.axiel7.moelist.ui.userlist.composables.UserMediaListControlBar
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -154,21 +154,16 @@ fun UserMediaListWithTabsView(
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                tonalElevation = 3.dp
             ) {
                 Column {
                     if (useListTabs) {
-                        TabRowWithPager(
+                        // M3 Expressive status selector (toggle buttons), synced with the pager
+                        StatusTabRow(
                             tabs = tabRowItems,
+                            pagerState = pagerState,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            isTabScrollable = true,
-                            isPrimaryTab = true,
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-                            pagerState = pagerState,
-                            showPager = false,
-                            pageContent = { _, _ -> }
+                                .padding(top = 8.dp, bottom = 4.dp),
                         )
                     }
 

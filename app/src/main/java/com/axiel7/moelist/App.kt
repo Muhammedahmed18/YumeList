@@ -7,20 +7,25 @@ import coil3.SingletonImageLoader
 import coil3.disk.DiskCache
 import coil3.disk.directory
 import coil3.memory.MemoryCache
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.crossfade
 import com.axiel7.moelist.data.model.media.TitleLanguage
+import com.axiel7.moelist.di.IMAGE_CLIENT
 import com.axiel7.moelist.di.dataStoreModule
 import com.axiel7.moelist.di.databaseModule
 import com.axiel7.moelist.di.networkModule
 import com.axiel7.moelist.di.repositoryModule
 import com.axiel7.moelist.di.viewModelModule
 import com.axiel7.moelist.di.workerModule
+import okhttp3.OkHttpClient
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.androidx.workmanager.koin.workManagerFactory
 import org.koin.androix.startup.KoinStartup
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
+import org.koin.core.qualifier.named
 import org.koin.dsl.koinConfiguration
 
 @OptIn(KoinExperimentalAPI::class)
@@ -49,6 +54,11 @@ class App : Application(), KoinComponent, KoinStartup, SingletonImageLoader.Fact
 
     override fun newImageLoader(context: PlatformContext) =
         ImageLoader.Builder(this)
+            // Load pictures through the app's shared OkHttp (same connections and dispatcher
+            // as the API calls); the client is only created on the first image request
+            .components {
+                add(OkHttpNetworkFetcherFactory(callFactory = { get<OkHttpClient>(named(IMAGE_CLIENT)) }))
+            }
             .memoryCache {
                 MemoryCache.Builder()
                     .maxSizePercent(context, percent = 0.25)

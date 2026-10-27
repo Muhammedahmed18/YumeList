@@ -20,11 +20,24 @@ class NavActionManager(
         navController.navigate(Route.MediaRanking(mediaType))
     }
 
-    fun toMediaDetails(mediaType: MediaType, id: Int) {
+    /**
+     * @param posterUrl the poster image the user tapped (optional). Passing it enables the
+     * shared poster transition and shows the poster on the details screen immediately.
+     * @param posterKey shared-transition key of the tapped poster (see posterSharedKey).
+     * Without it the details screen opens with no shared poster transition.
+     */
+    fun toMediaDetails(
+        mediaType: MediaType,
+        id: Int,
+        posterUrl: String? = null,
+        posterKey: String? = null,
+    ) {
         navController.navigate(
             Route.MediaDetails(
                 mediaType = mediaType,
                 mediaId = id,
+                posterUrl = posterUrl,
+                posterKey = posterKey,
             )
         )
     }
@@ -35,10 +48,6 @@ class NavActionManager(
 
     fun toSeasonChart() {
         navController.navigate(Route.SeasonChart)
-    }
-
-    fun toRecommendations() {
-        navController.navigate(Route.Recommendations)
     }
 
     fun toUserList(mediaType: MediaType, status: ListStatus? = null) {

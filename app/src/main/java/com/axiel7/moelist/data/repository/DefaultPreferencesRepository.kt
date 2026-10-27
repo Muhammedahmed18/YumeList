@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.axiel7.moelist.App
 import com.axiel7.moelist.data.model.AccessToken
 import com.axiel7.moelist.data.model.media.ListStatus
@@ -14,12 +15,11 @@ import com.axiel7.moelist.data.model.media.TitleLanguage
 import com.axiel7.moelist.di.getValue
 import com.axiel7.moelist.di.setValue
 import com.axiel7.moelist.ui.base.ColorPalette
-import com.axiel7.moelist.ui.base.ItemsPerRow
-import com.axiel7.moelist.ui.base.ListStyle
 import com.axiel7.moelist.ui.base.StartTab
 import com.axiel7.moelist.ui.base.TabletMode
 import com.axiel7.moelist.ui.base.ThemeStyle
 import com.axiel7.moelist.utils.NumExtensions.toInt
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
@@ -77,10 +77,55 @@ class DefaultPreferencesRepository(
         dataStore.setValue(HIDE_SCORES_KEY, value)
     }
 
-    val theme = dataStore.getValue(THEME_KEY, ThemeStyle.FOLLOW_SYSTEM.name)
-        .map { ThemeStyle.valueOfOrNull(it) ?: ThemeStyle.FOLLOW_SYSTEM }
+    /**
+     * IDs of media entries for which the user explicitly skipped the
+     * "set score on finish" reminder dialog. Once skipped, the reminder
+     * should never be shown again for that entry.
+     */
+    val dismissedScoreReminderIds = dataStore.getValue(DISMISSED_SCORE_REMINDER_IDS_KEY, emptySet())
+
+    suspend fun addDismissedScoreReminderId(mediaId: Int) {
+        dataStore.edit { prefs ->
+            val current = prefs[DISMISSED_SCORE_REMINDER_IDS_KEY] ?: emptySet()
+            prefs[DISMISSED_SCORE_REMINDER_IDS_KEY] = current + mediaId.toString()
+        }
+    }
+
+    /** The theme name as saved: one of [ThemeStyle], or [LEGACY_AMOLED] from older versions. */
+    private val savedThemeName = dataStore.getValue(THEME_KEY, ThemeStyle.FOLLOW_SYSTEM.name)
+
+    /**
+     * Theme mode: System / Light / Dark. The old AMOLED mode is now Dark + [pureBlack], so a saved
+     * "AMOLED" reads as DARK here (no migration step needed).
+     */
+    val theme = savedThemeName.map {
+        if (it == LEGACY_AMOLED) ThemeStyle.DARK
+        else ThemeStyle.valueOfOrNull(it) ?: ThemeStyle.FOLLOW_SYSTEM
+    }
+
     suspend fun setTheme(value: ThemeStyle) {
-        dataStore.setValue(THEME_KEY, value.name)
+        dataStore.edit { prefs ->
+            // Keep pure black for someone moving off the old AMOLED mode
+            if (prefs[THEME_KEY] == LEGACY_AMOLED && prefs[PURE_BLACK_KEY] == null) {
+                prefs[PURE_BLACK_KEY] = true
+            }
+            prefs[THEME_KEY] = value.name
+        }
+    }
+
+    /**
+     * Pure black backgrounds whenever the app is dark (Dark mode, or System at night).
+     * Never set yet -> on if the old AMOLED mode was saved.
+     */
+    val pureBlack = combine(savedThemeName, dataStore.getValue(PURE_BLACK_KEY)) { saved, pureBlack ->
+        pureBlack ?: (saved == LEGACY_AMOLED)
+    }
+
+    suspend fun setPureBlack(value: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[PURE_BLACK_KEY] = value
+            if (prefs[THEME_KEY] == LEGACY_AMOLED) prefs[THEME_KEY] = ThemeStyle.DARK.name
+        }
     }
 
     val colorPalette = dataStore.getValue(COLOR_PALETTE_KEY, ColorPalette.DYNAMIC.name)
@@ -247,105 +292,6 @@ class DefaultPreferencesRepository(
         dataStore.setValue(RANDOM_LIST_ENTRY_KEY, value)
     }
 
-    val generalListStyle = dataStore.getValue(GENERAL_LIST_STYLE_KEY, ListStyle.STANDARD.name)
-        .map { ListStyle.valueOfOrNull(it) ?: ListStyle.STANDARD }
-
-    suspend fun setGeneralListStyle(value: ListStyle) {
-        dataStore.setValue(GENERAL_LIST_STYLE_KEY, value.name)
-    }
-
-    val useGeneralListStyle = dataStore.getValue(USE_GENERAL_LIST_STYLE_KEY, true)
-    suspend fun setUseGeneralListStyle(value: Boolean) {
-        dataStore.setValue(USE_GENERAL_LIST_STYLE_KEY, value)
-    }
-
-    val gridItemsPerRow = dataStore.getValue(GRID_ITEMS_PER_ROW_KEY, ItemsPerRow.DEFAULT.value)
-        .map { ItemsPerRow.valueOf(it) ?: ItemsPerRow.DEFAULT }
-
-    suspend fun setGridItemsPerRow(value: ItemsPerRow) {
-        dataStore.setValue(GRID_ITEMS_PER_ROW_KEY, value.value)
-    }
-
-    val animeCurrentListStyle =
-        dataStore.getValue(ANIME_CURRENT_LIST_STYLE_KEY, ListStyle.STANDARD.name)
-            .map { ListStyle.valueOfOrNull(it) ?: ListStyle.STANDARD }
-
-    suspend fun setAnimeCurrentListStyle(value: ListStyle) {
-        dataStore.setValue(ANIME_CURRENT_LIST_STYLE_KEY, value.name)
-    }
-
-    val animePlannedListStyle =
-        dataStore.getValue(ANIME_PLANNED_LIST_STYLE_KEY, ListStyle.STANDARD.name)
-            .map { ListStyle.valueOfOrNull(it) ?: ListStyle.STANDARD }
-
-    suspend fun setAnimePlannedListStyle(value: ListStyle) {
-        dataStore.setValue(ANIME_PLANNED_LIST_STYLE_KEY, value.name)
-    }
-
-    val animeCompletedListStyle =
-        dataStore.getValue(ANIME_COMPLETED_LIST_STYLE_KEY, ListStyle.STANDARD.name)
-            .map { ListStyle.valueOfOrNull(it) ?: ListStyle.STANDARD }
-
-    suspend fun setAnimeCompletedListStyle(value: ListStyle) {
-        dataStore.setValue(ANIME_COMPLETED_LIST_STYLE_KEY, value.name)
-    }
-
-    val animePausedListStyle =
-        dataStore.getValue(ANIME_PAUSED_LIST_STYLE_KEY, ListStyle.STANDARD.name)
-            .map { ListStyle.valueOfOrNull(it) ?: ListStyle.STANDARD }
-
-    suspend fun setAnimePausedListStyle(value: ListStyle) {
-        dataStore.setValue(ANIME_PAUSED_LIST_STYLE_KEY, value.name)
-    }
-
-    val animeDroppedListStyle =
-        dataStore.getValue(ANIME_DROPPED_LIST_STYLE_KEY, ListStyle.STANDARD.name)
-            .map { ListStyle.valueOfOrNull(it) ?: ListStyle.STANDARD }
-
-    suspend fun setAnimeDroppedListStyle(value: ListStyle) {
-        dataStore.setValue(ANIME_DROPPED_LIST_STYLE_KEY, value.name)
-    }
-
-    val mangaCurrentListStyle =
-        dataStore.getValue(MANGA_CURRENT_LIST_STYLE_KEY, ListStyle.STANDARD.name)
-            .map { ListStyle.valueOfOrNull(it) ?: ListStyle.STANDARD }
-
-    suspend fun setMangaCurrentListStyle(value: ListStyle) {
-        dataStore.setValue(MANGA_CURRENT_LIST_STYLE_KEY, value.name)
-    }
-
-    val mangaPlannedListStyle =
-        dataStore.getValue(MANGA_PLANNED_LIST_STYLE_KEY, ListStyle.STANDARD.name)
-            .map { ListStyle.valueOfOrNull(it) ?: ListStyle.STANDARD }
-
-    suspend fun setMangaPlannedListStyle(value: ListStyle) {
-        dataStore.setValue(MANGA_PLANNED_LIST_STYLE_KEY, value.name)
-    }
-
-    val mangaCompletedListStyle =
-        dataStore.getValue(MANGA_COMPLETED_LIST_STYLE_KEY, ListStyle.STANDARD.name)
-            .map { ListStyle.valueOfOrNull(it) ?: ListStyle.STANDARD }
-
-    suspend fun setMangaCompletedListStyle(value: ListStyle) {
-        dataStore.setValue(MANGA_COMPLETED_LIST_STYLE_KEY, value.name)
-    }
-
-    val mangaPausedListStyle =
-        dataStore.getValue(MANGA_PAUSED_LIST_STYLE_KEY, ListStyle.STANDARD.name)
-            .map { ListStyle.valueOfOrNull(it) ?: ListStyle.STANDARD }
-
-    suspend fun setMangaPausedListStyle(value: ListStyle) {
-        dataStore.setValue(MANGA_PAUSED_LIST_STYLE_KEY, value.name)
-    }
-
-    val mangaDroppedListStyle =
-        dataStore.getValue(MANGA_DROPPED_LIST_STYLE_KEY, ListStyle.STANDARD.name)
-            .map { ListStyle.valueOfOrNull(it) ?: ListStyle.STANDARD }
-
-    suspend fun setMangaDroppedListStyle(value: ListStyle) {
-        dataStore.setValue(MANGA_DROPPED_LIST_STYLE_KEY, value.name)
-    }
-
     companion object {
 
         private val ACCESS_TOKEN_KEY = stringPreferencesKey("access_token")
@@ -354,11 +300,17 @@ class DefaultPreferencesRepository(
 
         private val NSFW_KEY = booleanPreferencesKey("nsfw")
         private val HIDE_SCORES_KEY = booleanPreferencesKey("hide_scores")
+        private val DISMISSED_SCORE_REMINDER_IDS_KEY =
+            stringSetPreferencesKey("dismissed_score_reminder_ids")
         private val THEME_KEY = stringPreferencesKey("theme")
         private val COLOR_PALETTE_KEY = stringPreferencesKey("color_palette")
         private val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
         private val LAST_TAB_KEY = intPreferencesKey("last_tab")
         private val PINNED_NAV_BAR_KEY = booleanPreferencesKey("pinned_nav_bar")
+        private val PURE_BLACK_KEY = booleanPreferencesKey("pure_black")
+
+        /** The removed AMOLED theme as older versions saved it (now DARK + pure black). */
+        private const val LEGACY_AMOLED = "AMOLED"
         private val PROFILE_PICTURE_KEY = stringPreferencesKey("profile_picture")
         private val USERNAME_KEY = stringPreferencesKey("username")
 
@@ -383,22 +335,5 @@ class DefaultPreferencesRepository(
         private val USE_LIST_TABS_KEY = booleanPreferencesKey("use_list_tabs")
         private val LOAD_CHARACTERS_KEY = booleanPreferencesKey("load_characters")
         private val RANDOM_LIST_ENTRY_KEY = booleanPreferencesKey("random_list_entry_enabled")
-
-        private val GENERAL_LIST_STYLE_KEY = stringPreferencesKey("list_display_mode")
-        private val USE_GENERAL_LIST_STYLE_KEY = booleanPreferencesKey("use_general_list_style")
-        private val GRID_ITEMS_PER_ROW_KEY = intPreferencesKey("grid_items_per_row")
-
-        private val ANIME_CURRENT_LIST_STYLE_KEY = stringPreferencesKey("anime_current_list_style")
-        private val ANIME_PLANNED_LIST_STYLE_KEY = stringPreferencesKey("anime_planned_list_style")
-        private val ANIME_COMPLETED_LIST_STYLE_KEY =
-            stringPreferencesKey("anime_completed_list_style")
-        private val ANIME_PAUSED_LIST_STYLE_KEY = stringPreferencesKey("anime_paused_list_style")
-        private val ANIME_DROPPED_LIST_STYLE_KEY = stringPreferencesKey("anime_dropped_list_style")
-        private val MANGA_CURRENT_LIST_STYLE_KEY = stringPreferencesKey("manga_current_list_style")
-        private val MANGA_PLANNED_LIST_STYLE_KEY = stringPreferencesKey("manga_planned_list_style")
-        private val MANGA_COMPLETED_LIST_STYLE_KEY =
-            stringPreferencesKey("manga_completed_list_style")
-        private val MANGA_PAUSED_LIST_STYLE_KEY = stringPreferencesKey("manga_paused_list_style")
-        private val MANGA_DROPPED_LIST_STYLE_KEY = stringPreferencesKey("manga_dropped_list_style")
     }
 }

@@ -2,38 +2,27 @@ package com.axiel7.moelist.ui.more.about
 
 import android.content.Intent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Api
-import androidx.compose.material.icons.rounded.BugReport
-import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.Explore
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.Gavel
-import androidx.compose.material.icons.rounded.NewReleases
-import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material.icons.rounded.PlaylistAdd
-import androidx.compose.material.icons.rounded.Verified
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -42,19 +31,35 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.axiel7.moelist.BuildConfig
 import com.axiel7.moelist.R
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
-import com.axiel7.moelist.ui.composables.DefaultScaffoldWithTopAppBar
 import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
-import com.axiel7.moelist.ui.composables.showSnackbarShort
+import com.axiel7.moelist.ui.composables.SnackbarType
+import com.axiel7.moelist.ui.composables.preferences.SettingsGroup
+import com.axiel7.moelist.ui.composables.preferences.SettingsNavItem
+import com.axiel7.moelist.ui.composables.preferences.SettingsScaffold
+import com.axiel7.moelist.ui.composables.preferences.SettingsSectionHeader
+import com.axiel7.moelist.ui.composables.showAppSnackbar
+import com.axiel7.moelist.ui.icons.Icons
+import com.axiel7.moelist.ui.icons.automirrored.rounded.PlaylistAdd
+import com.axiel7.moelist.ui.icons.rounded.Api
+import com.axiel7.moelist.ui.icons.rounded.BugReport
+import com.axiel7.moelist.ui.icons.rounded.CalendarMonth
+import com.axiel7.moelist.ui.icons.rounded.Explore
+import com.axiel7.moelist.ui.icons.rounded.Favorite
+import com.axiel7.moelist.ui.icons.rounded.Gavel
+import com.axiel7.moelist.ui.icons.rounded.NewReleases
+import com.axiel7.moelist.ui.icons.rounded.Palette
+import com.axiel7.moelist.ui.icons.rounded.Verified
 import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.utils.ContextExtensions.openAction
 import com.axiel7.moelist.utils.GITHUB_ISSUES_URL
@@ -65,6 +70,7 @@ import com.axiel7.moelist.utils.MOELIST_ORIGINAL_URL
 import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AboutView(navActionManager: NavActionManager) {
     val context = LocalContext.current
@@ -72,224 +78,219 @@ fun AboutView(navActionManager: NavActionManager) {
     val scope = rememberCoroutineScope()
     var versionClicks by remember { mutableIntStateOf(0) }
 
-    DefaultScaffoldWithTopAppBar(
+    SettingsScaffold(
         title = stringResource(R.string.about),
-        navigateBack = navActionManager::goBack,
-    ) { paddingValues ->
+        onBack = navActionManager::goBack,
+    ) {
+        // ── Hero ──────────────────────────────────────────────
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp),
+                .fillMaxWidth()
+                .padding(top = 12.dp, bottom = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-
-            // ── Hero ──────────────────────────────────────────────
-            Column(
+            // Logo in an M3 Expressive scalloped shape (same family as the profile avatar)
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 28.dp, bottom = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                    .size(112.dp)
+                    .clip(MaterialShapes.Cookie9Sided.toShape())
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center,
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = CircleShape,
-                        )
-                        .border(
-                            width = 3.dp,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-                            shape = CircleShape,
-                        ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_yumelist_logo),
-                        contentDescription = null,
-                        modifier = Modifier.size(56.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                AssistChip(
-                    onClick = {
-                        if (versionClicks >= 7) {
-                            scope.launch { snackbarHostState.showSnackbarShort("✧◝(⁰▿⁰)◜✧") }
-                            versionClicks = 0
-                        } else versionClicks++
-                    },
-                    label = {
-                        Text("${BuildConfig.VERSION_NAME} · ${stringResource(R.string.stable_release)}")
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Rounded.Verified,
-                            contentDescription = null,
-                            modifier = Modifier.size(AssistChipDefaults.IconSize),
-                        )
-                    },
+                Icon(
+                    painter = painterResource(R.drawable.ic_yumelist_logo),
+                    contentDescription = null,
+                    modifier = Modifier.size(60.dp),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
-
-            // ── Description card ──────────────────────────────────
-            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = stringResource(R.string.app_description),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
-                )
-            }
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // ── Core Highlights ───────────────────────────────────
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = stringResource(R.string.core_highlights),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+                text = stringResource(R.string.app_name),
+                style = MaterialTheme.typography.headlineMediumEmphasized,
             )
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Spacer(modifier = Modifier.height(8.dp))
+            AssistChip(
+                onClick = {
+                    if (versionClicks >= 7) {
+                        scope.launch { snackbarHostState.showAppSnackbar("✧◝(⁰▿⁰)◜✧", type = SnackbarType.INFO) }
+                        versionClicks = 0
+                    } else versionClicks++
+                },
+                label = {
+                    Text("${BuildConfig.VERSION_NAME} · ${stringResource(R.string.stable_release)}")
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Rounded.Verified,
+                        contentDescription = null,
+                        modifier = Modifier.size(AssistChipDefaults.IconSize),
+                    )
+                },
+                shape = CircleShape,
+            )
+        }
+
+        // ── Description ───────────────────────────────────────
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.surfaceContainer,
+        ) {
+            Text(
+                text = stringResource(R.string.app_description),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+            )
+        }
+
+        // ── Core Highlights ───────────────────────────────────
+        SettingsSectionHeader(stringResource(R.string.core_highlights))
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.height(IntrinsicSize.Max),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 AboutHighlightCard(
                     title = stringResource(R.string.highlight_track),
                     subtitle = stringResource(R.string.highlight_track_desc),
-                    icon = Icons.Rounded.PlaylistAdd,
-                    modifier = Modifier.weight(1f),
+                    icon = Icons.AutoMirrored.Rounded.PlaylistAdd,
+                    shape = MaterialShapes.Cookie4Sided.toShape(),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
                 )
                 AboutHighlightCard(
                     title = stringResource(R.string.highlight_seasonal),
                     subtitle = stringResource(R.string.highlight_seasonal_desc),
                     icon = Icons.Rounded.CalendarMonth,
-                    modifier = Modifier.weight(1f),
+                    shape = MaterialShapes.Flower.toShape(),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
                 )
             }
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.height(IntrinsicSize.Max),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 AboutHighlightCard(
                     title = stringResource(R.string.highlight_discover),
                     subtitle = stringResource(R.string.highlight_discover_desc),
                     icon = Icons.Rounded.Explore,
-                    modifier = Modifier.weight(1f),
+                    shape = MaterialShapes.Sunny.toShape(),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
                 )
                 AboutHighlightCard(
                     title = stringResource(R.string.highlight_themes),
                     subtitle = stringResource(R.string.highlight_themes_desc),
                     icon = Icons.Rounded.Palette,
-                    modifier = Modifier.weight(1f),
+                    shape = MaterialShapes.Clover4Leaf.toShape(),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
                 )
             }
+        }
 
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // ── Connect & Share ───────────────────────────────────
-            Text(
-                text = stringResource(R.string.connect_and_share),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+        // ── Connect & Share ───────────────────────────────────
+        SettingsSectionHeader(stringResource(R.string.connect_and_share))
+        SettingsGroup {
+            SettingsNavItem(
+                title = stringResource(R.string.github),
+                subtitle = stringResource(R.string.github_summary),
+                icon = painterResource(R.drawable.ic_github),
+                index = 0,
+                count = 3,
+                onClick = { context.openAction(GITHUB_REPO_URL) },
             )
-            Spacer(modifier = Modifier.height(12.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                AboutActionRow(
-                    title = stringResource(R.string.github),
-                    subtitle = stringResource(R.string.github_summary),
-                    icon = R.drawable.ic_github,
-                    onClick = { context.openAction(GITHUB_REPO_URL) },
-                )
-                AboutActionRow(
-                    title = stringResource(R.string.changelog),
-                    subtitle = stringResource(R.string.changelog_summary),
-                    icon = Icons.Rounded.NewReleases,
-                    onClick = { context.openAction(GITHUB_RELEASES_URL) },
-                )
-                AboutActionRow(
-                    title = stringResource(R.string.report_bug),
-                    subtitle = stringResource(R.string.report_bug_summary),
-                    icon = Icons.Rounded.BugReport,
-                    onClick = { context.openAction(GITHUB_ISSUES_URL) },
-                )
-            }
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // ── Credits ───────────────────────────────────────────
-            Text(
-                text = stringResource(R.string.credits),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+            SettingsNavItem(
+                title = stringResource(R.string.changelog),
+                subtitle = stringResource(R.string.changelog_summary),
+                icon = Icons.Rounded.NewReleases,
+                index = 1,
+                count = 3,
+                onClick = { context.openAction(GITHUB_RELEASES_URL) },
             )
-            Spacer(modifier = Modifier.height(12.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                AboutActionRow(
-                    title = stringResource(R.string.built_on_moelist),
-                    subtitle = stringResource(R.string.built_on_moelist_summary),
-                    icon = Icons.Rounded.Favorite,
-                    iconTint = MaterialTheme.colorScheme.error,
-                    onClick = { context.openAction(MOELIST_ORIGINAL_URL) },
-                )
-                AboutActionRow(
-                    title = stringResource(R.string.powered_by_mal),
-                    subtitle = stringResource(R.string.powered_by_mal_summary),
-                    icon = Icons.Rounded.Api,
-                    onClick = { context.openAction(MAL_API_DOCS_URL) },
-                )
-                AboutActionRow(
-                    title = stringResource(R.string.open_source_licenses),
-                    subtitle = stringResource(R.string.open_source_licenses_summary),
-                    icon = Icons.Rounded.Gavel,
-                    onClick = { context.startActivity(Intent(context, OssLicensesMenuActivity::class.java)) },
-                )
-            }
+            SettingsNavItem(
+                title = stringResource(R.string.report_bug),
+                subtitle = stringResource(R.string.report_bug_summary),
+                icon = Icons.Rounded.BugReport,
+                index = 2,
+                count = 3,
+                onClick = { context.openAction(GITHUB_ISSUES_URL) },
+            )
+        }
 
-            Spacer(modifier = Modifier.height(32.dp))
+        // ── Credits ───────────────────────────────────────────
+        SettingsSectionHeader(stringResource(R.string.credits))
+        SettingsGroup {
+            SettingsNavItem(
+                title = stringResource(R.string.built_on_moelist),
+                subtitle = stringResource(R.string.built_on_moelist_summary),
+                icon = rememberVectorPainter(Icons.Rounded.Favorite),
+                iconContainerColor = MaterialTheme.colorScheme.errorContainer,
+                iconContentColor = MaterialTheme.colorScheme.onErrorContainer,
+                index = 0,
+                count = 3,
+                onClick = { context.openAction(MOELIST_ORIGINAL_URL) },
+            )
+            SettingsNavItem(
+                title = stringResource(R.string.powered_by_mal),
+                subtitle = stringResource(R.string.powered_by_mal_summary),
+                icon = Icons.Rounded.Api,
+                index = 1,
+                count = 3,
+                onClick = { context.openAction(MAL_API_DOCS_URL) },
+            )
+            SettingsNavItem(
+                title = stringResource(R.string.open_source_licenses),
+                subtitle = stringResource(R.string.open_source_licenses_summary),
+                icon = Icons.Rounded.Gavel,
+                index = 2,
+                count = 3,
+                onClick = { context.startActivity(Intent(context, OssLicensesMenuActivity::class.java)) },
+            )
+        }
 
-            // ── Footer ────────────────────────────────────────────
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // ── Footer ────────────────────────────────────────────
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(
-                        text = "Made with",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Icon(
-                        imageVector = Icons.Rounded.Favorite,
-                        contentDescription = null,
-                        modifier = Modifier.size(12.dp),
-                        tint = MaterialTheme.colorScheme.error,
-                    )
-                    Text(
-                        text = "by Muhammed",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
                 Text(
-                    text = stringResource(R.string.copyright),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    text = stringResource(R.string.about_made_with),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Icon(
+                    imageVector = Icons.Rounded.Favorite,
+                    contentDescription = null,
+                    modifier = Modifier.size(12.dp),
+                    tint = MaterialTheme.colorScheme.error,
+                )
+                Text(
+                    text = stringResource(R.string.about_by_author),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            Text(
+                text = stringResource(R.string.copyright),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            )
         }
     }
 }
