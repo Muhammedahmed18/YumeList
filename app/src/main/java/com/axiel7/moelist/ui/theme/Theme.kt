@@ -3,7 +3,9 @@ package com.axiel7.moelist.ui.theme
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -13,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalContext
+import com.axiel7.moelist.ui.base.ColorPalette
 
 private val LightColors = lightColorScheme(
     primary = md_theme_light_primary,
@@ -89,63 +92,60 @@ private val DarkColors = darkColorScheme(
     surfaceContainerHighest = md_theme_dark_surfaceContainerHighest,
 )
 
+/**
+ * AMOLED variant: pure black background/surface. The surfaceContainer* roles are pulled
+ * towards black too, so cards, sheets and bars don't look like grey slabs on a black screen.
+ */
 private fun ColorScheme.toBlack() = this.copy(
     background = Color.Black,
     surface = Color.Black,
     surfaceVariant = surfaceVariant.copy(alpha = 0.4f).compositeOver(Color.Black),
+    surfaceContainerLowest = Color.Black,
+    surfaceContainerLow = surfaceContainerLow.copy(alpha = 0.5f).compositeOver(Color.Black),
+    surfaceContainer = surfaceContainer.copy(alpha = 0.6f).compositeOver(Color.Black),
+    surfaceContainerHigh = surfaceContainerHigh.copy(alpha = 0.7f).compositeOver(Color.Black),
+    surfaceContainerHighest = surfaceContainerHighest.copy(alpha = 0.8f).compositeOver(Color.Black),
 )
 
-private fun ColorScheme.toMonochrome(): ColorScheme {
-    return this.copy(
-        primary = onSurface,
-        onPrimary = surface,
-        primaryContainer = onSurface.copy(alpha = 0.12f).compositeOver(surface),
-        onPrimaryContainer = onSurface,
-        secondary = onSurfaceVariant,
-        onSecondary = surface,
-        secondaryContainer = onSurfaceVariant.copy(alpha = 0.12f).compositeOver(surface),
-        onSecondaryContainer = onSurfaceVariant,
-        tertiary = outline,
-        onTertiary = surface,
-        tertiaryContainer = outline.copy(alpha = 0.12f).compositeOver(surface),
-        onTertiaryContainer = outline,
-    )
-}
-
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MoeListTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
     useBlackColors: Boolean = false,
-    useMonochrome: Boolean = false,
+    colorPalette: ColorPalette = ColorPalette.DYNAMIC,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
-    val colorScheme = remember(dynamicColor, darkTheme, useBlackColors, useMonochrome) {
-        var scheme = when {
-            dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-                if (darkTheme) dynamicDarkColorScheme(context)
-                else dynamicLightColorScheme(context)
+    val colorScheme = remember(colorPalette, darkTheme, useBlackColors) {
+        var scheme = when (colorPalette) {
+            ColorPalette.DYNAMIC -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    if (darkTheme) dynamicDarkColorScheme(context)
+                    else dynamicLightColorScheme(context)
+                } else {
+                    if (darkTheme) DarkColors else LightColors
+                }
             }
-
-            darkTheme -> DarkColors
-            else -> LightColors
+            // YumeList's own palette (the dynamic switch is off)
+            ColorPalette.YUME -> if (darkTheme) DarkColors else LightColors
         }
 
-        if (darkTheme) {
-            if (useMonochrome) {
-                scheme = scheme.toMonochrome()
-            }
-            if (useBlackColors) {
-                scheme = scheme.toBlack()
-            }
+        if (darkTheme && useBlackColors) {
+            scheme = scheme.toBlack()
         }
         scheme
     }
 
-    MaterialTheme(
+    // Material 3 Expressive theme:
+    // - motionScheme: spring-based "expressive" motion used by every M3 component
+    //   (and available to our own animations via MaterialTheme.motionScheme)
+    // - shapes: our token scale, so built-in components match custom ones
+    // - typography: M3 scale + our bolder titles (includes the Emphasized styles)
+    MaterialExpressiveTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        motionScheme = MotionScheme.expressive(),
+        shapes = AppShapes,
+        typography = SystemTypography,
         content = content
     )
 }

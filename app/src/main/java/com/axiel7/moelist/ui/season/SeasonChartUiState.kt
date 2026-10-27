@@ -4,7 +4,6 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.axiel7.moelist.data.model.anime.AnimeSeasonal
-import com.axiel7.moelist.data.model.anime.SeasonType
 import com.axiel7.moelist.data.model.anime.StartSeason
 import com.axiel7.moelist.data.model.media.MediaFormat
 import com.axiel7.moelist.data.model.media.MediaSort
@@ -17,9 +16,12 @@ data class SeasonChartUiState(
     val sort: MediaSort = MediaSort.ANIME_NUM_USERS,
     val isNew: Boolean = true,
     val selectedFormat: MediaFormat? = null,
-    val seasonType: SeasonType? = SeasonType.CURRENT,
     val animes: SnapshotStateList<AnimeSeasonal> = mutableStateListOf(),
     val hideScore: Boolean = false,
+    /** Quick-add ("+" on a poster) in progress or just finished, by anime id. */
+    val quickAdd: Map<Int, QuickAddState> = emptyMap(),
+    /** Result of the last quick-add, shown once as a snackbar (then cleared). */
+    val quickAddResult: QuickAddResult? = null,
     override val nextPage: String? = null,
     override val loadMore: Boolean = true,
     override val isLoading: Boolean = true,
@@ -48,3 +50,9 @@ data class SeasonChartUiState(
         val years = ((SeasonCalendar.currentYear + 1) downTo BASE_YEAR).toList()
     }
 }
+
+/** State of the "+" button on a poster while adding it to Plan to Watch. */
+enum class QuickAddState { ADDING, ADDED }
+
+/** Outcome of a quick-add, for the snackbar. */
+data class QuickAddResult(val animeId: Int, val success: Boolean)

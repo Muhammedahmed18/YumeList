@@ -1,20 +1,19 @@
 package com.axiel7.moelist.ui.more.settings
 
 import android.os.Build
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.layout.Column
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -22,175 +21,133 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.dropUnlessResumed
+import androidx.lifecycle.repeatOnLifecycle
 import com.axiel7.moelist.R
-import com.axiel7.moelist.data.model.media.TitleLanguage
-import com.axiel7.moelist.ui.base.ItemsPerRow
-import com.axiel7.moelist.ui.base.ListStyle
-import com.axiel7.moelist.ui.base.StartTab
-import com.axiel7.moelist.ui.base.TabletMode
-import com.axiel7.moelist.ui.base.ThemeStyle
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
-import com.axiel7.moelist.ui.composables.DefaultScaffoldWithTopAppBar
-import com.axiel7.moelist.ui.composables.preferences.ListPreferenceView
-import com.axiel7.moelist.ui.composables.preferences.PlainPreferenceView
-import com.axiel7.moelist.ui.composables.preferences.SwitchPreferenceView
+import com.axiel7.moelist.ui.composables.preferences.SettingsGroup
+import com.axiel7.moelist.ui.composables.preferences.SettingsNavItem
+import com.axiel7.moelist.ui.composables.preferences.SettingsScaffold
+import com.axiel7.moelist.ui.composables.preferences.SettingsSectionHeader
+import com.axiel7.moelist.ui.icons.Icons
+import com.axiel7.moelist.ui.icons.rounded.Explore
+import com.axiel7.moelist.ui.icons.rounded.GridView
+import com.axiel7.moelist.ui.icons.rounded.OpenInBrowser
+import com.axiel7.moelist.ui.icons.rounded.Palette
+import com.axiel7.moelist.ui.icons.rounded.Tune
 import com.axiel7.moelist.ui.theme.MoeListTheme
+import com.axiel7.moelist.utils.ContextExtensions.isMalLinkHandlingEnabled
 import com.axiel7.moelist.utils.ContextExtensions.openByDefaultSettings
-import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SettingsView(
     navActionManager: NavActionManager
 ) {
-    val viewModel: SettingsViewModel = koinViewModel()
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    SettingsViewContent(
-        uiState = uiState,
-        event = viewModel,
-        navActionManager = navActionManager,
-    )
+    SettingsViewContent(navActionManager = navActionManager)
 }
 
 @Composable
 private fun SettingsViewContent(
-    uiState: SettingsUiState,
-    event: SettingsEvent?,
     navActionManager: NavActionManager
 ) {
-    val context = LocalContext.current
-
-    DefaultScaffoldWithTopAppBar(
+    SettingsScaffold(
         title = stringResource(R.string.settings),
-        navigateBack = navActionManager::goBack
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .padding(padding)
-        ) {
-            SettingsTitle(text = stringResource(R.string.display))
-
-            ListPreferenceView(
-                title = stringResource(R.string.theme),
-                entriesValues = ThemeStyle.entriesLocalized,
-                value = uiState.theme,
-                icon = R.drawable.ic_round_color_lens_24,
-                onValueChange = { event?.setTheme(it) }
+        onBack = navActionManager::goBack,
+    ) {
+        SettingsGroup {
+            SettingsNavItem(
+                title = stringResource(R.string.appearance),
+                subtitle = stringResource(R.string.settings_appearance_hint),
+                icon = Icons.Rounded.Palette,
+                index = 0,
+                count = 4,
+                onClick = dropUnlessResumed { navActionManager.toAppearance() },
             )
-
-            SwitchPreferenceView(
-                title = stringResource(R.string.black_theme_variant),
-                value = uiState.useBlackColors,
-                onValueChange = { event?.setUseBlackColors(it) }
+            SettingsNavItem(
+                title = stringResource(R.string.navigation),
+                subtitle = stringResource(R.string.settings_navigation_hint),
+                icon = Icons.Rounded.Explore,
+                index = 1,
+                count = 4,
+                onClick = dropUnlessResumed { navActionManager.toNavigationSettings() },
             )
-
-            AnimatedVisibility(
-                visible = uiState.useBlackColors,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
-            ) {
-                SwitchPreferenceView(
-                    title = stringResource(R.string.monochrome_theme),
-                    value = uiState.useMonochrome,
-                    onValueChange = { event?.setUseMonochrome(it) }
-                )
-            }
-
-            ListPreferenceView(
-                title = stringResource(R.string.title_language),
-                entriesValues = TitleLanguage.entriesLocalized,
-                value = uiState.titleLanguage,
-                icon = R.drawable.round_title_24,
-                onValueChange = { event?.setTitleLanguage(it) }
+            SettingsNavItem(
+                title = stringResource(R.string.media_lists),
+                subtitle = stringResource(R.string.settings_media_lists_hint),
+                icon = Icons.Rounded.GridView,
+                index = 2,
+                count = 4,
+                onClick = dropUnlessResumed { navActionManager.toListStyleSettings() },
             )
-
-            ListPreferenceView(
-                title = stringResource(R.string.default_section),
-                entriesValues = StartTab.entriesLocalized,
-                value = uiState.startTab,
-                icon = R.drawable.ic_round_home_24,
-                onValueChange = { event?.setStartTab(it) }
+            SettingsNavItem(
+                title = stringResource(R.string.content),
+                subtitle = stringResource(R.string.settings_content_hint),
+                icon = Icons.Rounded.Tune,
+                index = 3,
+                count = 4,
+                onClick = dropUnlessResumed { navActionManager.toContentSettings() },
             )
-
-            SwitchPreferenceView(
-                title = stringResource(R.string.pinned_navigation_bar),
-                value = uiState.pinnedNavBar,
-                onValueChange = { event?.setPinnedNavBar(it) }
-            )
-
-            ListPreferenceView(
-                title = stringResource(R.string.tablet_mode),
-                entriesValues = TabletMode.entriesLocalized,
-                value = uiState.tabletMode,
-                icon = R.drawable.tablet_android_24,
-                onValueChange = { event?.setTabletMode(it) }
-            )
-
-            SwitchPreferenceView(
-                title = stringResource(R.string.use_separated_list_styles),
-                value = !uiState.useGeneralListStyle,
-                onValueChange = { event?.setUseGeneralListStyle(!it) }
-            )
-
-            if (uiState.useGeneralListStyle) {
-                ListPreferenceView(
-                    title = stringResource(R.string.list_style),
-                    entriesValues = ListStyle.entriesLocalized,
-                    value = uiState.generalListStyle,
-                    icon = R.drawable.round_format_list_bulleted_24,
-                    onValueChange = { event?.setGeneralListStyle(it) }
-                )
-            } else {
-                PlainPreferenceView(
-                    title = stringResource(R.string.list_style),
-                    icon = R.drawable.round_format_list_bulleted_24,
-                    onClick = dropUnlessResumed { navActionManager.toListStyleSettings() }
-                )
-            }
-
-            if (uiState.generalListStyle == ListStyle.GRID || !uiState.useGeneralListStyle) {
-                ListPreferenceView(
-                    title = stringResource(R.string.items_per_row),
-                    entriesValues = ItemsPerRow.entriesLocalized,
-                    value = uiState.itemsPerRow,
-                    icon = R.drawable.round_grid_view_24,
-                    onValueChange = { event?.setItemsPerRow(it) }
-                )
-            }
-
-            SettingsTitle(text = stringResource(R.string.content))
-
-            SwitchPreferenceView(
-                title = stringResource(R.string.show_nsfw),
-                subtitle = stringResource(R.string.nsfw_summary),
-                value = uiState.showNsfw,
-                icon = R.drawable.no_adult_content_24,
-                onValueChange = { event?.setShowNsfw(it) }
-            )
-
-            SwitchPreferenceView(
-                title = stringResource(R.string.hide_scores),
-                value = uiState.hideScores,
-                icon = R.drawable.ic_round_details_star_24,
-                onValueChange = { event?.setHideScores(it) }
-            )
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                PlainPreferenceView(
-                    title = stringResource(R.string.open_mal_links_in_the_app),
-                    icon = R.drawable.ic_open_in_browser,
-                    onClick = {
-                        context.openByDefaultSettings()
-                    }
-                )
-            }
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            SettingsSectionHeader(text = stringResource(R.string.app_integration))
+            AppIntegrationItem()
+        }
+        Spacer(Modifier.height(8.dp))
     }
 }
 
+// ── App Integration ───────────────────────────────────────────────────────────
+
+/**
+ * "Open MAL links in the app" as a grouped item with a status badge. Tapping it opens the
+ * system "Open by default" page. The status is re-checked every time the screen resumes, so it
+ * updates after coming back from the system settings (it used to stay stale until reopened).
+ */
+@RequiresApi(Build.VERSION_CODES.S)
+@Composable
+private fun AppIntegrationItem() {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var isActive by remember { mutableStateOf(context.isMalLinkHandlingEnabled()) }
+
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            isActive = context.isMalLinkHandlingEnabled()
+        }
+    }
+
+    SettingsGroup {
+        SettingsNavItem(
+            title = stringResource(R.string.open_mal_links_in_the_app),
+            icon = Icons.Rounded.OpenInBrowser,
+            index = 0,
+            count = 1,
+            onClick = { context.openByDefaultSettings() },
+            trailingContent = {
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = if (isActive) MaterialTheme.colorScheme.primaryContainer
+                    else MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = if (isActive) MaterialTheme.colorScheme.onPrimaryContainer
+                    else MaterialTheme.colorScheme.onTertiaryContainer,
+                ) {
+                    Text(
+                        text = stringResource(
+                            if (isActive) R.string.app_integration_active
+                            else R.string.app_integration_not_set_up
+                        ),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelSmallEmphasized,
+                    )
+                }
+            },
+        )
+    }
+}
+
+// Used by CreditsView
 @Composable
 fun SettingsTitle(text: String) {
     Text(
@@ -199,7 +156,7 @@ fun SettingsTitle(text: String) {
             .padding(start = 72.dp, top = 16.dp, end = 16.dp, bottom = 8.dp),
         color = MaterialTheme.colorScheme.secondary,
         fontSize = 13.sp,
-        fontWeight = FontWeight.SemiBold
+        fontWeight = FontWeight.SemiBold,
     )
 }
 
@@ -207,12 +164,8 @@ fun SettingsTitle(text: String) {
 @Composable
 fun SettingsPreview() {
     MoeListTheme {
-        Surface {
-            SettingsViewContent(
-                uiState = SettingsUiState(),
-                event = null,
-                navActionManager = NavActionManager.rememberNavActionManager()
-            )
-        }
+        SettingsViewContent(
+            navActionManager = NavActionManager.rememberNavActionManager()
+        )
     }
 }

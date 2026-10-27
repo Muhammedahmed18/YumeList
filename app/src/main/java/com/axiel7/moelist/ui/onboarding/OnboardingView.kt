@@ -1,48 +1,128 @@
 package com.axiel7.moelist.ui.onboarding
 
-import androidx.compose.animation.*
+import androidx.activity.BackEventCompat
+import androidx.activity.compose.PredictiveBackHandler
+import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ContainedLoadingIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedListItem
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.toShape
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.graphics.shapes.Morph
+import androidx.graphics.shapes.RoundedPolygon
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.axiel7.moelist.R
 import com.axiel7.moelist.ui.base.ThemeStyle
+import com.axiel7.moelist.ui.composables.preferences.SettingsChoiceCard
+import com.axiel7.moelist.ui.composables.preferences.SettingsGroup
+import com.axiel7.moelist.ui.composables.preferences.SettingsIcon
+import com.axiel7.moelist.ui.composables.preferences.SettingsSwitchItem
+import com.axiel7.moelist.ui.composables.preferences.ThemeMiniPreview
+import com.axiel7.moelist.ui.composables.preferences.icon
+import com.axiel7.moelist.ui.composables.preferences.settingsItemColors
+import com.axiel7.moelist.ui.icons.Icons
+import com.axiel7.moelist.ui.icons.automirrored.rounded.PlaylistAdd
+import com.axiel7.moelist.ui.icons.rounded.Contrast
+import com.axiel7.moelist.ui.icons.rounded.Explore
+import com.axiel7.moelist.ui.icons.rounded.Palette
+import com.axiel7.moelist.ui.icons.rounded.Person
+import com.axiel7.moelist.ui.login.LoginButton
 import com.axiel7.moelist.ui.login.openLoginUrl
 import com.axiel7.moelist.ui.main.MainViewModel
 import com.axiel7.moelist.ui.main.SessionStatus
 import com.axiel7.moelist.ui.theme.MoeListTheme
+import com.axiel7.moelist.ui.theme.Motion
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+private const val STEP_COUNT = 3
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun OnboardingView(
     viewModel: MainViewModel,
@@ -54,14 +134,14 @@ fun OnboardingView(
 
     // Use -1 as a pending state to avoid defaulting to step 1 while loading
     var currentStep by rememberSaveable { mutableIntStateOf(-1) }
+    // True while the login link is being prepared, so the button can't be tapped twice
+    var isOpeningLogin by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
     val theme by viewModel.theme.collectAsState()
-    val useBlackColors by viewModel.useBlackColors.collectAsState(false)
-    val useMonochrome by viewModel.useMonochrome.collectAsState(false)
-    
+    val pureBlack by viewModel.pureBlack.collectAsState()
     val profilePicture by viewModel.profilePicture.collectAsState()
     val username by viewModel.username.collectAsState()
 
@@ -79,34 +159,62 @@ fun OnboardingView(
         }
     }
 
+    // ── Predictive back between steps ──
+    // The gesture drives the content's scale/offset live; releasing commits to the previous
+    // step, cancelling springs back. Without this, system back would leave onboarding entirely.
+    val backProgress = remember { Animatable(0f) }
+    var backSwipeEdge by remember { mutableIntStateOf(BackEventCompat.EDGE_LEFT) }
+    val backSettleSpec = Motion.spatial<Float>()
+    val canGoBack = currentStep > 1 && !isLoggedIn && !isLoggingIn
+
+    PredictiveBackHandler(enabled = canGoBack) { events ->
+        try {
+            events.collect { event ->
+                backSwipeEdge = event.swipeEdge
+                backProgress.snapTo(event.progress)
+            }
+            currentStep -= 1
+            scope.launch { backProgress.animateTo(0f, backSettleSpec) }
+        } catch (e: CancellationException) {
+            scope.launch { backProgress.animateTo(0f, backSettleSpec) }
+            throw e
+        }
+    }
+
     if (currentStep == -1 || (isLoggingIn && currentStep != 3)) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator()
+            ContainedLoadingIndicator(modifier = Modifier.size(96.dp))
         }
     } else {
         OnboardingContent(
             currentStep = currentStep,
             isLoggedIn = isLoggedIn,
             isLoggingIn = isLoggingIn,
+            isOpeningLogin = isOpeningLogin,
             theme = theme,
-            useBlackColors = useBlackColors,
-            useMonochrome = useMonochrome,
             profilePicture = profilePicture,
             username = username,
             onStepChange = { currentStep = it },
             onThemeChange = viewModel::setTheme,
-            onBlackColorsChange = viewModel::setUseBlackColors,
-            onMonochromeChange = viewModel::setUseMonochrome,
+            pureBlack = pureBlack,
+            onPureBlackChange = viewModel::setPureBlack,
             onLoginClick = {
+                isOpeningLogin = true
                 scope.launch {
-                    val url = viewModel.generateLoginUrl()
-                    context.openLoginUrl(url, false)
+                    try {
+                        val url = viewModel.generateLoginUrl()
+                        context.openLoginUrl(url, false)
+                    } finally {
+                        isOpeningLogin = false
+                    }
                 }
             },
-            onFinished = onFinished
+            onFinished = onFinished,
+            backProgress = { backProgress.value },
+            backSwipeEdge = backSwipeEdge,
         )
     }
 }
@@ -117,116 +225,446 @@ fun OnboardingContent(
     isLoggedIn: Boolean,
     isLoggingIn: Boolean,
     theme: ThemeStyle,
-    useBlackColors: Boolean,
-    useMonochrome: Boolean,
     profilePicture: String?,
     username: String?,
     onStepChange: (Int) -> Unit,
     onThemeChange: (ThemeStyle) -> Unit,
-    onBlackColorsChange: (Boolean) -> Unit,
-    onMonochromeChange: (Boolean) -> Unit,
     onLoginClick: () -> Unit,
-    onFinished: () -> Unit
+    onFinished: () -> Unit,
+    isOpeningLogin: Boolean = false,
+    pureBlack: Boolean = false,
+    onPureBlackChange: (Boolean) -> Unit = {},
+    backProgress: () -> Float = { 0f },
+    backSwipeEdge: Int = BackEventCompat.EDGE_LEFT,
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Scaffold(
-            bottomBar = {
-                BottomAppBar(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentPadding = PaddingValues(horizontal = 16.dp)
-                ) {
-                    Spacer(modifier = Modifier.weight(1f))
-                    
-                    if (currentStep < 3) {
-                        FilledIconButton(
-                            onClick = { onStepChange(currentStep + 1) },
-                            modifier = Modifier.size(56.dp),
-                            shape = CircleShape,
-                            colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
-                            )
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_round_arrow_forward_24),
-                                contentDescription = "Next",
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
-                    } else {
-                        Button(
-                            onClick = onFinished,
-                            modifier = Modifier.height(56.dp),
-                            shape = CircleShape,
-                            contentPadding = PaddingValues(horizontal = 24.dp),
-                            enabled = !isLoggingIn
-                        ) {
-                            Text(if (isLoggedIn) "Finished" else "Skip")
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Icon(
-                                painter = painterResource(
-                                    if (isLoggedIn) R.drawable.round_check_24 else R.drawable.ic_round_arrow_forward_24
-                                ),
-                                contentDescription = null
-                            )
-                        }
-                    }
+    // Read here: AnimatedContent's transitionSpec isn't @Composable
+    val slideSpec = Motion.spatial<IntOffset>()
+    val fadeSpec = Motion.effects<Float>()
+    val sizeSpec = Motion.spatial<IntSize>()
+
+    Scaffold(
+        bottomBar = {
+            OnboardingBottomBar(
+                currentStep = currentStep,
+                showBack = currentStep > 1 && !isLoggedIn && !isLoggingIn,
+                isLoggedIn = isLoggedIn,
+                isLoggingIn = isLoggingIn,
+                onBack = { onStepChange(currentStep - 1) },
+                onNext = { onStepChange(currentStep + 1) },
+                onFinished = onFinished,
+            )
+        }
+    ) { padding ->
+        StepColumn(
+            modifier = Modifier
+                .padding(padding)
+                .graphicsLayer {
+                    // Predictive back: shrink slightly and follow the finger
+                    val progress = backProgress()
+                    val scale = 1f - 0.08f * progress
+                    scaleX = scale
+                    scaleY = scale
+                    val direction = if (backSwipeEdge == BackEventCompat.EDGE_LEFT) 1f else -1f
+                    translationX = direction * 24.dp.toPx() * progress
                 }
-            }
-        ) { padding ->
+        ) {
+            // One hero that stays on screen and morphs between steps
+            OnboardingHero(
+                step = currentStep,
+                isLoggedIn = isLoggedIn,
+                isLoggingIn = isLoggingIn,
+                profilePicture = profilePicture,
+                modifier = Modifier.revealOnEnter(0)
+            )
+
+            Spacer(modifier = Modifier.height(28.dp))
+
             AnimatedContent(
                 targetState = currentStep,
                 transitionSpec = {
-                    if (targetState > initialState) {
-                        slideInHorizontally { it } + fadeIn() togetherWith
-                                slideOutHorizontally { -it } + fadeOut()
-                    } else {
-                        slideInHorizontally { -it } + fadeIn() togetherWith
-                                slideOutHorizontally { it } + fadeOut()
-                    }
+                    // M3 shared-axis: a short slide (a third of the width) plus a crossfade.
+                    // The size springs too, so the hero glides as the content height changes.
+                    val direction = if (targetState > initialState) 1 else -1
+                    ((slideInHorizontally(slideSpec) { it * direction / 3 } + fadeIn(fadeSpec)) togetherWith
+                        (slideOutHorizontally(slideSpec) { -it * direction / 3 } + fadeOut(fadeSpec)))
+                        .using(SizeTransform(clip = false) { _, _ -> sizeSpec })
                 },
+                contentAlignment = Alignment.TopCenter,
                 label = "onboarding_step"
             ) { step ->
                 when (step) {
-                    1 -> WelcomeStep(
-                        modifier = Modifier.padding(padding)
-                    )
+                    1 -> WelcomeStep()
                     2 -> AppearanceStep(
-                        modifier = Modifier.padding(padding),
                         theme = theme,
-                        useBlackColors = useBlackColors,
-                        useMonochrome = useMonochrome,
                         onThemeChange = onThemeChange,
-                        onBlackColorsChange = onBlackColorsChange,
-                        onMonochromeChange = onMonochromeChange
+                        pureBlack = pureBlack,
+                        onPureBlackChange = onPureBlackChange,
                     )
                     3 -> LoginStep(
-                        modifier = Modifier.padding(padding),
                         isLoggedIn = isLoggedIn,
                         isLoggingIn = isLoggingIn,
-                        profilePicture = profilePicture,
+                        isOpeningLogin = isOpeningLogin,
                         username = username,
                         onLoginClick = onLoginClick
                     )
                 }
             }
         }
+    }
+}
 
-        if (currentStep > 1 && !isLoggedIn && !isLoggingIn) {
+// ── Hero ──────────────────────────────────────────────────────────────────────
+
+private enum class HeroContent { LOGO, PALETTE, PERSON, AVATAR }
+private enum class HeroBadge { NONE, LOADING, DONE }
+
+/**
+ * The persistent hero above every step. Its container morphs Cookie9 → Sunny → Cookie12,
+ * spins a little on each change, and resizes/recolours with springs. The content inside stays
+ * upright (counter-rotated) and crossfades: logo, palette, person, then the user's avatar.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun OnboardingHero(
+    step: Int,
+    isLoggedIn: Boolean,
+    isLoggingIn: Boolean,
+    profilePicture: String?,
+    modifier: Modifier = Modifier,
+) {
+    val colors = MaterialTheme.colorScheme
+    val polygons = remember {
+        listOf(
+            MaterialShapes.Cookie9Sided,
+            MaterialShapes.Sunny,
+            MaterialShapes.Cookie12Sided,
+        ).map { it.normalized() }
+    }
+    val shape = rememberMorphingShape(polygons, (step - 1).coerceIn(0, polygons.lastIndex))
+
+    val inResult = step == STEP_COUNT && (isLoggedIn || isLoggingIn)
+    val content = when {
+        step == 1 -> HeroContent.LOGO
+        step == 2 -> HeroContent.PALETTE
+        isLoggedIn && profilePicture != null -> HeroContent.AVATAR
+        else -> HeroContent.PERSON
+    }
+    val badge = when {
+        step != STEP_COUNT -> HeroBadge.NONE
+        isLoggedIn -> HeroBadge.DONE
+        isLoggingIn -> HeroBadge.LOADING
+        else -> HeroBadge.NONE
+    }
+
+    val size by animateDpAsState(
+        targetValue = when {
+            step == 1 -> 120.dp
+            step == 2 -> 112.dp
+            inResult -> 144.dp
+            else -> 104.dp
+        },
+        animationSpec = Motion.spatial(),
+        label = "heroSize"
+    )
+    val containerColor by animateColorAsState(
+        targetValue = when {
+            step == 1 -> colors.primary
+            step == 2 -> colors.tertiaryContainer
+            inResult -> colors.primaryContainer
+            else -> colors.secondaryContainer
+        },
+        animationSpec = Motion.effects(),
+        label = "heroColor"
+    )
+    // Animate the colour rather than the width: a 0.dp border still draws a hairline
+    val borderColor by animateColorAsState(
+        targetValue = if (inResult) colors.primary else Color.Transparent,
+        animationSpec = Motion.effects(),
+        label = "heroBorder"
+    )
+    val rotation by animateFloatAsState(
+        targetValue = (step - 1) * 120f,
+        animationSpec = Motion.spatial(),
+        label = "heroRotation"
+    )
+    val fadeSpec = Motion.effects<Float>()
+    val scaleSpec = Motion.spatial<Float>()
+
+    Box(modifier = modifier.size(size)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer { rotationZ = rotation }
+                .clip(shape)
+                .background(containerColor)
+                .border(4.dp, borderColor, shape),
+            contentAlignment = Alignment.Center
+        ) {
+            AnimatedContent(
+                targetState = content,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { rotationZ = -rotation },
+                contentAlignment = Alignment.Center,
+                transitionSpec = {
+                    (fadeIn(fadeSpec) + scaleIn(scaleSpec, initialScale = 0.8f)) togetherWith fadeOut(fadeSpec)
+                },
+                label = "heroContent"
+            ) { heroContent ->
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    when (heroContent) {
+                        HeroContent.LOGO -> Image(
+                            painter = painterResource(R.drawable.ic_yumelist_logo),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(26.dp)
+                        )
+                        HeroContent.PALETTE -> Icon(
+                            imageVector = Icons.Rounded.Palette,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = colors.onTertiaryContainer
+                        )
+                        HeroContent.PERSON -> Icon(
+                            imageVector = Icons.Rounded.Person,
+                            contentDescription = null,
+                            modifier = Modifier.size(if (inResult) 64.dp else 52.dp),
+                            tint = if (inResult) colors.onPrimaryContainer.copy(alpha = 0.6f)
+                            else colors.onSecondaryContainer
+                        )
+                        HeroContent.AVATAR -> AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(profilePicture)
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop,
+                            placeholder = painterResource(R.drawable.ic_round_person_24),
+                            error = painterResource(R.drawable.ic_round_person_24)
+                        )
+                    }
+                }
+            }
+        }
+
+        AnimatedVisibility(
+            visible = badge != HeroBadge.NONE,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .offset(x = (-4).dp, y = (-4).dp),
+            enter = scaleIn(scaleSpec) + fadeIn(fadeSpec),
+            exit = scaleOut(scaleSpec) + fadeOut(fadeSpec),
+        ) {
             Surface(
-                modifier = Modifier.statusBarsPadding()
-                    .padding(16.dp)
-                    .size(48.dp)
-                    .align(Alignment.TopStart),
+                color = colors.primary,
+                contentColor = colors.onPrimary,
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-                onClick = { onStepChange(currentStep - 1) }
+                modifier = Modifier.size(44.dp)
             ) {
-                Box(contentAlignment = Alignment.Center) {
+                AnimatedContent(
+                    targetState = badge == HeroBadge.DONE,
+                    contentAlignment = Alignment.Center,
+                    transitionSpec = {
+                        (fadeIn(fadeSpec) + scaleIn(scaleSpec, initialScale = 0.6f)) togetherWith fadeOut(fadeSpec)
+                    },
+                    label = "heroBadge"
+                ) { done ->
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        if (done) {
+                            Icon(
+                                painter = painterResource(R.drawable.round_check_24),
+                                contentDescription = null,
+                            )
+                        } else {
+                            LoadingIndicator(
+                                modifier = Modifier.size(32.dp),
+                                color = colors.onPrimary
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Springs between [polygons] whenever [index] changes. If a new target arrives mid-morph,
+ * it continues from whichever end it was closer to.
+ */
+@Composable
+private fun rememberMorphingShape(polygons: List<RoundedPolygon>, index: Int): Shape {
+    var fromIndex by remember { mutableIntStateOf(index) }
+    var toIndex by remember { mutableIntStateOf(index) }
+    val progress = remember { Animatable(1f) }
+    val spec = Motion.spatial<Float>()
+
+    LaunchedEffect(index) {
+        if (index != toIndex) {
+            fromIndex = if (progress.value >= 0.5f) toIndex else fromIndex
+            toIndex = index
+            progress.snapTo(0f)
+            progress.animateTo(1f, spec)
+        }
+    }
+
+    val morph = remember(fromIndex, toIndex) { Morph(polygons[fromIndex], polygons[toIndex]) }
+    // A new Shape per frame so clip/border pick up the outline change; the spring's overshoot
+    // is left to size and rotation, so the outline itself never over-extrapolates.
+    return MorphShape(morph, progress.value.coerceIn(0f, 1f))
+}
+
+/** A [Morph] at a fixed [progress], scaled from its normalized 0..1 bounds to the layout size. */
+private class MorphShape(
+    private val morph: Morph,
+    private val progress: Float,
+) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val path = Path()
+        val cubics = morph.asCubics(progress)
+        if (cubics.isNotEmpty()) {
+            val w = size.width
+            val h = size.height
+            path.moveTo(cubics.first().anchor0X * w, cubics.first().anchor0Y * h)
+            for (cubic in cubics) {
+                path.cubicTo(
+                    cubic.control0X * w, cubic.control0Y * h,
+                    cubic.control1X * w, cubic.control1Y * h,
+                    cubic.anchor1X * w, cubic.anchor1Y * h,
+                )
+            }
+            path.close()
+        }
+        return Outline.Generic(path)
+    }
+}
+
+// ── Bottom bar ────────────────────────────────────────────────────────────────
+
+private enum class PrimaryAction { NEXT, SKIP, FINISH }
+
+/** Back (text button) · step indicator · one primary button that grows from Next into Finish / Skip. */
+@Composable
+private fun OnboardingBottomBar(
+    currentStep: Int,
+    showBack: Boolean,
+    isLoggedIn: Boolean,
+    isLoggingIn: Boolean,
+    onBack: () -> Unit,
+    onNext: () -> Unit,
+    onFinished: () -> Unit,
+) {
+    val fadeSpec = Motion.effects<Float>()
+    val isLastStep = currentStep >= STEP_COUNT
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier.weight(1f),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            // Fully qualified: inside Row { Box { } } the RowScope overload is picked otherwise,
+            // and Compose's scope marker forbids using the outer Row's receiver here
+            androidx.compose.animation.AnimatedVisibility(
+                visible = showBack,
+                enter = fadeIn(fadeSpec),
+                exit = fadeOut(fadeSpec),
+            ) {
+                TextButton(onClick = onBack, shapes = ButtonDefaults.shapes()) {
+                    Text(text = stringResource(R.string.back))
+                }
+            }
+        }
+
+        StepIndicator(currentStep = currentStep)
+
+        Box(
+            modifier = Modifier.weight(1f),
+            contentAlignment = Alignment.CenterEnd
+        ) {
+            OnboardingPrimaryButton(
+                action = when {
+                    !isLastStep -> PrimaryAction.NEXT
+                    isLoggedIn -> PrimaryAction.FINISH
+                    else -> PrimaryAction.SKIP
+                },
+                enabled = !(isLastStep && isLoggingIn),
+                onClick = if (isLastStep) onFinished else onNext,
+            )
+        }
+    }
+}
+
+/**
+ * A single button: a round arrow on steps 1–2 that springs wider into a labelled pill on the
+ * last step. The pill shape plus press squish come from [ButtonDefaults.shapes]; the size comes
+ * from the medium button tokens instead of hard-coded dp.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun OnboardingPrimaryButton(
+    action: PrimaryAction,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val height = ButtonDefaults.MediumContainerHeight
+    val fadeSpec = Motion.effects<Float>()
+    val sizeSpec = Motion.spatial<IntSize>()
+
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        shapes = ButtonDefaults.shapes(),
+        // A non-zero min width also skips Button's own 58dp minimum, so Next is a true circle
+        modifier = Modifier
+            .height(height)
+            .widthIn(min = height),
+        contentPadding = PaddingValues(0.dp),
+    ) {
+        AnimatedContent(
+            targetState = action,
+            contentAlignment = Alignment.Center,
+            transitionSpec = {
+                (fadeIn(fadeSpec) togetherWith fadeOut(fadeSpec))
+                    .using(SizeTransform { _, _ -> sizeSpec })
+            },
+            label = "primaryAction"
+        ) { target ->
+            if (target == PrimaryAction.NEXT) {
+                Box(modifier = Modifier.size(height), contentAlignment = Alignment.Center) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_arrow_back),
-                        contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        painter = painterResource(R.drawable.ic_round_arrow_forward_24),
+                        contentDescription = stringResource(R.string.onboarding_next),
+                        modifier = Modifier.size(ButtonDefaults.iconSizeFor(height))
+                    )
+                }
+            } else {
+                Row(
+                    modifier = Modifier.padding(ButtonDefaults.contentPaddingFor(height, hasEndIcon = true)),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(
+                            if (target == PrimaryAction.FINISH) R.string.finished else R.string.skip
+                        ),
+                        style = ButtonDefaults.textStyleFor(height),
+                        maxLines = 1,
+                    )
+                    Spacer(modifier = Modifier.width(ButtonDefaults.iconSpacingFor(height)))
+                    Icon(
+                        painter = painterResource(
+                            if (target == PrimaryAction.FINISH) R.drawable.round_check_24
+                            else R.drawable.ic_round_arrow_forward_24
+                        ),
+                        contentDescription = null,
+                        modifier = Modifier.size(ButtonDefaults.iconSizeFor(height))
                     )
                 }
             }
@@ -234,693 +672,473 @@ fun OnboardingContent(
     }
 }
 
+/** Three dots; the current step stretches into a pill (expressive spring). */
 @Composable
-fun WelcomeStep(
-    modifier: Modifier = Modifier
-) {
-    var show by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { show = true }
+private fun StepIndicator(currentStep: Int) {
+    val stepDescription = stringResource(R.string.onboarding_step, currentStep, STEP_COUNT)
+    Row(
+        modifier = Modifier.clearAndSetSemantics {
+            contentDescription = stepDescription
+        },
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        for (step in 1..STEP_COUNT) {
+            val selected = step == currentStep
+            val width by animateDpAsState(
+                targetValue = if (selected) 24.dp else 8.dp,
+                animationSpec = Motion.fastSpatial(),
+                label = "stepWidth"
+            )
+            val color by animateColorAsState(
+                targetValue = if (selected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.outlineVariant,
+                animationSpec = Motion.fastEffects(),
+                label = "stepColor"
+            )
+            Box(
+                modifier = Modifier
+                    .size(width = width, height = 8.dp)
+                    .clip(CircleShape)
+                    .background(color)
+            )
+        }
+    }
+}
 
-    Column(
+// ── Shared bits ───────────────────────────────────────────────────────────────
+
+/**
+ * Fades and lifts the element in with an expressive spring, [index] steps after the screen
+ * appears. Done in the draw phase, so the layout never shifts while things appear.
+ */
+@Composable
+private fun Modifier.revealOnEnter(index: Int): Modifier {
+    val progress = remember { Animatable(0f) }
+    val spec = Motion.spatial<Float>()
+    LaunchedEffect(Unit) {
+        delay(index * 70L)
+        progress.animateTo(1f, spec)
+    }
+    return graphicsLayer {
+        alpha = progress.value.coerceIn(0f, 1f)
+        translationY = (1f - progress.value) * 24.dp.toPx()
+    }
+}
+
+/** Scrollable, centred column holding the hero and the current step, capped in width for tablets. */
+@Composable
+private fun StepColumn(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Box(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        AnimatedVisibility(
-            visible = show,
-            enter = fadeIn(tween(600)) + slideInVertically(tween(600)) { -40 }
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Surface(
-                    modifier = Modifier.size(120.dp),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary
-                ) {
-                    Image(
-                        painter = painterResource(R.drawable.ic_yumelist_logo),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .padding(24.dp)
-                            .fillMaxSize()
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                Text(
-                    text = "YumeList",
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.ExtraBold,
-                    textAlign = TextAlign.Center
-                )
-                
-                Text(
-                    text = "Your ultimate anime & manga companion",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.secondary,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(48.dp))
-
-        val features = listOf(
-            Triple("Track Your List", "Manage your anime and manga list effortlessly with MyAnimeList integration.", MaterialTheme.colorScheme.primaryContainer),
-            Triple("Discover New Favorites", "Explore seasonal anime, top-rated manga, and get personalized recommendations.", MaterialTheme.colorScheme.secondaryContainer),
-            Triple("Beautiful UI", "Enjoy a clean, modern interface with customizable themes and OLED support.", MaterialTheme.colorScheme.tertiaryContainer)
-        )
-
-        features.forEachIndexed { index, feature ->
-            AnimatedVisibility(
-                visible = show,
-                enter = fadeIn(tween(600, delayMillis = 200 + (index * 100))) +
-                        slideInHorizontally(tween(600, delayMillis = 200 + (index * 100))) { 40 }
-            ) {
-                FeatureItem(
-                    title = feature.first,
-                    description = feature.second,
-                    containerColor = feature.third,
-                    contentColor = if (index == 0) MaterialTheme.colorScheme.onPrimaryContainer
-                                  else if (index == 1) MaterialTheme.colorScheme.onSecondaryContainer
-                                  else MaterialTheme.colorScheme.onTertiaryContainer,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-    }
-}
-
-@Composable
-fun FeatureItem(
-    title: String,
-    description: String,
-    containerColor: Color,
-    contentColor: Color,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = containerColor,
-            contentColor = contentColor
-        ),
-        shape = MaterialTheme.shapes.large
+            .verticalScroll(rememberScrollState()),
+        contentAlignment = Alignment.Center
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
+            modifier = Modifier
+                .widthIn(max = 520.dp)
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            content = content
+        )
     }
 }
 
+/** The body of a single step, below the hero. */
 @Composable
-fun ThemePreviewMockup(
-    theme: ThemeStyle,
-    useBlackColors: Boolean,
-    useMonochrome: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val isDark = when (theme) {
-        ThemeStyle.LIGHT -> false
-        ThemeStyle.DARK -> true
-        ThemeStyle.FOLLOW_SYSTEM -> isSystemInDarkTheme()
-    }
+private fun StepBody(content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        content = content
+    )
+}
 
-    Surface(
-        modifier = modifier
-            .width(160.dp)
-            .height(280.dp),
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-        border = BorderStroke(2.dp, MaterialTheme.colorScheme.outlineVariant)
+/** A non-clickable grouped item: shaped tonal icon, title and description. */
+@Composable
+private fun InfoItem(
+    title: String,
+    description: String?,
+    icon: Painter,
+    iconShape: Shape,
+    iconContainer: Color,
+    iconContent: Color,
+    index: Int,
+    count: Int,
+    modifier: Modifier = Modifier,
+) {
+    SegmentedListItem(
+        shapes = ListItemDefaults.segmentedShapes(index = index, count = count),
+        modifier = modifier,
+        colors = settingsItemColors(),
+        leadingContent = {
+            SettingsIcon(
+                painter = icon,
+                containerColor = iconContainer,
+                contentColor = iconContent,
+                shape = iconShape,
+            )
+        },
+        supportingContent = description?.let { { Text(text = it) } },
     ) {
-        MoeListTheme(
-            darkTheme = isDark,
-            useBlackColors = useBlackColors,
-            useMonochrome = useMonochrome,
-            dynamicColor = false
-        ) {
-            Scaffold(
-                topBar = {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth().height(40.dp),
-                        color = MaterialTheme.colorScheme.surface,
-                        tonalElevation = 2.dp
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(modifier = Modifier.size(20.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape))
-                            Spacer(Modifier.width(8.dp))
-                            Box(modifier = Modifier.width(40.dp).height(8.dp).background(MaterialTheme.colorScheme.outlineVariant, CircleShape))
-                        }
-                    }
-                },
-                bottomBar = {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth().height(36.dp),
-                        color = MaterialTheme.colorScheme.surface,
-                        tonalElevation = 2.dp
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            repeat(3) {
-                                Box(modifier = Modifier.size(16.dp).background(if (it == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant, CircleShape))
-                            }
-                        }
-                    }
-                }
-            ) { padding ->
-                Column(
-                    modifier = Modifier
-                        .padding(padding)
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background)
-                        .padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    repeat(4) { index ->
-                        Surface(
-                            modifier = Modifier.fillMaxWidth().height(if (index == 0) 60.dp else 34.dp),
-                            shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Box(modifier = Modifier.width(if (index == 0) 80.dp else 40.dp).height(6.dp).background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), CircleShape))
-                                Box(modifier = Modifier.width(if (index == 0) 60.dp else 30.dp).height(6.dp).background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f), CircleShape))
-                            }
-                        }
-                    }
-                }
+        Text(text = title, style = MaterialTheme.typography.titleSmallEmphasized)
+    }
+}
+
+// ── Step 1: Welcome ───────────────────────────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun WelcomeStep() {
+    val colors = MaterialTheme.colorScheme
+    val features = listOf(
+        FeatureInfo(
+            title = stringResource(R.string.onboarding_track_title),
+            description = stringResource(R.string.onboarding_track_desc),
+            icon = rememberVectorPainter(Icons.AutoMirrored.Rounded.PlaylistAdd),
+            shape = MaterialShapes.Cookie4Sided.toShape(),
+            container = colors.primaryContainer,
+            content = colors.onPrimaryContainer,
+        ),
+        FeatureInfo(
+            title = stringResource(R.string.onboarding_discover_title),
+            description = stringResource(R.string.onboarding_discover_desc),
+            icon = rememberVectorPainter(Icons.Rounded.Explore),
+            shape = MaterialShapes.Flower.toShape(),
+            container = colors.secondaryContainer,
+            content = colors.onSecondaryContainer,
+        ),
+        FeatureInfo(
+            title = stringResource(R.string.onboarding_ui_title),
+            description = stringResource(R.string.onboarding_ui_desc),
+            icon = rememberVectorPainter(Icons.Rounded.Palette),
+            shape = MaterialShapes.Sunny.toShape(),
+            container = colors.tertiaryContainer,
+            content = colors.onTertiaryContainer,
+        ),
+    )
+
+    StepBody {
+        Text(
+            text = stringResource(R.string.app_name),
+            style = MaterialTheme.typography.displaySmallEmphasized,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.revealOnEnter(1)
+        )
+        Text(
+            text = stringResource(R.string.onboarding_tagline),
+            style = MaterialTheme.typography.bodyLarge,
+            color = colors.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.revealOnEnter(1)
+        )
+
+        Spacer(modifier = Modifier.height(36.dp))
+
+        SettingsGroup {
+            features.forEachIndexed { index, feature ->
+                InfoItem(
+                    title = feature.title,
+                    description = feature.description,
+                    icon = feature.icon,
+                    iconShape = feature.shape,
+                    iconContainer = feature.container,
+                    iconContent = feature.content,
+                    index = index,
+                    count = features.size,
+                    modifier = Modifier.revealOnEnter(2 + index)
+                )
             }
         }
     }
 }
+
+private class FeatureInfo(
+    val title: String,
+    val description: String,
+    val icon: Painter,
+    val shape: Shape,
+    val container: Color,
+    val content: Color,
+)
+
+// ── Step 2: Appearance ────────────────────────────────────────────────────────
+
+@get:StringRes
+private val ThemeStyle.onboardingDescription: Int
+    get() = when (this) {
+        ThemeStyle.FOLLOW_SYSTEM -> R.string.onboarding_theme_system_desc
+        ThemeStyle.LIGHT -> R.string.onboarding_theme_light_desc
+        ThemeStyle.DARK -> R.string.onboarding_theme_dark_desc
+    }
 
 @Composable
 fun AppearanceStep(
-    modifier: Modifier = Modifier,
     theme: ThemeStyle,
-    useBlackColors: Boolean,
-    useMonochrome: Boolean,
     onThemeChange: (ThemeStyle) -> Unit,
-    onBlackColorsChange: (Boolean) -> Unit,
-    onMonochromeChange: (Boolean) -> Unit
+    pureBlack: Boolean = false,
+    onPureBlackChange: (Boolean) -> Unit = {},
 ) {
-    var show by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { show = true }
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        AnimatedVisibility(
-            visible = show,
-            enter = fadeIn(tween(600)) + slideInVertically(tween(600)) { -20 }
-        ) {
-            ThemePreviewMockup(
-                theme = theme,
-                useBlackColors = useBlackColors,
-                useMonochrome = useMonochrome,
-                modifier = Modifier.padding(bottom = 32.dp)
-            )
-        }
-
-        AnimatedVisibility(
-            visible = show,
-            enter = fadeIn(tween(600, 200)) + slideInVertically(tween(600, 200)) { 20 }
-        ) {
-            Column {
-                SectionHeader(icon = Icons.Default.Settings, title = "Appearance")
-
-                Text(
-                    text = "Personalize your experience",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 24.dp)
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    ThemeCard(
-                        label = "System",
-                        iconRes = R.drawable.ic_round_settings_24,
-                        selected = theme == ThemeStyle.FOLLOW_SYSTEM,
-                        modifier = Modifier.weight(1f),
-                        onClick = { onThemeChange(ThemeStyle.FOLLOW_SYSTEM) }
-                    )
-                    ThemeCard(
-                        label = "Light",
-                        iconRes = R.drawable.ic_round_home_24,
-                        selected = theme == ThemeStyle.LIGHT,
-                        modifier = Modifier.weight(1f),
-                        onClick = { onThemeChange(ThemeStyle.LIGHT) }
-                    )
-                    ThemeCard(
-                        label = "Dark",
-                        iconRes = R.drawable.ic_round_color_lens_24,
-                        selected = theme == ThemeStyle.DARK,
-                        modifier = Modifier.weight(1f),
-                        onClick = { onThemeChange(ThemeStyle.DARK) }
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        AnimatedVisibility(
-            visible = show,
-            enter = fadeIn(tween(600, 400)) + slideInVertically(tween(600, 400)) { 20 }
-        ) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
-                shape = RoundedCornerShape(20.dp)
-            ) {
-                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth().height(56.dp)
-                    ) {
-                        Surface(
-                            modifier = Modifier.size(36.dp),
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_round_refresh_24),
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
-                        Spacer(Modifier.width(16.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("OLED / Black Variant", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-                            Text("Pure black background", style = MaterialTheme.typography.bodySmall)
-                        }
-                        Switch(checked = useBlackColors, onCheckedChange = onBlackColorsChange)
-                    }
-
-                    AnimatedVisibility(visible = useBlackColors) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth().height(56.dp)
-                        ) {
-                            Surface(
-                                modifier = Modifier.size(36.dp),
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_round_color_lens_24),
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
-                            Spacer(Modifier.width(16.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("Monochrome Theme", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-                                Text("Black and white style", style = MaterialTheme.typography.bodySmall)
-                            }
-                            Switch(checked = useMonochrome, onCheckedChange = onMonochromeChange)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ThemeCard(
-    label: String,
-    iconRes: Int,
-    selected: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    val scale by animateFloatAsState(
-        targetValue = if (selected) 1.05f else 1f,
-        animationSpec = tween(300),
-        label = "theme_card_scale"
-    )
-
-    val containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-    val contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-    val borderColor = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
-
-    Surface(
-        onClick = onClick,
-        modifier = modifier
-            .height(100.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            },
-        shape = RoundedCornerShape(20.dp),
-        color = containerColor,
-        contentColor = contentColor,
-        border = BorderStroke(2.dp, borderColor)
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(8.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(
-                        if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
-                        CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(iconRes),
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
-            )
-        }
-    }
-}
-
-@Composable
-fun LoginStep(
-    modifier: Modifier = Modifier,
-    isLoggedIn: Boolean,
-    isLoggingIn: Boolean = false,
-    profilePicture: String?,
-    username: String?,
-    onLoginClick: () -> Unit
-) {
-    var show by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { show = true }
-
-    val targetState = when {
-        isLoggedIn -> "success"
-        isLoggingIn -> "loading"
-        else -> "login"
-    }
-
-    AnimatedContent(
-        targetState = targetState,
-        label = "login_state_transition",
-        transitionSpec = {
-            fadeIn(tween(500)) + scaleIn(initialScale = 0.92f, animationSpec = tween(500)) togetherWith
-                    fadeOut(tween(500))
-        }
-    ) { state ->
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            if (state == "success" || state == "loading") {
-                // Success/Loading UI
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.padding(bottom = 32.dp)
-                ) {
-                    Surface(
-                        modifier = Modifier
-                            .size(160.dp)
-                            .padding(8.dp),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                        border = androidx.compose.foundation.BorderStroke(4.dp, MaterialTheme.colorScheme.primary)
-                    ) {
-                        if (state == "success") {
-                            val context = LocalContext.current
-                            AsyncImage(
-                                model = ImageRequest.Builder(context)
-                                    .data(profilePicture)
-                                    .crossfade(true)
-                                    .build(),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop,
-                                placeholder = painterResource(R.drawable.ic_round_person_24),
-                                error = painterResource(R.drawable.ic_round_person_24)
-                            )
-                        } else {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    Icons.Default.Person,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(64.dp),
-                                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                                )
-                            }
-                        }
-                    }
-
-                    Surface(
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = CircleShape,
-                        modifier = Modifier
-                            .size(44.dp)
-                            .align(Alignment.BottomEnd)
-                            .offset(x = (-8).dp, y = (-8).dp)
-                    ) {
-                        if (state == "success") {
-                            Icon(
-                                Icons.Default.CheckCircle,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.padding(8.dp)
-                            )
-                        } else {
-                            CircularProgressIndicator(
-                                strokeWidth = 3.dp,
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.padding(10.dp)
-                            )
-                        }
-                    }
-                }
-
-                Text(
-                    text = if (state == "success") "You're all set!" else "Syncing your list...",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.primary,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                if (state == "success") {
-                    Text(
-                        text = "Welcome back, $username",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = if (state == "success")
-                        "Your list is synced and ready. Let's start tracking your favorites!"
-                        else "Fetching your profile and updating your local database.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-
-            } else {
-                // Login UI
-                AnimatedVisibility(
-                    visible = show,
-                    enter = fadeIn(tween(600)) + slideInVertically(tween(600)) { -20 }
-                ) {
-                    Surface(
-                        modifier = Modifier.size(100.dp),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.secondaryContainer
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                Icons.Default.Person,
-                                contentDescription = null,
-                                modifier = Modifier.size(50.dp),
-                                tint = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                AnimatedVisibility(
-                    visible = show,
-                    enter = fadeIn(tween(600, 100)) + slideInVertically(tween(600, 100)) { 20 }
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "Sync Your World",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.ExtraBold,
-                            textAlign = TextAlign.Center
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text(
-                            text = "Connect your MyAnimeList account to unlock the full potential of YumeList.",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(40.dp))
-
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    val benefits = listOf(
-                        R.drawable.ic_round_refresh_24 to "Auto-sync your list updates",
-                        R.drawable.ic_round_star_16 to "Sync your scores and progress",
-                        R.drawable.ic_round_person_24 to "Access your profile and stats"
-                    )
-                    benefits.forEachIndexed { index, benefit ->
-                        AnimatedVisibility(
-                            visible = show,
-                            enter = fadeIn(tween(600, 300 + (index * 100))) +
-                                    slideInHorizontally(tween(600, 300 + (index * 100))) { 20 }
-                        ) {
-                            LoginBenefitItem(icon = benefit.first, text = benefit.second)
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(48.dp))
-
-                AnimatedVisibility(
-                    visible = show,
-                    enter = fadeIn(tween(600, 600)) + slideInVertically(tween(600, 600)) { 20 }
-                ) {
-                    Button(
-                        onClick = onLoginClick,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(64.dp),
-                        shape = MaterialTheme.shapes.extraLarge,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        )
-                    ) {
-                        Icon(painter = painterResource(R.drawable.ic_open_in_browser), contentDescription = null)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            "Login with MyAnimeList",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun LoginBenefitItem(icon: Int, text: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(horizontal = 8.dp)
-    ) {
-        Surface(
-            modifier = Modifier.size(32.dp),
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-        ) {
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                Icon(
-                    painter = painterResource(icon),
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-        Spacer(modifier = Modifier.width(16.dp))
+    StepBody {
         Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium
+            text = stringResource(R.string.onboarding_theme_title),
+            style = MaterialTheme.typography.headlineSmallEmphasized,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.revealOnEnter(1)
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = stringResource(R.string.onboarding_theme_subtitle),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.revealOnEnter(1)
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // System / Light / Dark side by side, then Pure black as its own switch (same as settings)
+        Row(
+            modifier = Modifier
+                .revealOnEnter(2)
+                .height(IntrinsicSize.Max),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OnboardingThemeModes.forEach { style ->
+                ThemeOptionCard(
+                    themeStyle = style,
+                    selected = theme == style,
+                    pureBlack = pureBlack,
+                    onClick = { onThemeChange(style) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        val isLight = theme == ThemeStyle.LIGHT
+        SettingsSwitchItem(
+            title = stringResource(R.string.pure_black_mode),
+            subtitle = stringResource(
+                if (isLight) R.string.pure_black_dark_only else R.string.pure_black_summary
+            ),
+            icon = Icons.Rounded.Contrast,
+            checked = pureBlack,
+            onCheckedChange = onPureBlackChange,
+            enabled = !isLight,
+            index = 0,
+            count = 1,
+            modifier = Modifier.revealOnEnter(3),
         )
     }
 }
 
+private val OnboardingThemeModes = listOf(ThemeStyle.FOLLOW_SYSTEM, ThemeStyle.LIGHT, ThemeStyle.DARK)
+
+/** Same look as the theme cards in Appearance settings, plus a one-line description. */
 @Composable
-fun SectionHeader(icon: ImageVector, title: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp)
+private fun ThemeOptionCard(
+    themeStyle: ThemeStyle,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    pureBlack: Boolean = false,
+) {
+    SettingsChoiceCard(
+        selected = selected,
+        onClick = onClick,
+        modifier = modifier,
     ) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            ThemeMiniPreview(
+                themeStyle = themeStyle,
+                accent = MaterialTheme.colorScheme.primary,
+                pureBlack = pureBlack,
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = themeStyle.icon,
+                        contentDescription = null,
+                        tint = if (selected) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Text(
+                        text = stringResource(themeStyle.stringRes),
+                        style = if (selected) MaterialTheme.typography.labelLargeEmphasized
+                        else MaterialTheme.typography.labelLarge,
+                        color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
+                        else MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                    )
+                }
+                Text(
+                    text = stringResource(themeStyle.onboardingDescription),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }
+
+// ── Step 3: Login ─────────────────────────────────────────────────────────────
+
+private enum class LoginStepState { LOGIN, LOADING, SUCCESS }
+
+/** The avatar, loading badge and check now live in the hero; this is the text and actions below it. */
+@Composable
+fun LoginStep(
+    isLoggedIn: Boolean,
+    username: String?,
+    onLoginClick: () -> Unit,
+    isLoggingIn: Boolean = false,
+    isOpeningLogin: Boolean = false,
+) {
+    val targetState = when {
+        isLoggedIn -> LoginStepState.SUCCESS
+        isLoggingIn -> LoginStepState.LOADING
+        else -> LoginStepState.LOGIN
+    }
+    val fadeSpec = Motion.effects<Float>()
+    val scaleSpec = Motion.spatial<Float>()
+
+    AnimatedContent(
+        targetState = targetState,
+        contentAlignment = Alignment.TopCenter,
+        label = "login_state_transition",
+        transitionSpec = {
+            (fadeIn(fadeSpec) + scaleIn(scaleSpec, initialScale = 0.92f)) togetherWith fadeOut(fadeSpec)
+        }
+    ) { state ->
+        StepBody {
+            if (state == LoginStepState.LOGIN) {
+                LoginPrompt(
+                    isOpeningLogin = isOpeningLogin,
+                    onLoginClick = onLoginClick
+                )
+            } else {
+                LoginResult(
+                    success = state == LoginStepState.SUCCESS,
+                    username = username
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun LoginPrompt(
+    isOpeningLogin: Boolean,
+    onLoginClick: () -> Unit,
+) {
+    val colors = MaterialTheme.colorScheme
+
+    Text(
+        text = stringResource(R.string.onboarding_login_title),
+        style = MaterialTheme.typography.headlineMediumEmphasized,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.revealOnEnter(1)
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    Text(
+        text = stringResource(R.string.onboarding_login_desc),
+        style = MaterialTheme.typography.bodyLarge,
+        color = colors.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .revealOnEnter(1)
+            .padding(horizontal = 8.dp)
+    )
+
+    Spacer(modifier = Modifier.height(32.dp))
+
+    val benefits = listOf(
+        R.drawable.ic_round_refresh_24 to stringResource(R.string.onboarding_benefit_sync),
+        R.drawable.ic_round_star_16 to stringResource(R.string.onboarding_benefit_scores),
+        R.drawable.ic_round_person_24 to stringResource(R.string.onboarding_benefit_profile)
+    )
+    SettingsGroup {
+        benefits.forEachIndexed { index, (icon, text) ->
+            InfoItem(
+                title = text,
+                description = null,
+                icon = painterResource(icon),
+                iconShape = CircleShape,
+                iconContainer = colors.primaryContainer,
+                iconContent = colors.onPrimaryContainer,
+                index = index,
+                count = benefits.size,
+                modifier = Modifier.revealOnEnter(2 + index)
+            )
+        }
+    }
+
+    Spacer(modifier = Modifier.height(32.dp))
+
+    LoginButton(
+        isLoading = isOpeningLogin,
+        onClick = onLoginClick,
+        modifier = Modifier.revealOnEnter(5)
+    )
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun LoginResult(
+    success: Boolean,
+    username: String?,
+) {
+    val colors = MaterialTheme.colorScheme
+
+    Text(
+        text = stringResource(if (success) R.string.onboarding_all_set else R.string.onboarding_syncing),
+        style = MaterialTheme.typography.headlineMediumEmphasized,
+        color = colors.primary,
+        textAlign = TextAlign.Center
+    )
+
+    if (success) {
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            // The name can arrive a moment after the token; don't show "null"
+            text = if (username.isNullOrBlank()) stringResource(R.string.onboarding_welcome_back)
+            else stringResource(R.string.onboarding_welcome_back_name, username),
+            style = MaterialTheme.typography.titleLargeEmphasized,
+            textAlign = TextAlign.Center
+        )
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Text(
+        text = stringResource(
+            if (success) R.string.onboarding_synced_desc else R.string.onboarding_syncing_desc
+        ),
+        style = MaterialTheme.typography.bodyLarge,
+        color = colors.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.padding(horizontal = 16.dp)
+    )
+}
+
+// ── Previews ──────────────────────────────────────────────────────────────────
 
 @Preview(showBackground = true)
 @Composable
@@ -931,14 +1149,10 @@ fun OnboardingWelcomePreview() {
             isLoggedIn = false,
             isLoggingIn = false,
             theme = ThemeStyle.FOLLOW_SYSTEM,
-            useBlackColors = false,
-            useMonochrome = false,
             profilePicture = null,
             username = null,
             onStepChange = {},
             onThemeChange = {},
-            onBlackColorsChange = {},
-            onMonochromeChange = {},
             onLoginClick = {},
             onFinished = {}
         )
@@ -954,14 +1168,10 @@ fun OnboardingAppearancePreview() {
             isLoggedIn = false,
             isLoggingIn = false,
             theme = ThemeStyle.FOLLOW_SYSTEM,
-            useBlackColors = false,
-            useMonochrome = false,
             profilePicture = null,
             username = null,
             onStepChange = {},
             onThemeChange = {},
-            onBlackColorsChange = {},
-            onMonochromeChange = {},
             onLoginClick = {},
             onFinished = {}
         )
@@ -977,14 +1187,10 @@ fun OnboardingLoginPreview() {
             isLoggedIn = false,
             isLoggingIn = false,
             theme = ThemeStyle.FOLLOW_SYSTEM,
-            useBlackColors = false,
-            useMonochrome = false,
             profilePicture = null,
             username = null,
             onStepChange = {},
             onThemeChange = {},
-            onBlackColorsChange = {},
-            onMonochromeChange = {},
             onLoginClick = {},
             onFinished = {}
         )
@@ -1000,14 +1206,10 @@ fun OnboardingSuccessPreview() {
             isLoggedIn = true,
             isLoggingIn = false,
             theme = ThemeStyle.FOLLOW_SYSTEM,
-            useBlackColors = false,
-            useMonochrome = false,
             profilePicture = "https://myanimelist.net/images/userimages/1.jpg",
             username = "Axiel7",
             onStepChange = {},
             onThemeChange = {},
-            onBlackColorsChange = {},
-            onMonochromeChange = {},
             onLoginClick = {},
             onFinished = {}
         )
@@ -1023,14 +1225,10 @@ fun OnboardingDarkThemePreview() {
             isLoggedIn = false,
             isLoggingIn = false,
             theme = ThemeStyle.DARK,
-            useBlackColors = true,
-            useMonochrome = false,
             profilePicture = null,
             username = null,
             onStepChange = {},
             onThemeChange = {},
-            onBlackColorsChange = {},
-            onMonochromeChange = {},
             onLoginClick = {},
             onFinished = {}
         )

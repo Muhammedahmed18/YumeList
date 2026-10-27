@@ -64,8 +64,12 @@ object DateUtils {
         }
     }.getOrNull()
 
+    /**
+     * @return UTC-midnight millis, as expected by Material3 DatePickerState.
+     * Pass an explicit offset if local-zone millis are needed.
+     */
     fun LocalDate.toEpochMillis(
-        offset: ZoneOffset = defaultZoneOffset
+        offset: ZoneOffset = ZoneOffset.UTC
     ) = this.atStartOfDay().toInstant(offset).toEpochMilli()
 
     fun LocalDate.getNextDayOfWeek(dayOfWeek: DayOfWeek): LocalDate =

@@ -26,6 +26,12 @@ sealed interface Route {
     data class MediaDetails(
         val mediaType: MediaType,
         val mediaId: Int,
+        // Poster the user tapped, so details can show it instantly and the shared poster
+        // transition has something to land on before the details request finishes
+        val posterUrl: String? = null,
+        // Shared-transition key of the tapped poster (see posterSharedKey), so the details hero
+        // flies from exactly that poster. Null = no shared poster transition (e.g. deep links)
+        val posterKey: String? = null,
     ) : Route
 
     @Serializable
@@ -35,15 +41,7 @@ sealed interface Route {
     data object SeasonChart : Route
 
     @Serializable
-    data object Recommendations : Route
-
-    @Serializable
     data object Profile : Route
-
-    @Serializable
-    data class Search(
-        val mediaType: MediaType = MediaType.ANIME
-    ) : Route
 
     @Serializable
     data class UserList(
@@ -58,7 +56,16 @@ sealed interface Route {
     data object Settings : Route
 
     @Serializable
+    data object Appearance : Route
+
+    @Serializable
     data object ListStyleSettings : Route
+
+    @Serializable
+    data object NavigationSettings : Route
+
+    @Serializable
+    data object ContentSettings : Route
 
     @Serializable
     data object Notifications : Route

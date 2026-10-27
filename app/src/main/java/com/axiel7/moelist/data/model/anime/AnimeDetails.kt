@@ -53,7 +53,6 @@ data class AnimeDetails(
     override val relatedAnime: List<RelatedAnime>? = null,
     @SerialName("related_manga")
     override val relatedManga: List<RelatedManga>? = null,
-    override val recommendations: List<Recommendations<AnimeNode>>? = null,
     @SerialName("my_list_status")
     override val myListStatus: MyAnimeListStatus? = null,
     @SerialName("num_episodes")
@@ -75,7 +74,7 @@ data class AnimeDetails(
     @SerialName("ending_themes")
     val endingThemes: List<Theme>? = null,
     @SerialName("statistics")
-    val statistics: Statistics? = null,
+    override val statistics: Statistics? = null,
 ) : BaseMediaDetails() {
 
     fun toAnimeNode() = AnimeNode(

@@ -2,7 +2,6 @@ package com.axiel7.moelist.ui.details
 
 import androidx.compose.runtime.Immutable
 import com.axiel7.moelist.data.model.anime.AnimeDetails
-import com.axiel7.moelist.data.model.anime.Recommendations
 import com.axiel7.moelist.data.model.anime.RelatedAnime
 import com.axiel7.moelist.data.model.manga.MangaDetails
 import com.axiel7.moelist.data.model.manga.RelatedManga
@@ -11,17 +10,20 @@ import com.axiel7.moelist.data.model.media.BaseMediaNode
 import com.axiel7.moelist.data.model.media.BaseMyListStatus
 import com.axiel7.moelist.data.model.media.BaseRelated
 import com.axiel7.moelist.data.model.media.Character
+import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.MediaFormat
 import com.axiel7.moelist.data.model.media.RelationType
+import com.axiel7.moelist.data.model.media.Stat
 import com.axiel7.moelist.ui.base.state.UiState
 
 @Immutable
 data class MediaDetailsUiState(
     val mediaDetails: BaseMediaDetails? = null,
+    val statusDistribution: List<Stat<ListStatus>>? = null,
+    val isLoadingStatusDistribution: Boolean = false,
     val hideScore: Boolean = false,
     val relatedAnime: List<RelatedAnime> = emptyList(),
     val relatedManga: List<RelatedManga> = emptyList(),
-    val recommendations: List<Recommendations<BaseMediaNode>> = emptyList(),
     val picturesUrls: List<String> = emptyList(),
     val characters: List<Character> = emptyList(),
     val isLoadingCharacters: Boolean = false,

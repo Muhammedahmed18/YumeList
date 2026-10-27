@@ -23,6 +23,7 @@ interface UserMediaListEvent : PagedUiEvent {
     fun toggleSortDialog(open: Boolean)
     fun toggleFormatSheet(open: Boolean)
     fun toggleSetScoreDialog(open: Boolean)
+    fun skipSetScoreDialog()
     fun toggleActionSheet(open: Boolean)
     fun getRandomIdOfList()
     fun onRandomIdOpen()

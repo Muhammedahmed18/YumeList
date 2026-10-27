@@ -1,1 +1,1 @@
-Another unofficial MyAnimeList client
+Your anime & manga companion for MyAnimeList, with Material 3 Expressive

@@ -11,7 +11,6 @@ import com.axiel7.moelist.App
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.BaseResponse
 import com.axiel7.moelist.data.model.anime.AnimeDetails
-import com.axiel7.moelist.data.model.anime.Recommendations
 import com.axiel7.moelist.data.model.anime.RelatedAnime
 import com.axiel7.moelist.data.model.manga.MangaDetails
 import com.axiel7.moelist.data.model.manga.RelatedManga
@@ -41,9 +40,9 @@ abstract class BaseMediaDetails : BaseResponse {
     abstract val background: String?
     abstract val relatedAnime: List<RelatedAnime>?
     abstract val relatedManga: List<RelatedManga>?
-    abstract val recommendations: List<Recommendations<*>>?
 
     abstract val myListStatus: BaseMyListStatus?
+    abstract val statistics: Statistics?
 
     override val error: String? = null
     override val message: String? = null

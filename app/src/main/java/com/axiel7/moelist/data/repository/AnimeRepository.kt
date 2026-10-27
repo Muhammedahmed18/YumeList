@@ -16,7 +16,7 @@ import com.axiel7.moelist.data.model.media.MediaSort
 import com.axiel7.moelist.data.model.media.MediaStatus
 import com.axiel7.moelist.data.model.media.RankingType
 import com.axiel7.moelist.data.network.Api
-import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,7 +42,6 @@ class AnimeRepository(
         const val SEASONAL_FIELDS =
             "alternative_titles{en,ja},start_season,broadcast,num_episodes,media_type,mean,num_list_users" +
                     ",my_list_status{status}"
-        private const val RECOMMENDED_FIELDS = "alternative_titles{en,ja},mean"
         private const val LIST_STATUS_FIELDS =
             "start_date,finish_date,num_times_rewatched,is_rewatching,rewatch_value,priority,tags,comments"
         private const val ANIME_DETAILS_FIELDS =
@@ -52,14 +51,14 @@ class AnimeRepository(
                     "average_episode_duration,studios,opening_themes,ending_themes," +
                     "related_anime{media_type,alternative_titles{en,ja}}," +
                     "related_manga{media_type,alternative_titles{en,ja}}," +
-                    "recommendations{alternative_titles{en,ja}},background,statistics"
+                    "background,statistics"
         private const val USER_ANIME_LIST_FIELDS =
             "alternative_titles{en,ja},list_status{$LIST_STATUS_FIELDS},num_episodes,media_type,status,broadcast,mean"
         private const val SEARCH_FIELDS =
             "id,title,alternative_titles{en,ja},main_picture,mean,media_type,num_episodes,start_season," +
                     "my_list_status{status,score}"
         const val RANKING_FIELDS =
-            "alternative_titles{en,ja},mean,media_type,num_episodes,num_list_users,my_list_status{status}"
+            "alternative_titles{en,ja},mean,media_type,num_episodes,num_list_users,my_list_status{status,score}"
 
         // https://myanimelist.net/forum/?topicid=2111811
         private const val CHARACTERS_FIELDS =
@@ -101,26 +100,13 @@ class AnimeRepository(
             } else {
                 result
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Response(message = e.message)
         }
     }
 
-    suspend fun getRecommendedAnimes(
-        limit: Int,
-        page: String? = null
-    ): Response<List<AnimeList>> {
-        return try {
-            if (page == null) api.getAnimeRecommendations(
-                limit = limit,
-                nsfw = defaultPreferencesRepository.nsfwInt(),
-                fields = RECOMMENDED_FIELDS
-            )
-            else api.getAnimeRecommendations(page)
-        } catch (e: Exception) {
-            Response(message = e.message)
-        }
-    }
 
     suspend fun getAnimeDetails(
         animeId: Int
@@ -267,8 +253,7 @@ class AnimeRepository(
         animeId: Int
     ): Boolean {
         return try {
-            val result = api.deleteAnimeEntry(animeId)
-            if (result.status == HttpStatusCode.OK) {
+            if (api.deleteAnimeEntry(animeId)) {
                 _userAnimeList.update { currentList ->
                     currentList.filter { it.node.id != animeId }
                 }

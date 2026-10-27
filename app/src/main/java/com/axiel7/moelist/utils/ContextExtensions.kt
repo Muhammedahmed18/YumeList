@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
+import android.content.pm.verify.domain.DomainVerificationManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -18,6 +19,7 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.ContextCompat
 import com.axiel7.moelist.BuildConfig
 import com.axiel7.moelist.R
+import java.util.Locale
 
 object ContextExtensions {
 
@@ -27,6 +29,15 @@ object ContextExtensions {
 
     fun Context.showToast(@StringRes stringRes: Int) {
         showToast(getString(stringRes))
+    }
+
+    fun Context.getCurrentLanguageTag(): String? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            resources.configuration.locales[0].toLanguageTag()
+        } else {
+            @Suppress("DEPRECATION")
+            resources.configuration.locale.toLanguageTag()
+        }
     }
 
     fun Context.openAction(uri: String) {
@@ -115,6 +126,16 @@ object ContextExtensions {
         } else {
             queryIntentActivities(intent, flags)
         }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    fun Context.isMalLinkHandlingEnabled(): Boolean {
+        return try {
+            val manager = getSystemService(DomainVerificationManager::class.java)
+            manager.getDomainVerificationUserState(packageName)?.isLinkHandlingAllowed == true
+        } catch (e: Exception) {
+            false
+        }
+    }
 
     @RequiresApi(Build.VERSION_CODES.S)
     fun Context.openByDefaultSettings() {

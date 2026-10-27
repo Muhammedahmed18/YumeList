@@ -8,6 +8,7 @@ import com.axiel7.moelist.data.repository.LoginRepository
 import com.axiel7.moelist.data.repository.UserRepository
 import com.axiel7.moelist.ui.base.viewmodel.BaseViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
@@ -90,7 +91,7 @@ class ProfileViewModel(
                     )
                 }
 
-                // get manga stats from jikan api because the official api has not implemented it
+                // MAL's API has no manga statistics: count them from the user's manga list
                 user.name?.let { username ->
                     getMangaStats(username)
                 }
@@ -98,61 +99,47 @@ class ProfileViewModel(
         }
     }
 
+    /**
+     * Manga stats: the counts, chapters, volumes, mean score and rereads are counted from the
+     * user's own MAL manga list (MAL's API has no manga statistics). Only "days read" comes from
+     * Jikan, fetched at the same time; if Jikan fails, just that tile shows "─".
+     * If MAL fails, the stats show "─" with a retry button and the real reason in a snackbar.
+     */
     private fun getMangaStats(username: String) {
         viewModelScope.launch {
             mutableUiState.update { it.copy(isLoadingManga = true, isMangaError = false) }
-            try {
-                // convert the username to lowercase because a bug in the jikan api
-                val jikanUserStats = withContext(Dispatchers.IO) {
-                    userRepository.getUserStats(username.lowercase())
-                }
+            // Jikan's usernames are case sensitive in a buggy way: lowercase works
+            val jikanDays = async(Dispatchers.IO) {
+                userRepository.getUserStats(username.lowercase()).data?.manga?.days
+            }
+            val result = withContext(Dispatchers.IO) { userRepository.getMyMangaStats() }
+            val stats = result.data
 
-                jikanUserStats.data?.manga?.let { stats ->
-                    val tempMangaStatList = mutableListOf<Stat<ListStatus>>()
-                    tempMangaStatList.add(
-                        Stat(
-                            type = ListStatus.READING,
-                            value = stats.current.toFloat()
-                        )
-                    )
-                    tempMangaStatList.add(
-                        Stat(
-                            type = ListStatus.COMPLETED,
-                            value = stats.completed.toFloat()
-                        )
-                    )
-                    tempMangaStatList.add(
-                        Stat(
-                            type = ListStatus.ON_HOLD,
-                            value = stats.onHold.toFloat()
-                        )
-                    )
-                    tempMangaStatList.add(
-                        Stat(
-                            type = ListStatus.DROPPED,
-                            value = stats.dropped.toFloat()
-                        )
-                    )
-                    tempMangaStatList.add(
-                        Stat(
-                            type = ListStatus.PLAN_TO_READ,
-                            value = stats.planned.toFloat()
-                        )
-                    )
-                    mutableUiState.update {
-                        it.copy(
-                            mangaStats = tempMangaStatList,
-                            userMangaStats = stats,
-                            isMangaError = false
-                        )
-                    }
-                } ?: run {
-                    mutableUiState.update { it.copy(isMangaError = true) }
-                }
-            } catch (e: Exception) {
-                mutableUiState.update { it.copy(isMangaError = true) }
-            } finally {
-                mutableUiState.update { it.copy(isLoadingManga = false) }
+            if (stats == null) {
+                jikanDays.cancel()
+                mutableUiState.update { it.copy(isMangaError = true, isLoadingManga = false) }
+                showMessage(result.message ?: result.error)
+                return@launch
+            }
+
+            val tempMangaStatList = listOf(
+                Stat(type = ListStatus.READING, value = stats.current.toFloat()),
+                Stat(type = ListStatus.COMPLETED, value = stats.completed.toFloat()),
+                Stat(type = ListStatus.ON_HOLD, value = stats.onHold.toFloat()),
+                Stat(type = ListStatus.DROPPED, value = stats.dropped.toFloat()),
+                Stat(type = ListStatus.PLAN_TO_READ, value = stats.planned.toFloat()),
+            )
+            // Show the MAL numbers right away; "days read" fills in when Jikan answers
+            mutableUiState.update {
+                it.copy(
+                    mangaStats = tempMangaStatList,
+                    userMangaStats = stats,
+                    isMangaError = false,
+                    isLoadingManga = false,
+                )
+            }
+            jikanDays.await()?.let { days ->
+                mutableUiState.update { it.copy(userMangaStats = it.userMangaStats?.copy(days = days)) }
             }
         }
     }

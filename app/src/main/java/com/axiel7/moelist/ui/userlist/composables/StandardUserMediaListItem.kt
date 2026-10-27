@@ -1,54 +1,40 @@
 package com.axiel7.moelist.ui.userlist.composables
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
+import com.axiel7.moelist.ui.composables.score.MyScoreBadge
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Bookmark
-import androidx.compose.material.icons.rounded.Star
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -56,368 +42,371 @@ import androidx.compose.ui.unit.dp
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.anime.AnimeNode
 import com.axiel7.moelist.data.model.anime.exampleUserAnimeList
-import com.axiel7.moelist.data.model.manga.UserMangaList
 import com.axiel7.moelist.data.model.media.BaseMediaNode
 import com.axiel7.moelist.data.model.media.BaseUserMediaList
 import com.axiel7.moelist.data.model.media.ListStatus
+import com.axiel7.moelist.data.model.media.MediaFormat
+import com.axiel7.moelist.data.model.media.MediaStatus
 import com.axiel7.moelist.ui.composables.RollingNumberText
 import com.axiel7.moelist.ui.composables.defaultPlaceholder
 import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_MEDIUM_HEIGHT
 import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_MEDIUM_WIDTH
 import com.axiel7.moelist.ui.composables.media.MediaPoster
+import com.axiel7.moelist.ui.icons.Icons
+import com.axiel7.moelist.ui.icons.automirrored.rounded.MenuBook
+import com.axiel7.moelist.ui.icons.rounded.Movie
+import com.axiel7.moelist.ui.icons.rounded.MusicNote
+import com.axiel7.moelist.ui.icons.rounded.PlayArrow
+import com.axiel7.moelist.ui.icons.rounded.Schedule
+import com.axiel7.moelist.ui.icons.rounded.Tv
 import com.axiel7.moelist.ui.theme.MoeListTheme
+import com.axiel7.moelist.ui.theme.ShapeFull
+import com.axiel7.moelist.ui.theme.ShapePoster
+import com.axiel7.moelist.ui.theme.ShapeSmall
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrUnknown
-import com.axiel7.moelist.utils.UNKNOWN_CHAR
 
-@OptIn(ExperimentalFoundationApi::class)
+// Fix #7: minimum reserved height for the metadata badge row so cards with
+// zero, one, or multiple badges keep a consistent title-to-content rhythm.
+private val BadgeRowMinHeight = 22.dp
+
+// Connected badge group (M3 Expressive connected button group style)
+private val ConnectedGap = 2.dp
+private val ConnectedInnerCorner = 4.dp
+
+/** Outer ends fully rounded (50%), inner corners small. Both ends → full pill. */
+private fun connectedShape(isFirst: Boolean, isLast: Boolean): Shape {
+    val full = CornerSize(50)
+    val inner = CornerSize(ConnectedInnerCorner)
+    return RoundedCornerShape(
+        topStart = if (isFirst) full else inner,
+        bottomStart = if (isFirst) full else inner,
+        topEnd = if (isLast) full else inner,
+        bottomEnd = if (isLast) full else inner,
+    )
+}
+
+@Composable
+private fun ConnectedMetaPill(
+    text: String,
+    shape: Shape,
+    containerColor: Color,
+    contentColor: Color,
+    icon: ImageVector? = null,
+) {
+    Row(
+        modifier = Modifier
+            .clip(shape)
+            .background(containerColor)
+            .padding(horizontal = 10.dp, vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = contentColor,
+                modifier = Modifier.size(14.dp)
+            )
+        }
+        Text(
+            text = text,
+            color = contentColor,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun StandardUserMediaListItem(
     item: BaseUserMediaList<out BaseMediaNode>,
     listStatus: ListStatus?,
+    // Shared-transition key of the poster (see posterSharedKey); null = no shared transition
+    posterKey: String? = null,
+    // Position in the list, for the segmented shape (index 0 / count 1 = standalone card)
+    index: Int = 0,
+    count: Int = 1,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     onClickPlus: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val totalProgress = remember { item.totalProgress() }
+    val totalProgress = item.totalProgress()
     val userProgress = item.userProgress()
-    val broadcast = remember { (item.node as? AnimeNode)?.broadcast }
-    val isAiring = remember { item.isAiring }
+    val score = item.listStatus?.score?.takeIf { it > 0 }
+    val broadcast = (item.node as? AnimeNode)?.broadcast
+    val isAiring = item.isAiring
+    val isNotYetAired = (item.node as? AnimeNode)?.status == MediaStatus.NOT_AIRED
+    val showQuickAdd = listStatus?.isCurrent() == true ||
+        (listStatus?.isPlanning() == true && item.hasStarted)
     val haptic = LocalHapticFeedback.current
 
-    val cardScale by animateFloatAsState(
-        targetValue = 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "cardScale"
-    )
+    // Fixed primary color rather than the status color, so a dropped/on-hold item doesn't
+    // show a misleading "error red" progress bar just because of its list status.
+    val progressBarColor = MaterialTheme.colorScheme.primary
 
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .scale(cardScale)
-            .combinedClickable(
-                onLongClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onLongClick()
-                },
-                onClick = onClick
-            ),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    // Segmented row: grouped corners, pressed-shape morph and a ripple clipped to the shape.
+    // Inner clickables (the +1 button) still receive their own taps first.
+    ListSegment(
+        index = index,
+        count = count,
+        modifier = modifier,
+        onClick = onClick,
+        onLongClick = {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            onLongClick()
+        },
     ) {
         Row(
             modifier = Modifier
                 .height(IntrinsicSize.Max)
-                .padding(14.dp),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // --- Poster Column ---
             Box {
+                // MediaPoster clips itself (ShapePoster), so the corners stay rounded in the transition
                 MediaPoster(
                     url = item.node.mainPicture?.large,
+                    sharedKey = posterKey,
                     showShadow = true,
                     modifier = Modifier
                         .height(MEDIA_POSTER_MEDIUM_HEIGHT.dp)
                         .width(MEDIA_POSTER_MEDIUM_WIDTH.dp)
-                        .clip(RoundedCornerShape(20.dp))
                 )
 
-                // Glassmorphism Score Badge
-                Row(
+                // Score badge — bottom-left overlay (only when a score is given)
+                MyScoreBadge(
+                    score = score,
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(6.dp)
-                        .clip(CircleShape)
-                        .background(
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
-                        )
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = item.listStatus?.score?.takeIf { it > 0 }?.toString() ?: UNKNOWN_CHAR,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Icon(
-                        imageVector = Icons.Rounded.Star,
-                        contentDescription = "star",
-                        modifier = Modifier
-                            .padding(start = 2.dp)
-                            .size(14.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
+                        .align(Alignment.BottomStart)
+                        .padding(4.dp)
+                )
             }
 
+            // --- Info Column ---
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = 16.dp)
-                    .fillMaxHeight()
+                    .padding(start = 14.dp)
+                    .fillMaxHeight(),
             ) {
-                // Title section
+                // Title
                 Text(
                     text = item.node.userPreferredTitle(),
                     color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold,
+                    fontWeight = FontWeight.Bold,
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 2
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Badges row
-                Row(
+                // Metadata badges — static, non-interactive (fix #1: no click, no ripple).
+                // Fix #7: reserve a minimum height for this row so cards with zero, one,
+                // or multiple badges keep a consistent title-to-content rhythm across
+                // the list, instead of some cards looking visually "sparser" than others.
+                FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = BadgeRowMinHeight)
                 ) {
-                    ExpressiveBadge(
-                        text = item.node.mediaFormat?.localized().orEmpty(),
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    if (isAiring) {
-                        ExpressiveBadge(
-                            text = broadcast?.airingInString() ?: stringResource(R.string.airing),
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+                    val formatText = item.node.mediaFormat?.localized()
+                    // Airing and "Not yet aired" are mutually exclusive, so the group
+                    // is at most two segments: format + one temporal-state badge.
+                    val temporalText = when {
+                        isAiring -> broadcast?.airingInString() ?: stringResource(R.string.airing)
+                        isNotYetAired -> stringResource(R.string.not_yet_aired)
+                        else -> null
+                    }
+
+                    // M3 Expressive-style connected group: one FlowRow item, so the
+                    // pair never splits across lines. Outer ends fully rounded, inner
+                    // corners small. Single badge → standalone, fully rounded pill.
+                    if (formatText != null || temporalText != null) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(ConnectedGap)) {
+                            if (formatText != null) {
+                                ConnectedMetaPill(
+                                    text = formatText,
+                                    shape = connectedShape(
+                                        isFirst = true,
+                                        isLast = temporalText == null
+                                    ),
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                            if (temporalText != null) {
+                                ConnectedMetaPill(
+                                    text = temporalText,
+                                    icon = Icons.Rounded.Schedule,
+                                    shape = connectedShape(
+                                        isFirst = formatText == null,
+                                        isLast = true
+                                    ),
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Integrated Progress Section
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                // One UI-style bottom pill: progress info on the left and +1 action on
+                // the right, with the full-width container preserved even when the
+                // action is unavailable for the current list state.
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(ShapeFull)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                        .border(
+                            BorderStroke(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                            ),
+                            ShapeFull
+                        )
+                        .padding(start = 14.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // Progress Container
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(20.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        tonalElevation = 1.dp
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .clip(CircleShape)
-                                        .background(
-                                            MaterialTheme.colorScheme.surfaceContainerHighest
-                                        )
-                                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                                ) {
-                                    RollingNumberText(
-                                        targetValue = userProgress ?: 0,
-                                        style = MaterialTheme.typography.labelLarge,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                    Text(
-                                        text = "/${totalProgress.toStringPositiveValueOrUnknown()}",
-                                        style = MaterialTheme.typography.labelLarge,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                            alpha = 0.6f
-                                        )
-                                    )
-                                }
-                                if ((item as? UserMangaList)?.listStatus?.isUsingVolumeProgress() == true) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Bookmark,
-                                        contentDescription = stringResource(R.string.volumes),
-                                        modifier = Modifier
-                                            .padding(start = 6.dp)
-                                            .size(18.dp),
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            }
-
-                            if (listStatus?.isCurrent() == true) {
-                                FilledTonalButton(
-                                    onClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.Confirm)
-                                        onClickPlus()
-                                    },
-                                    modifier = Modifier.height(36.dp),
-                                    shape = RoundedCornerShape(18.dp),
-                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                                    colors = ButtonDefaults.filledTonalButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary,
-                                        contentColor = MaterialTheme.colorScheme.onPrimary
-                                    )
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Add,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = "1",
-                                        style = MaterialTheme.typography.labelLarge,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    if ((totalProgress ?: 0) > 0) {
-                        val targetProgressBarColor = when (listStatus) {
-                            ListStatus.COMPLETED -> MaterialTheme.colorScheme.tertiary
-                            ListStatus.ON_HOLD -> MaterialTheme.colorScheme.outline
-                            ListStatus.DROPPED -> MaterialTheme.colorScheme.error
-                            else -> MaterialTheme.colorScheme.primary
-                        }
-
-                        val animatedProgress by animateFloatAsState(
-                            targetValue = item.calculateProgressBarValue(),
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = Spring.StiffnessMedium
-                            ),
-                            label = "progressBarAnimation"
+                        RollingNumberText(
+                            targetValue = userProgress ?: 0,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
                         )
-                        val animatedProgressBarColor by animateColorAsState(
-                            targetValue = targetProgressBarColor,
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = Spring.StiffnessMedium
-                            ),
-                            label = "progressBarColorAnimation"
-                        )
-
-                        LinearProgressIndicator(
-                            progress = { animatedProgress },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(6.dp)
-                                .clip(CircleShape),
-                            color = animatedProgressBarColor,
-                            trackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            strokeCap = StrokeCap.Round
+                        Text(
+                            text = " / ${totalProgress.toStringPositiveValueOrUnknown()}",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+
+                    if (showQuickAdd) {
+                        // Morphs from a pill to a rounded square while pressed
+                        PlusOneButton(
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                                onClickPlus()
+                            }
+                        )
+                    } else {
+                        // Keep the pill's height so every card has the same rhythm
+                        Spacer(modifier = Modifier.height(36.dp))
+                    }
+                }
+
+                // Wavy progress — only when the total is known, so unknown-progress entries
+                // don't keep an empty gap under the pill. Fixed primary color (not the
+                // status color), so a dropped item isn't drawn in the error color.
+                if ((totalProgress ?: 0) > 0) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ListProgressBar(
+                        progress = item.calculateProgressBarValue(),
+                        color = progressBarColor,
+                    )
                 }
             }
         }
     }
 }
 
+
 @Composable
-fun ExpressiveBadge(
-    text: String,
-    containerColor: Color,
-    contentColor: Color,
-    modifier: Modifier = Modifier,
-    textStyle: TextStyle = MaterialTheme.typography.labelSmall,
-    paddingValues: PaddingValues = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-    border: BorderStroke? = null,
-    tonalElevation: androidx.compose.ui.unit.Dp = 0.dp,
-    content: @Composable (() -> Unit)? = null
+fun StandardUserMediaListItemPlaceholder(
+    index: Int = 0,
+    count: Int = 1,
 ) {
-    if (text.isEmpty() && content == null) return
-
-    Surface(
-        modifier = modifier,
-        color = containerColor,
-        contentColor = contentColor,
-        shape = RoundedCornerShape(8.dp),
-        border = border,
-        tonalElevation = tonalElevation
-    ) {
-        Box(modifier = Modifier.padding(paddingValues)) {
-            if (content != null) {
-                content()
-            } else {
-                Text(
-                    text = text,
-                    style = textStyle,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun StandardUserMediaListItemPlaceholder() {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
-    ) {
+    // Same segmented container as the real row, so loading -> loaded doesn't jump
+    ListSegment(index = index, count = count) {
         Row(
             modifier = Modifier
                 .height(IntrinsicSize.Max)
-                .padding(14.dp),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Poster placeholder
             Box(
                 modifier = Modifier
                     .height(MEDIA_POSTER_MEDIUM_HEIGHT.dp)
                     .width(MEDIA_POSTER_MEDIUM_WIDTH.dp)
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(ShapePoster)
                     .defaultPlaceholder(visible = true)
             )
 
+            // Info column placeholder — mirrors real item structure
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = 16.dp)
+                    .padding(start = 14.dp)
                     .fillMaxHeight()
             ) {
+                // Title line
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(20.dp)
-                        .clip(CircleShape)
+                        .height(18.dp)
+                        .clip(ShapeSmall)
                         .defaultPlaceholder(visible = true)
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
+                // Second title line (short)
                 Box(
                     modifier = Modifier
-                        .width(100.dp)
-                        .height(16.dp)
-                        .clip(CircleShape)
+                        .fillMaxWidth(0.6f)
+                        .height(18.dp)
+                        .clip(ShapeSmall)
+                        .defaultPlaceholder(visible = true)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Badge row placeholder
+                Box(
+                    modifier = Modifier
+                        .width(80.dp)
+                        .height(20.dp)
+                        .clip(ShapeSmall)
                         .defaultPlaceholder(visible = true)
                 )
 
                 Spacer(modifier = Modifier.weight(1f))
 
+                // Full-width progress/action pill placeholder
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp)
-                        .clip(RoundedCornerShape(20.dp))
+                        .height(48.dp)
+                        .clip(ShapeFull)
+                        .defaultPlaceholder(visible = true)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Progress bar placeholder — inside info column, same as real item
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(10.dp)
+                        .clip(ShapeFull)
                         .defaultPlaceholder(visible = true)
                 )
             }

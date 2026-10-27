@@ -2,23 +2,15 @@ package com.axiel7.moelist.data.network
 
 import com.axiel7.moelist.data.model.Response
 import com.axiel7.moelist.data.model.UserStats
-import com.axiel7.moelist.utils.JIKAN_API_URL
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.HttpRequestBuilder
-import io.ktor.client.request.get
-import io.ktor.http.HttpHeaders
+import com.axiel7.moelist.data.model.manga.JikanMangaStatisticsResponse
 
-class JikanApi(private val client: HttpClient) {
+/** Jikan (unofficial MAL API). Calls go through a client without any MAL credentials. */
+class JikanApi(private val service: JikanService) {
 
-    private fun HttpRequestBuilder.removeOfficialApiHeaders() = headers.apply {
-        remove(HttpHeaders.Authorization)
-        remove("X-MAL-CLIENT-ID")
-    }
+    /** Errors come back in the [Response]'s `error` / `message`, with the HTTP code. */
+    suspend fun getUserStats(username: String): Response<UserStats> =
+        service.getUserStats(username).bodyOrError()
 
-    suspend fun getUserStats(
-        username: String
-    ): Response<UserStats> = client.get("${JIKAN_API_URL}users/$username/statistics") {
-        removeOfficialApiHeaders()
-    }.body()
+    suspend fun getMangaStatistics(mangaId: Int): JikanMangaStatisticsResponse =
+        service.getMangaStatistics(mangaId).bodyOrThrow()
 }

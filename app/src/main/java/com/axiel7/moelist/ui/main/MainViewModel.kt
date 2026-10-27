@@ -3,16 +3,20 @@ package com.axiel7.moelist.ui.main
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.axiel7.moelist.App
 import com.axiel7.moelist.data.repository.DefaultPreferencesRepository
 import com.axiel7.moelist.data.repository.LoginRepository
 import com.axiel7.moelist.data.repository.UserRepository
+import com.axiel7.moelist.ui.base.ColorPalette
+import com.axiel7.moelist.ui.base.StartTab
+import com.axiel7.moelist.ui.base.TabletMode
 import com.axiel7.moelist.ui.base.ThemeStyle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -22,6 +26,19 @@ enum class SessionStatus {
     LOGGED_IN,
     LOGGED_OUT
 }
+
+/**
+ * Everything the first frame needs, read once from DataStore without blocking the main thread.
+ */
+data class StartupState(
+    val theme: ThemeStyle,
+    val pureBlack: Boolean,
+    val colorPalette: ColorPalette,
+    val tabletMode: TabletMode,
+    val isOnboardingCompleted: Boolean,
+    val startTab: StartTab?,
+    val lastTab: Int,
+)
 
 class MainViewModel(
     private val loginRepository: LoginRepository,
@@ -36,6 +53,7 @@ class MainViewModel(
     val lastTab = defaultPreferencesRepository.lastTab
 
     fun saveLastTab(value: Int) = viewModelScope.launch {
+        cachedStartupState = cachedStartupState?.copy(lastTab = value)
         defaultPreferencesRepository.setLastTab(value)
     }
 
@@ -46,15 +64,42 @@ class MainViewModel(
     val theme = defaultPreferencesRepository.theme
         .stateIn(viewModelScope, SharingStarted.Eagerly, ThemeStyle.FOLLOW_SYSTEM)
 
-    val useBlackColors = defaultPreferencesRepository.useBlackColors
+    val pureBlack = defaultPreferencesRepository.pureBlack
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
-    val useMonochrome = defaultPreferencesRepository.useMonochrome
+    val colorPalette = defaultPreferencesRepository.colorPalette
+        .stateIn(viewModelScope, SharingStarted.Eagerly, ColorPalette.DYNAMIC)
 
     val isOnboardingCompleted = defaultPreferencesRepository.isOnboardingCompleted
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     val accessToken = defaultPreferencesRepository.accessToken
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    /**
+     * Suspends (never blocks) until the preferences are loaded. Reads straight from the repository
+     * instead of the stateIn() flows above, so the first frame gets the real saved values rather
+     * than the stateIn() defaults (avoids a theme/palette flash on launch).
+     */
+    /** Kept across configuration changes so a recreated activity can draw its first frame instantly. */
+    var cachedStartupState: StartupState? = null
+        private set
+
+    suspend fun loadStartupState(): StartupState {
+        cachedStartupState?.let { return it }
+        val prefs = defaultPreferencesRepository
+        App.accessToken = prefs.accessToken.first()
+        App.titleLanguage = prefs.titleLang.first()
+        return StartupState(
+            theme = prefs.theme.first(),
+            pureBlack = prefs.pureBlack.first(),
+            colorPalette = prefs.colorPalette.first(),
+            tabletMode = prefs.tabletMode.first(),
+            isOnboardingCompleted = prefs.isOnboardingCompleted.first(),
+            startTab = prefs.startTab.first(),
+            lastTab = prefs.lastTab.first(),
+        ).also { cachedStartupState = it }
+    }
 
     private val isParsingIntent = MutableStateFlow(false)
 
@@ -120,12 +165,12 @@ class MainViewModel(
         defaultPreferencesRepository.setTheme(value)
     }
 
-    fun setUseBlackColors(value: Boolean) = viewModelScope.launch {
-        defaultPreferencesRepository.setUseBlackColors(value)
+    fun setPureBlack(value: Boolean) = viewModelScope.launch {
+        defaultPreferencesRepository.setPureBlack(value)
     }
 
-    fun setUseMonochrome(value: Boolean) = viewModelScope.launch {
-        defaultPreferencesRepository.setUseMonochrome(value)
+    fun setColorPalette(value: ColorPalette) = viewModelScope.launch {
+        defaultPreferencesRepository.setColorPalette(value)
     }
 
     fun completeOnboarding() = viewModelScope.launch {

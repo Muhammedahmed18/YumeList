@@ -20,7 +20,6 @@ import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.TabIndicatorScope
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,7 +31,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.zIndex
+import kotlin.math.absoluteValue
 import com.axiel7.moelist.R
 import com.axiel7.moelist.ui.base.TabRowItem
 import com.axiel7.moelist.ui.theme.MoeListTheme
@@ -58,7 +59,7 @@ fun <T> TabRowWithPager(
 
     val divider = @Composable {
         HorizontalDivider(
-            thickness = 0.5.dp,
+            thickness = 1.dp,
             color = MaterialTheme.colorScheme.outlineVariant
         )
     }
@@ -97,14 +98,46 @@ fun <T> TabRowWithPager(
             }
         }
 
+        val indicatorColor = MaterialTheme.colorScheme.primary
         val indicator: @Composable TabIndicatorScope.() -> Unit = {
             Box(
                 Modifier
-                    .tabIndicatorOffset(state.currentPage)
+                    .tabIndicatorLayout { measurable, constraints, tabPositions ->
+                        val pageCount = tabPositions.size
+                        val currentPage = state.currentPage.coerceIn(0, pageCount - 1)
+                        val fraction = state.currentPageOffsetFraction
+                        val targetPage = when {
+                            fraction > 0f -> (currentPage + 1).coerceAtMost(pageCount - 1)
+                            fraction < 0f -> (currentPage - 1).coerceAtLeast(0)
+                            else -> currentPage
+                        }
+                        val progress = fraction.absoluteValue.coerceIn(0f, 1f)
+                        val fromTab = tabPositions[currentPage]
+                        val toTab = tabPositions[targetPage]
+
+                        val tabLeft = lerp(fromTab.left, toTab.left, progress)
+                        val tabWidth = lerp(fromTab.width, toTab.width, progress)
+
+                        val horizontalInsetPx = 16.dp.roundToPx()
+                        val indicatorWidthPx = (tabWidth.roundToPx() - horizontalInsetPx * 2)
+                            .coerceAtLeast(0)
+
+                        val placeable = measurable.measure(
+                            constraints.copy(
+                                minWidth = indicatorWidthPx,
+                                maxWidth = indicatorWidthPx
+                            )
+                        )
+                        layout(tabWidth.roundToPx(), constraints.maxHeight) {
+                            placeable.place(
+                                x = tabLeft.roundToPx() + horizontalInsetPx,
+                                y = constraints.maxHeight - placeable.height
+                            )
+                        }
+                    }
                     .height(3.dp)
-                    .padding(horizontal = 16.dp)
                     .background(
-                        color = MaterialTheme.colorScheme.primary,
+                        color = indicatorColor,
                         shape = RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp)
                     )
             )

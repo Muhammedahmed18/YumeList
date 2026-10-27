@@ -7,11 +7,12 @@ import com.axiel7.moelist.ui.home.HomeViewModel
 import com.axiel7.moelist.ui.main.MainViewModel
 import com.axiel7.moelist.ui.more.MoreViewModel
 import com.axiel7.moelist.ui.more.notifications.NotificationsViewModel
-import com.axiel7.moelist.ui.more.settings.SettingsViewModel
+import com.axiel7.moelist.ui.more.settings.appearance.AppearanceViewModel
+import com.axiel7.moelist.ui.more.settings.content.ContentSettingsViewModel
 import com.axiel7.moelist.ui.more.settings.list.ListStyleSettingsViewModel
+import com.axiel7.moelist.ui.more.settings.navigation.NavigationSettingsViewModel
 import com.axiel7.moelist.ui.profile.ProfileViewModel
 import com.axiel7.moelist.ui.ranking.MediaRankingViewModel
-import com.axiel7.moelist.ui.recommendations.RecommendationsViewModel
 import com.axiel7.moelist.ui.search.SearchViewModel
 import com.axiel7.moelist.ui.season.SeasonChartViewModel
 import com.axiel7.moelist.ui.userlist.UserMediaListViewModel
@@ -21,7 +22,10 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val viewModelModule = module {
-    viewModelOf(::SettingsViewModel)
+    viewModelOf(::AppearanceViewModel)
+    viewModelOf(::ContentSettingsViewModel)
+    viewModelOf(::ListStyleSettingsViewModel)
+    viewModelOf(::NavigationSettingsViewModel)
     viewModelOf(::CalendarViewModel)
     viewModelOf(::MediaDetailsViewModel)
     viewModel { params ->
@@ -33,7 +37,6 @@ val viewModelModule = module {
     }
     viewModelOf(::HomeViewModel)
     viewModelOf(::MainViewModel)
-    viewModelOf(::ListStyleSettingsViewModel)
     viewModel {
         NotificationsViewModel(
             dataStore = get(named(NOTIFICATIONS_DATA_STORE)),
@@ -50,7 +53,6 @@ val viewModelModule = module {
             mangaRepository = get()
         )
     }
-    viewModelOf(::RecommendationsViewModel)
     viewModelOf(::SearchViewModel)
     viewModelOf(::SeasonChartViewModel)
     viewModel { params ->

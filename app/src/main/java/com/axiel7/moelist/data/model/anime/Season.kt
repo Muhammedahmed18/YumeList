@@ -44,4 +44,22 @@ enum class Season(
         SUMMER -> stringResource(R.string.summer)
         FALL -> stringResource(R.string.fall)
     }
+
+    /** The season that follows this one within the same year cycle. */
+    val next
+        get() = when (this) {
+            WINTER -> SPRING
+            SPRING -> SUMMER
+            SUMMER -> FALL
+            FALL -> WINTER
+        }
+
+    /** The season that precedes this one within the same year cycle. */
+    val previous
+        get() = when (this) {
+            WINTER -> FALL
+            SPRING -> WINTER
+            SUMMER -> SPRING
+            FALL -> SUMMER
+        }
 }

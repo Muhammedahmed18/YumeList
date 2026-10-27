@@ -23,12 +23,17 @@ object SeasonCalendar {
 
     val currentYear = calendar[Calendar.YEAR]
 
+    /**
+     * The current anime season, using the standard anime/MAL season boundaries:
+     * Winter = Jan–Mar, Spring = Apr–Jun, Summer = Jul–Sep, Fall = Oct–Dec.
+     * (Previously Dec/Mar/Jun/Sep were already counted as the next season.)
+     */
     val currentSeason = when (month) {
-        0, 1, 11 -> Season.WINTER
-        2, 3, 4 -> Season.SPRING
-        5, 6, 7 -> Season.SUMMER
-        8, 9, 10 -> Season.FALL
-        else -> Season.SPRING
+        0, 1, 2 -> Season.WINTER
+        3, 4, 5 -> Season.SPRING
+        6, 7, 8 -> Season.SUMMER
+        9, 10, 11 -> Season.FALL
+        else -> Season.WINTER
     }
 
     private val nextSeason = when (currentSeason) {
@@ -45,19 +50,21 @@ object SeasonCalendar {
         Season.FALL -> Season.SUMMER
     }
 
+    // Every season now sits inside its calendar year, so the current season is always this year
     val currentStartSeason = StartSeason(
-        // if december, the season is next year winter
-        year = if (month == 11) currentYear + 1 else currentYear,
+        year = currentYear,
         season = currentSeason
     )
 
+    // After Fall (Oct–Dec) comes next year's Winter
     val nextStartSeason = StartSeason(
-        year = if (month == 11) currentYear + 1 else currentYear,
+        year = if (currentSeason == Season.FALL) currentYear + 1 else currentYear,
         season = nextSeason
     )
 
+    // Before Winter (Jan–Mar) comes last year's Fall
     val prevStartSeason = StartSeason(
-        year = if (month == 0 || month == 1) currentYear - 1 else currentYear,
+        year = if (currentSeason == Season.WINTER) currentYear - 1 else currentYear,
         season = prevSeason
     )
 

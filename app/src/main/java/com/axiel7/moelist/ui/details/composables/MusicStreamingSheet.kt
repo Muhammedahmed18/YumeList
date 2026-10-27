@@ -12,7 +12,11 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -75,31 +81,44 @@ fun MusicStreamingSheet(
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 8.dp + bottomPadding)
+                .padding(bottom = 24.dp + bottomPadding)
         ) {
-            MusicStreaming.entries.forEach { service ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            context.openAction(
-                                service.searchUrl + songTitle.buildQueryFromThemeText()
-                            )
-                            onDismiss()
-                        }
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painter = painterResource(service.icon),
-                        contentDescription = service.localized(),
-                        modifier = Modifier.size(24.dp),
-                        tint = Color.Unspecified
-                    )
-
-                    Text(
-                        text = service.localized(),
-                        modifier = Modifier.padding(start = 8.dp),
+            Text(
+                text = stringResource(R.string.music_themes),
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            
+            MusicStreaming.entries.forEachIndexed { index, service ->
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            text = service.localized(),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
+                        )
+                    },
+                    leadingContent = {
+                        Icon(
+                            painter = painterResource(service.icon),
+                            contentDescription = service.localized(),
+                            modifier = Modifier.size(32.dp),
+                            tint = Color.Unspecified
+                        )
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    modifier = Modifier.clickable {
+                        context.openAction(
+                            service.searchUrl + songTitle.buildQueryFromThemeText()
+                        )
+                        onDismiss()
+                    }
+                )
+                if (index < MusicStreaming.entries.lastIndex) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 24.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
                     )
                 }
             }

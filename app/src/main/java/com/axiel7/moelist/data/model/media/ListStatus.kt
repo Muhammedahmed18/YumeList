@@ -1,13 +1,6 @@
 package com.axiel7.moelist.data.model.media
 
 import android.os.Bundle
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.CheckCircleOutline
-import androidx.compose.material.icons.rounded.HighlightOff
-import androidx.compose.material.icons.rounded.PauseCircleOutline
-import androidx.compose.material.icons.rounded.PlayCircleOutline
-import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -15,22 +8,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavType
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.base.LocalizableAndColorable
-import com.axiel7.moelist.ui.theme.stat_completed_content_dark
-import com.axiel7.moelist.ui.theme.stat_completed_content_light
-import com.axiel7.moelist.ui.theme.stat_completed_dark
-import com.axiel7.moelist.ui.theme.stat_completed_light
-import com.axiel7.moelist.ui.theme.stat_current_content_dark
-import com.axiel7.moelist.ui.theme.stat_current_content_light
-import com.axiel7.moelist.ui.theme.stat_current_dark
-import com.axiel7.moelist.ui.theme.stat_current_light
-import com.axiel7.moelist.ui.theme.stat_dropped_content_dark
-import com.axiel7.moelist.ui.theme.stat_dropped_content_light
-import com.axiel7.moelist.ui.theme.stat_dropped_dark
-import com.axiel7.moelist.ui.theme.stat_dropped_light
-import com.axiel7.moelist.ui.theme.stat_on_hold_content_dark
-import com.axiel7.moelist.ui.theme.stat_on_hold_content_light
-import com.axiel7.moelist.ui.theme.stat_on_hold_dark
-import com.axiel7.moelist.ui.theme.stat_on_hold_light
+import com.axiel7.moelist.ui.icons.Icons
+import com.axiel7.moelist.ui.icons.rounded.CheckCircleOutline
+import com.axiel7.moelist.ui.icons.rounded.HighlightOff
+import com.axiel7.moelist.ui.icons.rounded.PauseCircleOutline
+import com.axiel7.moelist.ui.icons.rounded.PlayCircleOutline
+import com.axiel7.moelist.ui.icons.rounded.Schedule
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -93,22 +76,24 @@ enum class ListStatus(
             PLAN_TO_READ -> R.string.ptr
         }
 
+    // Status colours come from the (dynamic) colour scheme, so they follow the wallpaper /
+    // chosen palette. Each status also has its own icon, which carries the meaning.
     @Composable
     override fun primaryColor() = when (this) {
-        WATCHING, READING -> if (isSystemInDarkTheme()) stat_current_dark else stat_current_light
+        WATCHING, READING -> MaterialTheme.colorScheme.primary
         PLAN_TO_WATCH, PLAN_TO_READ -> MaterialTheme.colorScheme.outline
-        COMPLETED -> if (isSystemInDarkTheme()) stat_completed_dark else stat_completed_light
-        ON_HOLD -> if (isSystemInDarkTheme()) stat_on_hold_dark else stat_on_hold_light
-        DROPPED -> if (isSystemInDarkTheme()) stat_dropped_dark else stat_dropped_light
+        COMPLETED -> MaterialTheme.colorScheme.tertiary
+        ON_HOLD -> MaterialTheme.colorScheme.secondary
+        DROPPED -> MaterialTheme.colorScheme.error
     }
 
     @Composable
     override fun onPrimaryColor() = when (this) {
-        WATCHING, READING -> if (isSystemInDarkTheme()) stat_current_content_dark else stat_current_content_light
-        PLAN_TO_WATCH, PLAN_TO_READ -> if (isSystemInDarkTheme()) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.inverseOnSurface
-        COMPLETED -> if (isSystemInDarkTheme()) stat_completed_content_dark else stat_completed_content_light
-        ON_HOLD -> if (isSystemInDarkTheme()) stat_on_hold_content_dark else stat_on_hold_content_light
-        DROPPED -> if (isSystemInDarkTheme()) stat_dropped_content_dark else stat_dropped_content_light
+        WATCHING, READING -> MaterialTheme.colorScheme.onPrimary
+        PLAN_TO_WATCH, PLAN_TO_READ -> MaterialTheme.colorScheme.surface
+        COMPLETED -> MaterialTheme.colorScheme.onTertiary
+        ON_HOLD -> MaterialTheme.colorScheme.onSecondary
+        DROPPED -> MaterialTheme.colorScheme.onError
     }
 
     companion object {

@@ -47,22 +47,3 @@ fun Int.scoreText() = when (this) {
     10 -> stringResource(R.string.score_masterpiece)
     else -> ""
 }
-
-@Composable
-fun Int.priorityLocalized() = when (this) {
-    0 -> stringResource(R.string.low_value)
-    1 -> stringResource(R.string.medium_value)
-    2 -> stringResource(R.string.high_value)
-    else -> stringResource(R.string.unknown)
-}
-
-@Composable
-fun Int.repeatValueLocalized() = when (this) {
-    0 -> "─"
-    1 -> stringResource(R.string.very_low_value)
-    2 -> stringResource(R.string.low_value)
-    3 -> stringResource(R.string.medium_value)
-    4 -> stringResource(R.string.high_value)
-    5 -> stringResource(R.string.very_high_value)
-    else -> stringResource(R.string.unknown)
-}

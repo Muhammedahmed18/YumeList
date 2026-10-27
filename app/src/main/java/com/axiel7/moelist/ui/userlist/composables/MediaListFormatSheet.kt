@@ -1,197 +1,58 @@
 package com.axiel7.moelist.ui.userlist.composables
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import com.axiel7.moelist.R
-import com.axiel7.moelist.data.model.media.MediaFormat
+import androidx.compose.runtime.rememberCoroutineScope
 import com.axiel7.moelist.data.model.media.MediaType
+import com.axiel7.moelist.ui.composables.media.AnimeFormatOptions
+import com.axiel7.moelist.ui.composables.media.MangaFormatOptions
+import com.axiel7.moelist.ui.composables.media.MediaFormatSheetContent
 import com.axiel7.moelist.ui.userlist.UserMediaListEvent
 import com.axiel7.moelist.ui.userlist.UserMediaListUiState
+import kotlinx.coroutines.launch
 
-private val ItemPillShape = RoundedCornerShape(20.dp)
-
+/**
+ * Format filter for the anime / manga lists, using the shared [MediaFormatSheetContent]
+ * (same look as the season chart's sheet).
+ *
+ * The counts are for the status tab you're on, so the header shows that status ("Format ·
+ * Watching"). Picking a row applies straight away, then the sheet slides away before closing
+ * (it used to vanish without the slide).
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MediaListFormatSheet(
     uiState: UserMediaListUiState,
     event: UserMediaListEvent?,
 ) {
-    val formatOptions = remember(uiState.mediaType) {
-        if (uiState.mediaType == MediaType.ANIME) {
-            listOf(
-                null, // All
-                MediaFormat.TV,
-                MediaFormat.OVA,
-                MediaFormat.ONA,
-                MediaFormat.MOVIE,
-                MediaFormat.TV_SPECIAL,
-                MediaFormat.SPECIAL
-            )
-        } else {
-            listOf(
-                null, // All
-                MediaFormat.MANGA,
-                MediaFormat.ONE_SHOT,
-                MediaFormat.MANHWA,
-                MediaFormat.MANHUA,
-                MediaFormat.NOVEL,
-                MediaFormat.LIGHT_NOVEL
-            )
-        }
-    }
     val sheetState = rememberModalBottomSheetState()
+    val scope = rememberCoroutineScope()
+    val bottomPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
+    fun close() {
+        scope.launch { sheetState.hide() }.invokeOnCompletion { event?.toggleFormatSheet(false) }
+    }
 
     ModalBottomSheet(
         onDismissRequest = { event?.toggleFormatSheet(false) },
         sheetState = sheetState,
-        dragHandle = { BottomSheetDefaults.DragHandle() },
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp),
+        contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
     ) {
-        MediaListFormatContent(
-            formatOptions = formatOptions,
-            selectedFormat = uiState.selectedFormat,
-            formatCounts = uiState.formatCounts,
-            onFormatClick = {
-                event?.onChangeFormat(it)
-                event?.toggleFormatSheet(false)
-            }
+        MediaFormatSheetContent(
+            options = if (uiState.mediaType == MediaType.ANIME) AnimeFormatOptions else MangaFormatOptions,
+            selected = uiState.selectedFormat,
+            counts = uiState.formatCounts,
+            context = uiState.listStatus?.localized(),
+            bottomPadding = bottomPadding,
+            onSelect = { format ->
+                if (format != uiState.selectedFormat) event?.onChangeFormat(format)
+                close()
+            },
         )
-    }
-}
-
-@Composable
-fun MediaListFormatContent(
-    formatOptions: List<MediaFormat?>,
-    selectedFormat: MediaFormat?,
-    formatCounts: Map<MediaFormat?, Int>,
-    onFormatClick: (MediaFormat?) -> Unit,
-) {
-    val haptic = LocalHapticFeedback.current
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 32.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.format),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp)
-        )
-
-        formatOptions.forEach { format ->
-            val isSelected = selectedFormat == format
-            val count = formatCounts[format] ?: 0
-
-            val checkScale by animateFloatAsState(
-                targetValue = if (isSelected) 1f else 0.6f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioLowBouncy,
-                    stiffness = Spring.StiffnessMedium
-                ),
-                label = "checkScale"
-            )
-            
-            val backgroundColor by animateColorAsState(
-                targetValue = if (isSelected)
-                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                else
-                    Color.Transparent,
-                label = "backgroundColor"
-            )
-
-            val contentColor by animateColorAsState(
-                targetValue = if (isSelected)
-                    MaterialTheme.colorScheme.primary
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant,
-                label = "contentColor"
-            )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-                    .clip(ItemPillShape)
-                    .background(backgroundColor)
-                    .clickable {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onFormatClick(format)
-                    }
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = format?.localized() ?: stringResource(R.string.all),
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                    color = if (isSelected) MaterialTheme.colorScheme.onSurface else contentColor,
-                    modifier = Modifier.weight(1f)
-                )
-
-                Text(
-                    text = count.toString(),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (isSelected) MaterialTheme.colorScheme.primary else contentColor,
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
-
-                if (isSelected) {
-                    Box(
-                        modifier = Modifier
-                            .scale(checkScale)
-                            .size(24.dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.primary,
-                                shape = CircleShape
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Check,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(24.dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                                shape = CircleShape
-                            )
-                    )
-                }
-            }
-        }
     }
 }

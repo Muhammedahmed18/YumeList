@@ -1,27 +1,21 @@
 package com.axiel7.moelist.ui.composables.score
 
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.SliderState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
@@ -29,7 +23,11 @@ import androidx.compose.ui.unit.dp
 import com.axiel7.moelist.data.model.media.scoreText
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
+private const val MAX_SCORE = 10f
+
+/** Converts a 0f..1f slider position to a whole 0..10 score. */
+private fun Float.toScore() = (this * MAX_SCORE).roundToInt()
+
 @Composable
 fun ScoreSlider(
     score: Int,
@@ -39,6 +37,32 @@ fun ScoreSlider(
 ) {
     val haptic = LocalHapticFeedback.current
     val scoreTextLabel = score.scoreText()
+
+    // material3 1.5's SliderState no longer takes a valueRange, so the slider works on the
+    // default 0f..1f range and we map it to the 0..10 score (score / 10f <-> value * 10).
+    // 9 steps = a stop at every whole score between 0 and 10.
+    val sliderState = remember {
+        SliderState(
+            value = score / MAX_SCORE,
+            steps = 9,
+        )
+    }
+
+    // Keep the slider in sync when the score changes from outside (e.g. reset / loaded entry)
+    LaunchedEffect(score) {
+        if (sliderState.value.toScore() != score) {
+            sliderState.value = score / MAX_SCORE
+        }
+    }
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val colors = SliderDefaults.colors(
+        thumbColor = MaterialTheme.colorScheme.primary,
+        activeTrackColor = MaterialTheme.colorScheme.primary,
+        inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+        activeTickColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f),
+        inactiveTickColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+    )
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -66,41 +90,34 @@ fun ScoreSlider(
             )
         }
 
-        // Thick Modern Slider
+        // M3 Expressive slider: the thumb is a vertical handle that narrows while dragged,
+        // the track is split around it with a gap, and a small dot marks every whole score.
         Slider(
-            value = score.toFloat(),
+            state = sliderState,
             onValueChange = {
-                val newValue = it.roundToInt()
+                sliderState.value = it
+                val newValue = it.toScore()
                 if (newValue != score) {
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
                     onValueChange(newValue)
                 }
             },
             onValueChangeFinished = onValueChangeFinished,
-            valueRange = 0f..10f,
-            steps = 9,
-            colors = SliderDefaults.colors(
-                thumbColor = MaterialTheme.colorScheme.primary,
-                activeTrackColor = MaterialTheme.colorScheme.primary,
-                inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                activeTickColor = Color.Transparent,
-                inactiveTickColor = Color.Transparent
-            ),
+            colors = colors,
+            interactionSource = interactionSource,
             thumb = {
-                val thumbSize by animateDpAsState(targetValue = 24.dp, label = "thumbSize")
-                Box(
-                    modifier = Modifier
-                        .size(thumbSize)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary)
+                // The sliderState overload is hidden in material3 1.5 (binary compatibility
+                // only); this one takes the orientation directly. Same expressive handle thumb.
+                SliderDefaults.Thumb(
+                    interactionSource = interactionSource,
+                    isVertical = false,
+                    colors = colors,
                 )
             },
-            track = { sliderState ->
+            track = { state ->
                 SliderDefaults.Track(
-                    sliderState = sliderState,
-                    modifier = Modifier.height(16.dp), // Even thicker for better touch
-                    thumbTrackGapSize = 0.dp,
-                    trackInsideCornerSize = 8.dp
+                    sliderState = state,
+                    colors = colors,
                 )
             }
         )

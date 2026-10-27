@@ -1,9 +1,10 @@
 package com.axiel7.moelist.ui.userlist
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
@@ -16,8 +17,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -30,7 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
@@ -39,22 +39,35 @@ import androidx.lifecycle.compose.dropUnlessResumed
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.media.BaseMediaNode
 import com.axiel7.moelist.data.model.media.BaseUserMediaList
-import com.axiel7.moelist.ui.base.ListStyle
+import com.axiel7.moelist.data.model.media.ListStatus
+import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.EmptyState
 import com.axiel7.moelist.ui.composables.ErrorState
-import com.axiel7.moelist.ui.composables.OnBottomReached
-import com.axiel7.moelist.ui.composables.collapsable
-import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_MEDIUM_WIDTH
-import com.axiel7.moelist.ui.userlist.composables.CompactUserMediaListItem
-import com.axiel7.moelist.ui.userlist.composables.CompactUserMediaListItemPlaceholder
-import com.axiel7.moelist.ui.userlist.composables.GridUserMediaListItem
-import com.axiel7.moelist.ui.userlist.composables.GridUserMediaListItemPlaceholder
-import com.axiel7.moelist.ui.userlist.composables.MinimalUserMediaListItem
-import com.axiel7.moelist.ui.userlist.composables.MinimalUserMediaListItemPlaceholder
+import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
+import com.axiel7.moelist.ui.composables.PosterSection
+import com.axiel7.moelist.ui.composables.SnackbarType
+import com.axiel7.moelist.ui.composables.posterSharedKey
+import com.axiel7.moelist.ui.composables.showAppSnackbar
+import com.axiel7.moelist.ui.icons.Icons
+import com.axiel7.moelist.ui.icons.automirrored.outlined.MenuBook
+import com.axiel7.moelist.ui.icons.outlined.Bookmark
+import com.axiel7.moelist.ui.icons.outlined.Cancel
+import com.axiel7.moelist.ui.icons.outlined.CheckCircle
+import com.axiel7.moelist.ui.icons.outlined.CloudOff
+import com.axiel7.moelist.ui.icons.outlined.Inbox
+import com.axiel7.moelist.ui.icons.outlined.PauseCircle
+import com.axiel7.moelist.ui.icons.outlined.PlayCircle
+import com.axiel7.moelist.ui.theme.Motion
+import com.axiel7.moelist.ui.userlist.composables.SetScoreDialog
 import com.axiel7.moelist.ui.userlist.composables.StandardUserMediaListItem
 import com.axiel7.moelist.ui.userlist.composables.StandardUserMediaListItemPlaceholder
-import com.axiel7.moelist.utils.ContextExtensions.showToast
+
+/** Placeholder rows shown below the list while more items load. */
+private const val LOAD_MORE_PLACEHOLDERS = 5
+
+/** Placeholder rows shown while the list loads for the first time. */
+private const val LOADING_PLACEHOLDERS = 8
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,49 +77,69 @@ fun UserMediaListView(
     navActionManager: NavActionManager,
     isCompactScreen: Boolean,
     modifier: Modifier = Modifier,
-    topBarHeightPx: Float = 0f,
-    topBarOffsetY: Animatable<Float, AnimationVector1D> = Animatable(0f),
     contentPadding: PaddingValues = PaddingValues(),
     onShowEditSheet: (BaseUserMediaList<out BaseMediaNode>) -> Unit,
 ) {
-    val context = LocalContext.current
     val layoutDirection = LocalLayoutDirection.current
     val haptic = LocalHapticFeedback.current
+    @Suppress("SpellCheckingInspection")
+    val snackbarHostState = LocalSnackbarHostState.current
     val pullRefreshState = rememberPullToRefreshState()
 
     // Hoist states to maintain scroll position during sort/status changes
     val listState = rememberLazyListState()
-    val gridState = rememberLazyGridState()
     val tabletGridState = rememberLazyGridState()
 
-    LaunchedEffect(uiState.message) {
-        if (uiState.message != null) {
-            context.showToast(uiState.message)
-            event?.onMessageDisplayed()
+    val updatedLabel = stringResource(R.string.updated)
+    LaunchedEffect(uiState.message, uiState.updatedTitle) {
+        when {
+            uiState.updatedTitle != null -> {
+                snackbarHostState.showAppSnackbar(
+                    message = updatedLabel,
+                    type = SnackbarType.SUCCESS,
+                    highlight = uiState.updatedTitle,
+                )
+                event?.onMessageDisplayed()
+            }
+            uiState.message != null -> {
+                snackbarHostState.showAppSnackbar(uiState.message, type = SnackbarType.ERROR)
+                event?.onMessageDisplayed()
+            }
         }
     }
 
-    // Scroll to top when the trigger changes from the ViewModel
+    // Scroll to top when the trigger changes, as signalled by the ViewModel
     var lastScrollToTopTrigger by remember { mutableIntStateOf(uiState.scrollToTopTrigger) }
     LaunchedEffect(uiState.scrollToTopTrigger, uiState.isLoading) {
         if (uiState.scrollToTopTrigger > lastScrollToTopTrigger && !uiState.isLoading) {
             // Wait until loading is finished to prevent Compose from anchoring to items that move down
             listState.scrollToItem(0)
-            gridState.scrollToItem(0)
             tabletGridState.scrollToItem(0)
-            // Reset top bar offset so it's fully expanded when we return to top
-            topBarOffsetY.snapTo(0f)
             lastScrollToTopTrigger = uiState.scrollToTopTrigger
         }
     }
 
     @Composable
-    fun StandardItemView(item: BaseUserMediaList<out BaseMediaNode>, modifier: Modifier = Modifier) {
+    fun StandardItemView(
+        item: BaseUserMediaList<out BaseMediaNode>,
+        modifier: Modifier = Modifier,
+        index: Int = 0,
+        count: Int = 1,
+    ) {
+        val posterKey = posterSharedKey(PosterSection.USER_LIST, uiState.mediaType, item.node.id)
         StandardUserMediaListItem(
             item = item,
             listStatus = uiState.listStatus,
+            index = index,
+            count = count,
+            posterKey = posterKey,
             onClick = dropUnlessResumed {
-                navActionManager.toMediaDetails(uiState.mediaType, item.node.id)
+                navActionManager.toMediaDetails(
+                    uiState.mediaType,
+                    item.node.id,
+                    posterUrl = item.node.mainPicture?.large,
+                    posterKey = posterKey,
+                )
             },
             onLongClick = {
                 onShowEditSheet(item)
@@ -119,57 +152,14 @@ fun UserMediaListView(
         )
     }
 
-    @Composable
-    fun CompactItemView(item: BaseUserMediaList<out BaseMediaNode>, modifier: Modifier = Modifier) {
-        CompactUserMediaListItem(
-            item = item,
-            listStatus = uiState.listStatus,
-            onClick = dropUnlessResumed {
-                navActionManager.toMediaDetails(uiState.mediaType, item.node.id)
-            },
-            onLongClick = {
-                onShowEditSheet(item)
-            },
-            onClickPlus = {
-                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                event?.onUpdateProgress(item)
-            },
-            modifier = modifier
-        )
-    }
 
-    @Composable
-    fun MinimalItemView(item: BaseUserMediaList<out BaseMediaNode>, modifier: Modifier = Modifier) {
-        MinimalUserMediaListItem(
-            item = item,
-            listStatus = uiState.listStatus,
-            onClick = dropUnlessResumed {
-                navActionManager.toMediaDetails(uiState.mediaType, item.node.id)
-            },
-            onLongClick = {
-                onShowEditSheet(item)
-            },
-            onClickPlus = {
-                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                event?.onUpdateProgress(item)
-            },
-            modifier = modifier
-        )
-    }
+    // AnimatedContent's transitionSpec isn't @Composable, so read the motion spec here
+    val stateCrossfade = Motion.effects<Float>()
 
-    @Composable
-    fun GridItemView(item: BaseUserMediaList<out BaseMediaNode>, modifier: Modifier = Modifier) {
-        GridUserMediaListItem(
-            item = item,
-            onClick = dropUnlessResumed {
-                navActionManager.toMediaDetails(uiState.mediaType, item.node.id)
-            },
-            onLongClick = {
-                onShowEditSheet(item)
-            },
-            modifier = modifier
-        )
-    }
+    // Segmented list: every row needs its position and the group size. Load-more
+    // placeholders continue the same group, so the last real row isn't rounded too early.
+    val listSize = uiState.filteredMediaList.size
+    val segmentCount = listSize + if (uiState.isLoadingMore) LOAD_MORE_PLACEHOLDERS else 0
 
     PullToRefreshBox(
         isRefreshing = uiState.isLoading && uiState.filteredMediaList.isNotEmpty(),
@@ -177,268 +167,130 @@ fun UserMediaListView(
         modifier = modifier.fillMaxSize(),
         state = pullRefreshState,
     ) {
-        val listModifier = Modifier
-            .fillMaxWidth()
-            .align(Alignment.TopStart)
-
-        when {
-            uiState.isLoading && uiState.filteredMediaList.isEmpty() -> {
-                LoadingPlaceholder(uiState, contentPadding)
-            }
-
-            uiState.isError && uiState.filteredMediaList.isEmpty() -> {
-                ErrorState(
+        AnimatedContent(
+            targetState = when {
+                uiState.filteredMediaList.isNotEmpty() -> 3
+                uiState.isLoading -> 0
+                uiState.isError -> 1
+                !uiState.isLoading && uiState.isStatusLoaded(uiState.listStatus) -> 2
+                else -> 0
+            },
+            transitionSpec = {
+                fadeIn(animationSpec = stateCrossfade) togetherWith
+                        fadeOut(animationSpec = stateCrossfade)
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopStart),
+            contentAlignment = Alignment.TopStart,
+            label = "listContent"
+        ) { state ->
+            when (state) {
+                1 -> ErrorState(
                     modifier = Modifier.padding(contentPadding),
+                    icon = Icons.Outlined.CloudOff,
                     message = uiState.message,
                     onAction = { event?.refreshList() }
                 )
-            }
 
-            !uiState.isLoading && uiState.filteredMediaList.isEmpty() && uiState.isStatusLoaded(uiState.listStatus) -> {
-                EmptyState(
-                    modifier = Modifier.padding(contentPadding),
-                    actionLabel = stringResource(R.string.refresh),
-                    onAction = { event?.refreshList() }
-                )
-            }
+                2 -> {
+                    val empty = emptyStateFor(uiState.listStatus, uiState.mediaType)
+                    EmptyState(
+                        modifier = Modifier.padding(contentPadding),
+                        icon = empty.icon,
+                        title = stringResource(empty.titleRes),
+                        description = stringResource(empty.descRes),
+                        actionLabel = stringResource(R.string.refresh),
+                        onAction = { event?.refreshList() }
+                    )
+                }
 
-            uiState.filteredMediaList.isNotEmpty() -> {
-                if (uiState.listStyle == ListStyle.GRID) {
-                    // Prevent pagination trigger during initial load of a new sort
-                    if (!uiState.isLoading) {
-                        gridState.OnBottomReached(buffer = 3) {
-                            event?.loadMore()
-                        }
-                    }
-                    LazyVerticalGrid(
-                        columns = if (uiState.itemsPerRow.value > 0) GridCells.Fixed(uiState.itemsPerRow.value)
-                        else GridCells.Adaptive(minSize = (MEDIA_POSTER_MEDIUM_WIDTH + 8).dp),
-                        modifier = listModifier
-                            .collapsable(
-                                state = gridState,
-                                topBarHeightPx = topBarHeightPx,
-                                topBarOffsetY = topBarOffsetY,
+                3 -> {
+                    if (isCompactScreen) {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            state = listState,
+                            contentPadding = PaddingValues(
+                                start = contentPadding.calculateStartPadding(layoutDirection),
+                                top = contentPadding.calculateTopPadding(),
+                                end = contentPadding.calculateEndPadding(layoutDirection),
+                                bottom = contentPadding.calculateBottomPadding() + 8.dp
                             ),
-                        state = gridState,
-                        contentPadding = PaddingValues(
-                            start = contentPadding.calculateStartPadding(layoutDirection) + 8.dp,
-                            top = contentPadding.calculateTopPadding(),
-                            end = contentPadding.calculateEndPadding(layoutDirection) + 8.dp,
-                            bottom = contentPadding.calculateBottomPadding() + 8.dp
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Bottom),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
-                    ) {
-                        items(
-                            items = uiState.filteredMediaList,
-                            key = { it.node.id },
-                            contentType = { it.node }
-                        ) { item ->
-                            GridItemView(
-                                item = item,
-                                modifier = Modifier.animateItem()
-                            )
-                        }
-                        if (uiState.isLoadingMore) {
-                            items(9, contentType = { it }) {
-                                GridUserMediaListItemPlaceholder()
+                        ) {
+                            itemsIndexed(
+                                items = uiState.filteredMediaList,
+                                key = { _, it -> it.node.id },
+                                contentType = { _, _ -> "media" }
+                            ) { index, item ->
+                                StandardItemView(
+                                    item = item,
+                                    modifier = Modifier.animateItem(),
+                                    index = index,
+                                    count = segmentCount,
+                                )
                             }
-                        }
-                        item(contentType = { 0 }) {
-                            if (uiState.canLoadMore) {
-                                Box(modifier = Modifier.fillMaxWidth()) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier
-                                            .align(Alignment.Center)
-                                            .padding(16.dp)
+                            if (uiState.isLoadingMore) {
+                                items(LOAD_MORE_PLACEHOLDERS, contentType = { "placeholder" }) {
+                                    StandardUserMediaListItemPlaceholder(
+                                        index = listSize + it,
+                                        count = segmentCount,
                                     )
                                 }
-                                LaunchedEffect(true) {
-                                    event?.loadMore()
-                                }
                             }
-                        }
-                    }
-                } else if (isCompactScreen) {
-                    if (!uiState.isLoading) {
-                        listState.OnBottomReached(buffer = 3) {
-                            event?.loadMore()
-                        }
-                    }
-                    LazyColumn(
-                        modifier = listModifier
-                            .collapsable(
-                                state = listState,
-                                topBarHeightPx = topBarHeightPx,
-                                topBarOffsetY = topBarOffsetY,
+                        }//:LazyColumn
+                    } else { // tablet ui
+                        // Standard cards have enough density to work as 2-column on tablet
+                        // Two columns can't form one segmented group, so each card stands alone
+                        // (fully rounded) with a gap between rows
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            state = tabletGridState,
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            contentPadding = PaddingValues(
+                                start = contentPadding.calculateStartPadding(layoutDirection),
+                                top = contentPadding.calculateTopPadding(),
+                                end = contentPadding.calculateEndPadding(layoutDirection),
+                                bottom = contentPadding.calculateBottomPadding() + 8.dp
                             ),
-                        state = listState,
-                        contentPadding = PaddingValues(
-                            start = contentPadding.calculateStartPadding(layoutDirection),
-                            top = contentPadding.calculateTopPadding(),
-                            end = contentPadding.calculateEndPadding(layoutDirection),
-                            bottom = contentPadding.calculateBottomPadding() + 8.dp
-                        ),
-                    ) {
-                        when (uiState.listStyle) {
-                            ListStyle.STANDARD -> {
-                                items(
-                                    items = uiState.filteredMediaList,
-                                    key = { it.node.id },
-                                    contentType = { it.node }
-                                ) { item ->
-                                    StandardItemView(
-                                        item = item,
-                                        modifier = Modifier.animateItem()
-                                    )
-                                }
-                                if (uiState.isLoadingMore) {
-                                    items(5, contentType = { it }) {
-                                        StandardUserMediaListItemPlaceholder()
-                                    }
-                                }
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            items(
+                                items = uiState.filteredMediaList,
+                                key = { it.node.id },
+                                contentType = { "media" }
+                            ) { item ->
+                                StandardItemView(
+                                    item = item,
+                                    modifier = Modifier.animateItem()
+                                )
                             }
-
-                            ListStyle.COMPACT -> {
-                                items(
-                                    items = uiState.filteredMediaList,
-                                    key = { it.node.id },
-                                    contentType = { it.node }
-                                ) { item ->
-                                    CompactItemView(
-                                        item = item,
-                                        modifier = Modifier.animateItem()
-                                    )
-                                }
-                                if (uiState.isLoadingMore) {
-                                    items(5, contentType = { it }) {
-                                        CompactUserMediaListItemPlaceholder()
-                                    }
-                                }
-                            }
-
-                            ListStyle.MINIMAL -> {
-                                items(
-                                    items = uiState.filteredMediaList,
-                                    key = { it.node.id },
-                                    contentType = { it.node }
-                                ) { item ->
-                                    MinimalItemView(
-                                        item = item,
-                                        modifier = Modifier.animateItem()
-                                    )
-                                }
-                                if (uiState.isLoadingMore) {
-                                    items(5, contentType = { it }) {
-                                        MinimalUserMediaListItemPlaceholder()
-                                    }
-                                }
-                            }
-
-                            else -> {}
-                        }
-                    }//:LazyColumn
-                } else { // tablet ui
-                    if (!uiState.isLoading) {
-                        tabletGridState.OnBottomReached(buffer = 3) {
-                            event?.loadMore()
-                        }
-                    }
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        state = tabletGridState,
-                        modifier = listModifier
-                            .collapsable(
-                                state = tabletGridState,
-                                topBarHeightPx = topBarHeightPx,
-                                topBarOffsetY = topBarOffsetY,
-                            ),
-                        contentPadding = PaddingValues(
-                            start = contentPadding.calculateStartPadding(layoutDirection),
-                            top = contentPadding.calculateTopPadding(),
-                            end = contentPadding.calculateEndPadding(layoutDirection),
-                            bottom = contentPadding.calculateBottomPadding() + 8.dp
-                        ),
-                    ) {
-                        when (uiState.listStyle) {
-                            ListStyle.STANDARD -> {
-                                items(
-                                    items = uiState.filteredMediaList,
-                                    key = { it.node.id },
-                                    contentType = { it.node }
-                                ) { item ->
-                                    StandardItemView(
-                                        item = item,
-                                        modifier = Modifier.animateItem()
-                                    )
-                                }
-                                if (uiState.isLoadingMore) {
-                                    items(5, contentType = { it }) {
-                                        StandardUserMediaListItemPlaceholder()
-                                    }
-                                }
-                            }
-
-                            ListStyle.COMPACT -> {
-                                items(
-                                    items = uiState.filteredMediaList,
-                                    key = { it.node.id },
-                                    contentType = { it.node }
-                                ) { item ->
-                                    CompactItemView(
-                                        item = item,
-                                        modifier = Modifier.animateItem()
-                                    )
-                                }
-                                if (uiState.isLoadingMore) {
-                                    items(5, contentType = { it }) {
-                                        CompactUserMediaListItemPlaceholder()
-                                    }
-                                }
-                            }
-
-                            ListStyle.MINIMAL -> {
-                                items(
-                                    items = uiState.filteredMediaList,
-                                    key = { it.node.id },
-                                    contentType = { it.node }
-                                ) { item ->
-                                    MinimalItemView(
-                                        item = item,
-                                        modifier = Modifier.animateItem()
-                                    )
-                                }
-                                if (uiState.isLoadingMore) {
-                                    items(5, contentType = { it }) {
-                                        MinimalUserMediaListItemPlaceholder()
-                                    }
-                                }
-                            }
-
-                            else -> {}
-                        }
-                        item(contentType = { 0 }) {
-                            if (uiState.canLoadMore) {
-                                Box(modifier = Modifier.fillMaxWidth()) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier
-                                            .align(Alignment.Center)
-                                            .padding(16.dp)
-                                    )
-                                }
-                                LaunchedEffect(true) {
-                                    event?.loadMore()
+                            if (uiState.isLoadingMore) {
+                                items(4, contentType = { "placeholder" }) {
+                                    StandardUserMediaListItemPlaceholder()
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            else -> {
-                // Fallback to loading state instead of empty while state is uncertain
-                LoadingPlaceholder(uiState, contentPadding)
+                else -> LoadingPlaceholder(uiState, contentPadding)
             }
+        }
+    }
+
+    if (uiState.openSetScoreDialog) {
+        val item = uiState.selectedItem
+        if (item != null) {
+            SetScoreDialog(
+                mediaTitle = item.node.userPreferredTitle(),
+                finishDate = uiState.setScoreDialogFinishDate,
+                onDismiss = { event?.skipSetScoreDialog() },
+                onFinish = { score ->
+                    event?.setScore(item, score)
+                }
+            )
         }
     }
 }
@@ -449,42 +301,77 @@ fun LoadingPlaceholder(
     contentPadding: PaddingValues
 ) {
     val layoutDirection = LocalLayoutDirection.current
-    if (uiState.listStyle == ListStyle.GRID) {
-        LazyVerticalGrid(
-            columns = if (uiState.itemsPerRow.value > 0) GridCells.Fixed(uiState.itemsPerRow.value)
-            else GridCells.Adaptive(minSize = (MEDIA_POSTER_MEDIUM_WIDTH + 8).dp),
-            contentPadding = PaddingValues(
-                start = contentPadding.calculateStartPadding(layoutDirection) + 8.dp,
-                top = contentPadding.calculateTopPadding(),
-                end = contentPadding.calculateEndPadding(layoutDirection) + 8.dp,
-                bottom = contentPadding.calculateBottomPadding() + 8.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Bottom),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-            userScrollEnabled = false
-        ) {
-            items(12) {
-                GridUserMediaListItemPlaceholder()
-            }
+    LazyColumn(
+        contentPadding = PaddingValues(
+            start = contentPadding.calculateStartPadding(layoutDirection),
+            top = contentPadding.calculateTopPadding(),
+            end = contentPadding.calculateEndPadding(layoutDirection),
+            bottom = contentPadding.calculateBottomPadding() + 8.dp
+        ),
+        userScrollEnabled = false
+    ) {
+        items(LOADING_PLACEHOLDERS) { index ->
+            // Same segmented group as the loaded list
+            StandardUserMediaListItemPlaceholder(index, LOADING_PLACEHOLDERS)
         }
-    } else {
-        LazyColumn(
-            contentPadding = PaddingValues(
-                start = contentPadding.calculateStartPadding(layoutDirection),
-                top = contentPadding.calculateTopPadding(),
-                end = contentPadding.calculateEndPadding(layoutDirection),
-                bottom = contentPadding.calculateBottomPadding() + 8.dp
-            ),
-            userScrollEnabled = false
-        ) {
-            items(8) {
-                when (uiState.listStyle) {
-                    ListStyle.STANDARD -> StandardUserMediaListItemPlaceholder()
-                    ListStyle.COMPACT -> CompactUserMediaListItemPlaceholder()
-                    ListStyle.MINIMAL -> MinimalUserMediaListItemPlaceholder()
-                    else -> {}
-                }
-            }
-        }
+    }
+}
+
+private data class EmptyStateSpec(
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    @field:androidx.annotation.StringRes val titleRes: Int,
+    @field:androidx.annotation.StringRes val descRes: Int,
+)
+
+private fun emptyStateFor(status: ListStatus?, mediaType: MediaType): EmptyStateSpec {
+    val isAnime = mediaType == MediaType.ANIME
+    return when (status) {
+        ListStatus.WATCHING -> EmptyStateSpec(
+            icon = Icons.Outlined.PlayCircle,
+            titleRes = R.string.empty_watching_title,
+            descRes = R.string.empty_watching_desc,
+        )
+
+        ListStatus.READING -> EmptyStateSpec(
+            icon = Icons.AutoMirrored.Outlined.MenuBook,
+            titleRes = R.string.empty_reading_title,
+            descRes = R.string.empty_reading_desc,
+        )
+
+        ListStatus.COMPLETED -> EmptyStateSpec(
+            icon = Icons.Outlined.CheckCircle,
+            titleRes = if (isAnime) R.string.empty_completed_anime_title else R.string.empty_completed_manga_title,
+            descRes = if (isAnime) R.string.empty_completed_anime_desc else R.string.empty_completed_manga_desc,
+        )
+
+        ListStatus.ON_HOLD -> EmptyStateSpec(
+            icon = Icons.Outlined.PauseCircle,
+            titleRes = if (isAnime) R.string.empty_on_hold_anime_title else R.string.empty_on_hold_manga_title,
+            descRes = if (isAnime) R.string.empty_on_hold_anime_desc else R.string.empty_on_hold_manga_desc,
+        )
+
+        ListStatus.DROPPED -> EmptyStateSpec(
+            icon = Icons.Outlined.Cancel,
+            titleRes = if (isAnime) R.string.empty_dropped_anime_title else R.string.empty_dropped_manga_title,
+            descRes = if (isAnime) R.string.empty_dropped_anime_desc else R.string.empty_dropped_manga_desc,
+        )
+
+        ListStatus.PLAN_TO_WATCH -> EmptyStateSpec(
+            icon = Icons.Outlined.Bookmark,
+            titleRes = R.string.empty_ptw_title,
+            descRes = R.string.empty_ptw_desc,
+        )
+
+        ListStatus.PLAN_TO_READ -> EmptyStateSpec(
+            icon = Icons.Outlined.Bookmark,
+            titleRes = R.string.empty_ptr_title,
+            descRes = R.string.empty_ptr_desc,
+        )
+
+        null -> EmptyStateSpec(
+            icon = Icons.Outlined.Inbox,
+            titleRes = R.string.no_results,
+            descRes = if (isAnime) R.string.empty_watching_desc else R.string.empty_reading_desc,
+        )
     }
 }

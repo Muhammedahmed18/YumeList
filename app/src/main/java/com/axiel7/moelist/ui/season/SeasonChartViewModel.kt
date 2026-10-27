@@ -1,10 +1,11 @@
 package com.axiel7.moelist.ui.season
 
 import androidx.lifecycle.viewModelScope
+import com.axiel7.moelist.data.model.anime.MyAnimeListStatus
 import com.axiel7.moelist.data.model.anime.Season
-import com.axiel7.moelist.data.model.anime.SeasonType
 import com.axiel7.moelist.data.model.anime.StartSeason
 import com.axiel7.moelist.data.model.media.BasicMyListStatus
+import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.MediaFormat
 import com.axiel7.moelist.data.model.media.MediaSort
 import com.axiel7.moelist.data.repository.AnimeRepository
@@ -12,12 +13,15 @@ import com.axiel7.moelist.data.repository.DefaultPreferencesRepository
 import com.axiel7.moelist.ui.base.viewmodel.BaseViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+/** How long the check stays on a poster after a successful quick-add. */
+private const val QUICK_ADD_CHECK_MILLIS = 1200L
 
 class SeasonChartViewModel(
     private val animeRepository: AnimeRepository,
@@ -37,19 +41,7 @@ class SeasonChartViewModel(
                 year != null -> uiState.season.copy(year = year)
                 else -> uiState.season
             }
-            uiState.copy(
-                season = startSeason,
-                seasonType = SeasonType.entries.find { it.season == startSeason }
-            )
-        }
-    }
-
-    override fun setSeason(type: SeasonType) {
-        mutableUiState.update {
-            it.copy(
-                season = type.season,
-                seasonType = type
-            )
+            uiState.copy(season = startSeason)
         }
     }
 
@@ -67,6 +59,61 @@ class SeasonChartViewModel(
 
     override fun onApplyFilters() {
         fetchFullSeason()
+    }
+
+    override fun onQuickAddPlanToWatch(animeId: Int) {
+        // Ignore taps while this anime is already being added (or was just added)
+        if (mutableUiState.value.quickAdd.containsKey(animeId)) return
+        setQuickAdd(animeId, QuickAddState.ADDING)
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = animeRepository.updateAnimeEntry(
+                animeId = animeId,
+                status = ListStatus.PLAN_TO_WATCH
+            )
+            if (result != null) {
+                setQuickAdd(animeId, QuickAddState.ADDED)
+                mutableUiState.update {
+                    it.copy(quickAddResult = QuickAddResult(animeId, success = true))
+                }
+                // Keep the check on the poster for a moment, then show the normal status badge
+                delay(QUICK_ADD_CHECK_MILLIS)
+                setQuickAdd(animeId, null)
+            } else {
+                setQuickAdd(animeId, null)
+                mutableUiState.update {
+                    it.copy(quickAddResult = QuickAddResult(animeId, success = false))
+                }
+            }
+        }
+    }
+
+    override fun onUndoQuickAdd(animeId: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            // The repository drops it from the user list, which brings the "+" back on the poster
+            val removed = animeRepository.deleteAnimeEntry(animeId)
+            if (!removed) {
+                mutableUiState.update { it.copy(message = "Failed to remove from list") }
+            }
+        }
+    }
+
+    override fun onQuickAddResultShown() {
+        mutableUiState.update { it.copy(quickAddResult = null) }
+    }
+
+    private fun setQuickAdd(animeId: Int, state: QuickAddState?) {
+        mutableUiState.update {
+            val map = it.quickAdd.toMutableMap()
+            if (state == null) map.remove(animeId) else map[animeId] = state
+            it.copy(quickAdd = map)
+        }
+    }
+
+    override fun getMyListStatusOf(animeId: Int): MyAnimeListStatus? {
+        return animeRepository.userAnimeList.value
+            .find { it.node.id == animeId }
+            ?.listStatus
     }
 
     private fun fetchFullSeason() {
@@ -114,16 +161,7 @@ class SeasonChartViewModel(
     }
 
     init {
-        mutableUiState
-            .distinctUntilChanged { old, new ->
-                old.season == new.season
-                        && old.sort == new.sort
-                        && old.isNew == new.isNew
-            }
-            .onEach { 
-                fetchFullSeason()
-            }
-            .launchIn(viewModelScope)
+        fetchFullSeason()
 
         defaultPreferencesRepository.hideScores
             .onEach { value ->
