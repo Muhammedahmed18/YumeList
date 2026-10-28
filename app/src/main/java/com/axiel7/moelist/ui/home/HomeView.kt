@@ -16,8 +16,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -67,8 +65,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
@@ -160,17 +156,10 @@ fun HomeView(
         label = "searchBarColor"
     )
 
-    val layoutDirection = LocalLayoutDirection.current
     Column(
         modifier = Modifier
             .fillMaxSize()
-            // The bottom space goes inside the list (below), so content scrolls behind the
-            // floating navigation bar instead of leaving an empty strip
-            .padding(
-                start = padding.calculateStartPadding(layoutDirection),
-                top = padding.calculateTopPadding(),
-                end = padding.calculateEndPadding(layoutDirection),
-            )
+            .padding(padding)
     ) {
         Row(
             modifier = Modifier
@@ -261,7 +250,6 @@ fun HomeView(
                 event = viewModel,
                 isLoggedIn = isLoggedIn,
                 navActionManager = navActionManager,
-                bottomPadding = padding.calculateBottomPadding(),
             )
 
             androidx.compose.animation.AnimatedVisibility(
@@ -342,7 +330,6 @@ private fun HomeViewContent(
     event: HomeEvent?,
     isLoggedIn: Boolean,
     navActionManager: NavActionManager,
-    bottomPadding: Dp = 0.dp,
 ) {
     val seasonalListState = rememberLazyListState()
 
@@ -388,7 +375,7 @@ private fun HomeViewContent(
     // verticalScroll built everything up front)
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 16.dp + bottomPadding),
+        contentPadding = PaddingValues(bottom = 16.dp),
     ) {
         item(key = "title", contentType = "title") {
             Text(

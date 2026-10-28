@@ -8,11 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -42,15 +38,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Velocity
-import kotlin.math.abs
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
@@ -74,7 +62,6 @@ import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
 import com.axiel7.moelist.ui.composables.AppSnackbarHost
 import com.axiel7.moelist.ui.composables.LocalSnackbarOffset
 import com.axiel7.moelist.ui.composables.SnackbarOffsetState
-import com.axiel7.moelist.ui.main.composables.FloatingNavBarHeight
 import com.axiel7.moelist.ui.main.composables.MainBottomNavBar
 import com.axiel7.moelist.ui.main.composables.MainNavigationRail
 import com.axiel7.moelist.ui.onboarding.OnboardingView
@@ -314,57 +301,32 @@ fun MainView(
     // Hide bottom nav while the Home search bar is expanded
     val isBottomBarVisible = (isBottomDestination || pinnedNavBar) && !searchActive
 
-    // The floating bar hides while a finger is dragging a list (either direction) and comes
-    // back the moment the finger lifts, even if the list keeps gliding from the fling.
-    // Only user drags count: sideways pager swipes and programmatic scrolls are ignored.
-    var hiddenByScroll by remember { mutableStateOf(false) }
-    val hideWhileDragging = remember {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (source == NestedScrollSource.UserInput &&
-                    abs(available.y) > SCROLL_HIDE_THRESHOLD &&
-                    abs(available.y) > abs(available.x)
-                ) {
-                    hiddenByScroll = true
-                }
-                return Offset.Zero
-            }
-
-            // Called when the finger lifts (for every drag, with or without a fling)
-            override suspend fun onPreFling(available: Velocity): Velocity {
-                hiddenByScroll = false
-                return Velocity.Zero
-            }
-        }
-    }
-    // Always bring the bar back when switching screens
-    LaunchedEffect(navBackStackEntry?.destination?.route) { hiddenByScroll = false }
-
-    // Keep the bar off the keyboard
-    val imeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
-
-    // The bar is drawn on top of the content. Screens get this as bottom *content* padding so
-    // lists scroll behind the bar and their last item can still scroll above it.
-    val navBarsBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val floatingBarSpace = FloatingNavBarHeight + navBarsBottom
-    val showFloatingBar = isCompactScreen && isBottomBarVisible
-    val floatingBarVisible = showFloatingBar && !imeVisible &&
-        // With the bar pinned on every screen it keeps its own space, so it doesn't hide on scroll
-        (pinnedNavBar || !hiddenByScroll)
-
     CompositionLocalProvider(
         LocalSnackbarHostState provides snackbarHostState,
         LocalSnackbarOffset provides snackbarOffset,
     ) {
     Scaffold(
+        bottomBar = {
+            if (isCompactScreen) {
+                MainBottomNavBar(
+                    navController = navController,
+                    navBackStackEntry = navBackStackEntry,
+                    // Hide bottom nav while the Home search bar is expanded
+                    isVisible = isBottomBarVisible,
+                    onItemSelected = saveLastTab,
+                )
+            }
+        },
         snackbarHost = {
-            // Above the floating bar when it's shown; otherwise just clear the system
-            // navigation bar (this Scaffold only applies horizontal insets)
+            // Above the bottom bar when it's shown; otherwise clear the system navigation bar
+            // ourselves (this Scaffold only applies horizontal insets)
             AppSnackbarHost(
                 hostState = snackbarHostState,
                 modifier = Modifier
-                    .navigationBarsPadding()
-                    .padding(bottom = if (showFloatingBar) FloatingNavBarHeight else 0.dp)
+                    .then(
+                        if (isCompactScreen && isBottomBarVisible) Modifier
+                        else Modifier.navigationBarsPadding()
+                    )
                     .padding(bottom = snackbarOffset.bottom)
             )
         },
@@ -399,47 +361,31 @@ fun MainView(
                 )
             }
         } else {
-            Box(modifier = Modifier.fillMaxSize()) {
-                MainNavigation(
-                    navController = navController,
-                    navActionManager = navActionManager,
-                    lastTabOpened = lastTabOpened,
-                    isLoggedIn = isLoggedIn,
-                    isCompactScreen = true,
-                    useListTabs = useListTabs,
-                    modifier = Modifier
-                        .nestedScroll(hideWhileDragging)
-                        .padding(
-                            start = padding.calculateStartPadding(LocalLayoutDirection.current),
-                            end = padding.calculateEndPadding(LocalLayoutDirection.current),
-                            // Pinned bar: every screen stops above it
-                            bottom = if (pinnedNavBar) floatingBarSpace else 0.dp,
-                        ),
-                    padding = PaddingValues(
-                        start = padding.calculateStartPadding(LocalLayoutDirection.current),
-                        end = padding.calculateEndPadding(LocalLayoutDirection.current),
-                        top = if (isUserListTab) 0.dp else padding.calculateTopPadding(),
-                        // Tabs scroll behind the floating bar (not needed when pinned)
-                        bottom = if (pinnedNavBar) 0.dp else floatingBarSpace,
-                    ),
-                    barOnAllScreens = pinnedNavBar,
-                    onSortClickTrigger = { sortTrigger = it },
-                    searchActive = searchActive,
-                    onSearchActiveChange = { searchActive = it },
-                    profilePicture = profilePicture,
-                )
-                MainBottomNavBar(
-                    navController = navController,
-                    navBackStackEntry = navBackStackEntry,
-                    isVisible = floatingBarVisible,
-                    onItemSelected = saveLastTab,
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                )
-            }
+            MainNavigation(
+                navController = navController,
+                navActionManager = navActionManager,
+                lastTabOpened = lastTabOpened,
+                isLoggedIn = isLoggedIn,
+                isCompactScreen = true,
+                useListTabs = useListTabs,
+                modifier = Modifier.padding(
+                    start = padding.calculateStartPadding(LocalLayoutDirection.current),
+                    end = padding.calculateEndPadding(LocalLayoutDirection.current),
+                    bottom = if (pinnedNavBar) padding.calculateBottomPadding() else 0.dp,
+                ),
+                padding = PaddingValues(
+                    start = padding.calculateStartPadding(LocalLayoutDirection.current),
+                    end = padding.calculateEndPadding(LocalLayoutDirection.current),
+                    top = if (isUserListTab) 0.dp else padding.calculateTopPadding(),
+                    bottom = padding.calculateBottomPadding()
+                ),
+                barOnAllScreens = pinnedNavBar,
+                onSortClickTrigger = { sortTrigger = it },
+                searchActive = searchActive,
+                onSearchActiveChange = { searchActive = it },
+                profilePicture = profilePicture,
+            )
         }
     }
     } // CompositionLocalProvider
 }
-
-/** Minimum drag distance (px per frame) before the floating bar hides, so taps don't hide it. */
-private const val SCROLL_HIDE_THRESHOLD = 4f
