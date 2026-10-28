@@ -146,10 +146,11 @@ fun UserMediaListWithTabsView(
             }
         },
     ) { innerPadding ->
+        // The bottom space goes inside the lists (below), so they scroll behind the floating
+        // navigation bar instead of leaving an empty strip
+        val listBottomPadding = innerPadding.calculateBottomPadding()
         Column(
-            modifier = Modifier
-                .statusBarsPadding()
-                .padding(bottom = innerPadding.calculateBottomPadding())
+            modifier = Modifier.statusBarsPadding()
         ) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -299,7 +300,7 @@ fun UserMediaListWithTabsView(
                     uiState.isLoadingRandom -> {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp),
+                            contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp + listBottomPadding),
                             userScrollEnabled = false
                         ) {
                             items(3) {
@@ -313,7 +314,7 @@ fun UserMediaListWithTabsView(
                             event = viewModel,
                             navActionManager = navActionManager,
                             isCompactScreen = isCompactScreen,
-                            contentPadding = PaddingValues(top = 8.dp),
+                            contentPadding = PaddingValues(top = 8.dp, bottom = listBottomPadding),
                             onShowEditSheet = { item ->
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 viewModel.onItemSelected(item)
