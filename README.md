@@ -90,7 +90,12 @@ YumeList is an unofficial Android client for [MyAnimeList](https://myanimelist.n
 
 ## Download
 
-Get the latest APK from **[GitHub Releases](https://github.com/Muhammedahmed18/YumeList/releases/latest)**.
+<p>
+  <a href="https://rookieenough.github.io/Orion-Data/app/?id=yumelist"><img alt="Get it on Orion Store" src="https://raw.githubusercontent.com/RookieEnough/Orion-Store/refs/heads/main/assets/orion-badge.png" height="60"/></a>
+  <a href="https://github.com/Muhammedahmed18/YumeList/releases/latest"><img alt="Get it on GitHub" src="https://img.shields.io/badge/Get%20it%20on-GitHub-B0C6FF?style=for-the-badge&logo=github&logoColor=white" height="60"/></a>
+</p>
+
+Get it from **[Orion Store](https://rookieenough.github.io/Orion-Data/app/?id=yumelist)** for automatic updates, or download the APK directly from **[GitHub Releases](https://github.com/Muhammedahmed18/YumeList/releases/latest)**.
 
 | File | Choose it if… |
 |---|---|

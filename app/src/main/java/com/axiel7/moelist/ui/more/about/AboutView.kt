@@ -54,11 +54,13 @@ import com.axiel7.moelist.ui.icons.automirrored.rounded.PlaylistAdd
 import com.axiel7.moelist.ui.icons.rounded.Api
 import com.axiel7.moelist.ui.icons.rounded.BugReport
 import com.axiel7.moelist.ui.icons.rounded.CalendarMonth
-import com.axiel7.moelist.ui.icons.rounded.Explore
+import com.axiel7.moelist.ui.icons.rounded.EmojiEvents
 import com.axiel7.moelist.ui.icons.rounded.Favorite
 import com.axiel7.moelist.ui.icons.rounded.Gavel
 import com.axiel7.moelist.ui.icons.rounded.NewReleases
+import com.axiel7.moelist.ui.icons.rounded.Notifications
 import com.axiel7.moelist.ui.icons.rounded.Palette
+import com.axiel7.moelist.ui.icons.rounded.Schedule
 import com.axiel7.moelist.ui.icons.rounded.Verified
 import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.utils.ContextExtensions.openAction
@@ -179,7 +181,7 @@ fun AboutView(navActionManager: NavActionManager) {
                 AboutHighlightCard(
                     title = stringResource(R.string.highlight_discover),
                     subtitle = stringResource(R.string.highlight_discover_desc),
-                    icon = Icons.Rounded.Explore,
+                    icon = Icons.Rounded.EmojiEvents,
                     shape = MaterialShapes.Sunny.toShape(),
                     modifier = Modifier
                         .weight(1f)
@@ -190,6 +192,29 @@ fun AboutView(navActionManager: NavActionManager) {
                     subtitle = stringResource(R.string.highlight_themes_desc),
                     icon = Icons.Rounded.Palette,
                     shape = MaterialShapes.Clover4Leaf.toShape(),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                )
+            }
+            Row(
+                modifier = Modifier.height(IntrinsicSize.Max),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                AboutHighlightCard(
+                    title = stringResource(R.string.highlight_airing),
+                    subtitle = stringResource(R.string.highlight_airing_desc),
+                    icon = Icons.Rounded.Schedule,
+                    shape = MaterialShapes.Cookie6Sided.toShape(),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                )
+                AboutHighlightCard(
+                    title = stringResource(R.string.highlight_notifications),
+                    subtitle = stringResource(R.string.highlight_notifications_desc),
+                    icon = Icons.Rounded.Notifications,
+                    shape = MaterialShapes.SoftBurst.toShape(),
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight(),

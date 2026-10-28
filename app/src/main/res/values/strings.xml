@@ -421,7 +421,7 @@
     <string name="dates">Dates</string>
 
     <!-- About page -->
-    <string name="app_description">YumeList is your open-source anime &amp; manga tracker powered by MyAnimeList. Track, discover, and explore with a beautiful Material 3 experience.</string>
+    <string name="app_description">YumeList is your open-source anime &amp; manga tracker powered by MyAnimeList. See what\'s airing today, update your progress in one tap, and explore every season, all with a Material 3 Expressive design.</string>
     <string name="stable_release">Stable Release</string>
     <string name="changelog">Changelog</string>
     <string name="changelog_summary">See what\'s new in this release</string>
@@ -436,14 +436,18 @@
     <string name="core_highlights">Core Highlights</string>
     <string name="connect_and_share">Connect &amp; Share</string>
     <string name="highlight_track">Track Lists</string>
-    <string name="highlight_track_desc">Anime &amp; manga in one place</string>
-    <string name="highlight_seasonal">Seasonal Charts</string>
-    <string name="highlight_seasonal_desc">Discover what\'s airing now</string>
-    <string name="highlight_discover">Discover</string>
-    <string name="highlight_discover_desc">Rankings, trending &amp; more</string>
-    <string name="highlight_themes">Anime Themes</string>
-    <string name="highlight_themes_desc">Material 3 with dynamic colors</string>
-    <string name="copyright">© 2026 YumeList. All rights reserved.</string>
+    <string name="highlight_track_desc">One-tap +1 progress for anime &amp; manga</string>
+    <string name="highlight_seasonal">Season &amp; Calendar</string>
+    <string name="highlight_seasonal_desc">Browse any season and the weekly schedule</string>
+    <string name="highlight_discover">Rankings</string>
+    <string name="highlight_discover_desc">Top anime &amp; manga by score and popularity</string>
+    <string name="highlight_themes">Light, Dark &amp; OLED</string>
+    <string name="highlight_themes_desc">Material 3 Expressive with pure black mode</string>
+    <string name="highlight_airing">Airing Today</string>
+    <string name="highlight_airing_desc">Live countdowns for every new episode</string>
+    <string name="highlight_notifications">Alerts &amp; Widget</string>
+    <string name="highlight_notifications_desc">Airing notifications on your home screen</string>
+    <string name="copyright">© 2026 YumeList · Licensed under GPL-3.0</string>
     <string name="added_to_plan_to_watch">Added to Plan to Watch</string>
     <string name="undo">Undo</string>
     <string name="updated">Updated</string>

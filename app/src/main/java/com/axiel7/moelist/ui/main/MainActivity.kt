@@ -39,6 +39,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
@@ -301,6 +305,20 @@ fun MainView(
     // Hide bottom nav while the Home search bar is expanded
     val isBottomBarVisible = (isBottomDestination || pinnedNavBar) && !searchActive
 
+    // The floating bar slides away while scrolling down and comes back on scroll up
+    var hiddenByScroll by remember { mutableStateOf(false) }
+    val hideOnScroll = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (available.y < -SCROLL_HIDE_THRESHOLD) hiddenByScroll = true
+                else if (available.y > SCROLL_HIDE_THRESHOLD) hiddenByScroll = false
+                return Offset.Zero
+            }
+        }
+    }
+    // Always bring the bar back when switching screens
+    LaunchedEffect(navBackStackEntry?.destination?.route) { hiddenByScroll = false }
+
     CompositionLocalProvider(
         LocalSnackbarHostState provides snackbarHostState,
         LocalSnackbarOffset provides snackbarOffset,
@@ -311,8 +329,8 @@ fun MainView(
                 MainBottomNavBar(
                     navController = navController,
                     navBackStackEntry = navBackStackEntry,
-                    // Hide bottom nav while the Home search bar is expanded
-                    isVisible = isBottomBarVisible,
+                    // Hidden while the Home search bar is expanded or while scrolling down
+                    isVisible = isBottomBarVisible && !hiddenByScroll,
                     onItemSelected = saveLastTab,
                 )
             }
@@ -368,11 +386,13 @@ fun MainView(
                 isLoggedIn = isLoggedIn,
                 isCompactScreen = true,
                 useListTabs = useListTabs,
-                modifier = Modifier.padding(
-                    start = padding.calculateStartPadding(LocalLayoutDirection.current),
-                    end = padding.calculateEndPadding(LocalLayoutDirection.current),
-                    bottom = if (pinnedNavBar) padding.calculateBottomPadding() else 0.dp,
-                ),
+                modifier = Modifier
+                    .nestedScroll(hideOnScroll)
+                    .padding(
+                        start = padding.calculateStartPadding(LocalLayoutDirection.current),
+                        end = padding.calculateEndPadding(LocalLayoutDirection.current),
+                        bottom = if (pinnedNavBar) padding.calculateBottomPadding() else 0.dp,
+                    ),
                 padding = PaddingValues(
                     start = padding.calculateStartPadding(LocalLayoutDirection.current),
                     end = padding.calculateEndPadding(LocalLayoutDirection.current),
@@ -389,3 +409,6 @@ fun MainView(
     }
     } // CompositionLocalProvider
 }
+
+/** Minimum scroll delta (px per frame) before the floating bar hides or shows. */
+private const val SCROLL_HIDE_THRESHOLD = 4f
