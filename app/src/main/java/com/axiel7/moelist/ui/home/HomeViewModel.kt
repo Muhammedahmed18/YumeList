@@ -17,6 +17,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.ZoneId
 
 class HomeViewModel(
     private val animeRepository: AnimeRepository,
@@ -34,6 +36,17 @@ class HomeViewModel(
         }
     }
 
+    /** The local date the Today row was built for, to rebuild it after midnight. */
+    private var todayLoadedFor: LocalDate? = null
+
+    /** Rebuilds the Today row when the user comes back on a new day (e.g. app left open). */
+    fun refreshTodayIfDayChanged() {
+        val loadedFor = todayLoadedFor ?: return
+        if (loadedFor != LocalDate.now()) {
+            viewModelScope.launch(Dispatchers.IO) { getTodayAiringAnimes() }
+        }
+    }
+
     private suspend fun getTodayAiringAnimes() {
         val result = animeRepository.getAnimeRanking(
             rankingType = RankingType.AIRING,
@@ -41,21 +54,26 @@ class HomeViewModel(
             fields = AnimeRepository.TODAY_FIELDS
         )
         if (result.data != null) {
-            val tempList = mutableListOf<AnimeRanking>()
-            for (anime in result.data) {
-                val status = anime.node.myListStatus?.status
-                val isInList = status == ListStatus.WATCHING || status == ListStatus.PLAN_TO_WATCH
-                
-                if (anime.node.broadcast != null
-                    && !tempList.contains(anime)
-                    && anime.node.broadcast.dayOfTheWeek == SeasonCalendar.currentJapanWeekday
-                    && anime.node.status == MediaStatus.AIRING
-                    && isInList
-                ) {
-                    tempList.add(anime)
+            // "Today" is the user's day in their own time zone, not Japan's: a Thursday 01:30
+            // JST episode airs on Wednesday evening in Pakistan, Wednesday morning in New York.
+            val today = LocalDate.now()
+            val zone = ZoneId.systemDefault()
+            val tempList = result.data
+                .filter { anime ->
+                    val status = anime.node.myListStatus?.status
+                    val isInList = status == ListStatus.WATCHING || status == ListStatus.PLAN_TO_WATCH
+                    anime.node.status == MediaStatus.AIRING
+                        && isInList
+                        && anime.node.broadcast?.airsOn(today, zone) == true
                 }
-            }
-            tempList.sortByDescending { it.node.broadcast?.startTime }
+                .distinctBy { it.node.id }
+                // Earliest local air time first; day-only broadcasts (no time) go last
+                .sortedWith(
+                    compareBy(nullsLast<Long>()) { anime: AnimeRanking ->
+                        anime.node.broadcast?.localAiringOn(today, zone)?.toEpochSecond()
+                    }
+                )
+            todayLoadedFor = today
             mutableUiState.update { it.copy(todayAnimes = tempList) }
         } else {
             showMessage(result.message ?: result.error)

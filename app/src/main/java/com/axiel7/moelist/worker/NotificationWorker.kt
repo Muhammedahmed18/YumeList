@@ -30,15 +30,15 @@ import com.axiel7.moelist.data.model.media.MediaStatus
 import com.axiel7.moelist.data.model.media.WeekDay
 import com.axiel7.moelist.data.repository.AnimeRepository
 import com.axiel7.moelist.ui.main.MainActivity
+import com.axiel7.moelist.utils.BroadcastSchedule
 import com.axiel7.moelist.utils.DateUtils
-import com.axiel7.moelist.utils.DateUtils.getNextDayOfWeek
-import com.axiel7.moelist.utils.SeasonCalendar
 import kotlinx.coroutines.flow.map
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 
 class NotificationWorker(
@@ -121,14 +121,15 @@ class NotificationWorkerManager(
             createAiringAnimeNotificationChannel(context)
         }
 
-        val airingDay = LocalDate.now().getNextDayOfWeek(DayOfWeek.of(weekDay.ordinal + 1))
-        val startDateTime = LocalDateTime.of(airingDay, jpHour)
-            .atZone(SeasonCalendar.japanZoneId)
-            .withZoneSameInstant(ZoneId.systemDefault())
-            .toLocalDateTime()
-
-        val delay = startDateTime.toEpochSecond(DateUtils.defaultZoneOffset) -
-                LocalDateTime.now().toEpochSecond(DateUtils.defaultZoneOffset)
+        // Exactly the time until the next real airing in the user's time zone (never negative,
+        // never a day off), worked out from the Japan day/time
+        val now = ZonedDateTime.now(ZoneId.systemDefault())
+        val nextAiring = BroadcastSchedule.nextAiring(
+            day = DayOfWeek.of(weekDay.ordinal + 1),
+            jpTime = jpHour,
+            now = now,
+        )
+        val delay = BroadcastSchedule.secondsBetween(now, nextAiring)
 
         val inputData = Data.Builder()
             .putInt("anime_id", animeId)

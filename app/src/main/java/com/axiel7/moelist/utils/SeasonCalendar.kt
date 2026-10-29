@@ -12,14 +12,11 @@ object SeasonCalendar {
     private val calendar: Calendar by lazy {
         Calendar.getInstance(Locale.getDefault())
     }
-    private val jpCalendar =
-        Calendar.getInstance(TimeZone.getTimeZone("Asia/Tokyo"), Locale.ENGLISH)
 
     /**
      * The current month from 0 to 11
      */
     private val month = calendar[Calendar.MONTH]
-    private val weekDay = calendar[Calendar.DAY_OF_WEEK]
 
     val currentYear = calendar[Calendar.YEAR]
 
@@ -68,7 +65,9 @@ object SeasonCalendar {
         season = prevSeason
     )
 
-    val currentWeekday = when (weekDay) {
+    /** Today's weekday in the user's time zone, worked out every time (not once at app start). */
+    val currentWeekday: WeekDay
+        get() = when (Calendar.getInstance(Locale.getDefault())[Calendar.DAY_OF_WEEK]) {
         2 -> WeekDay.MONDAY
         3 -> WeekDay.TUESDAY
         4 -> WeekDay.WEDNESDAY
@@ -79,7 +78,11 @@ object SeasonCalendar {
         else -> WeekDay.MONDAY
     }
 
-    val currentJapanWeekday = when (jpCalendar[Calendar.DAY_OF_WEEK]) {
+    /** Today's weekday in Japan, worked out every time. */
+    val currentJapanWeekday: WeekDay
+        get() = when (
+            Calendar.getInstance(TimeZone.getTimeZone("Asia/Tokyo"), Locale.ENGLISH)[Calendar.DAY_OF_WEEK]
+        ) {
         2 -> WeekDay.MONDAY
         3 -> WeekDay.TUESDAY
         4 -> WeekDay.WEDNESDAY
@@ -91,4 +94,4 @@ object SeasonCalendar {
     }
 
     val japanZoneId: ZoneId = ZoneId.of("Asia/Tokyo")
-}
+}

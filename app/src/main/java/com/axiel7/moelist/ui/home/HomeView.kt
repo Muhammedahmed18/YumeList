@@ -66,6 +66,8 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
 import coil3.compose.AsyncImage
@@ -110,6 +112,10 @@ fun HomeView(
     profilePicture: String?,
 ) {
     val viewModel: HomeViewModel = koinViewModel()
+    // Coming back to the app on a new day (e.g. left open overnight) rebuilds the Today row
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.refreshTodayIfDayChanged()
+    }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     // The search ViewModel is NOT created here: it lives in HomeSearchResults, which only exists

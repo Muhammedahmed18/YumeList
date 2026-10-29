@@ -323,6 +323,8 @@ class AnimeRepository(
                 mutableListOf(),//5: SATURDAY
                 mutableListOf(),//6: SUNDAY
             )
+            // Each show goes under the day it airs in the user's time zone. Sorting by the actual
+            // airing moment also orders every day by local time.
             rankResponse.data
                 ?.sortedBy { it.node.broadcast?.secondsUntilNextBroadcast() }
                 ?.forEach { anime ->
