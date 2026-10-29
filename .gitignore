@@ -10,3 +10,11 @@
 .cxx
 /app/src/main/java/com/axiel7/moelist/private/ClientId.kt
 /app/release
+
+# Local tools and caches (never commit)
+.claude/
+.kotlin/
+
+# Signing keys (never commit)
+*.jks
+*.keystore
