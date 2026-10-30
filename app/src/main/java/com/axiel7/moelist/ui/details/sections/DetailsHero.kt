@@ -130,7 +130,9 @@ fun DetailsHero(
                     else ListStatus.listStatusMangaValues,
                     onEditClick = onEditClick,
                     onStatusSelected = onStatusSelected,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    isUpdating = uiState.isUpdatingStatus,
+                    pendingStatus = uiState.pendingStatus,
                 )
             }
         }

@@ -170,6 +170,8 @@ class AnimeRepository(
         @IntRange(0, 2) priority: Int? = null,
         tags: String? = null,
         comments: String? = null,
+        // Receives the failure (no internet, expired session...) so callers can explain it
+        onError: (Throwable) -> Unit = {},
     ): MyAnimeListStatus? {
         // Optimistic update
         val previousList = _userAnimeList.value
@@ -243,8 +245,9 @@ class AnimeRepository(
                 newList
             }
             result
-        } catch (_: Exception) {
+        } catch (e: Exception) {
             _userAnimeList.value = previousList
+            onError(e)
             null
         }
     }

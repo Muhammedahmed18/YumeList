@@ -28,6 +28,11 @@ data class MediaDetailsUiState(
     val characters: List<Character> = emptyList(),
     val isLoadingCharacters: Boolean = false,
     val notification: String? = null,
+    // Quick status change from the split button: the status being saved (shown on the button
+    // straight away), whether a save/undo is running, and its one-time result for the snackbar
+    val pendingStatus: ListStatus? = null,
+    val isUpdatingStatus: Boolean = false,
+    val statusResult: StatusChangeResult? = null,
     val startNotification: String? = null,
     override val isLoading: Boolean = true,
     override val message: String? = null,
@@ -65,4 +70,33 @@ data class MediaDetailsUiState(
             .filter { it.relationType != RelationType.PREQUEL && it.relationType != RelationType.SEQUEL }
             .groupBy { it.node.mediaFormat ?: MediaFormat.UNKNOWN }
             .filter { it.value.isNotEmpty() }
+}
+
+/**
+ * One-time result of a quick status change, turned into a snackbar by the details screen.
+ *
+ * @param status the status that was requested
+ * @param previous the entry before the change (null if it wasn't in the list), used by Undo
+ */
+@Immutable
+data class StatusChangeResult(
+    val kind: Kind,
+    val status: ListStatus?,
+    val previous: BaseMyListStatus?,
+    val errorMessage: String? = null,
+    /** True for the result of an Undo (a failed Undo isn't retried as a normal change) */
+    val fromUndo: Boolean = false,
+) {
+    enum class Kind {
+        /** New entry added with [status] */
+        ADDED,
+        /** Existing entry moved to [status] */
+        CHANGED,
+        /** Undo of a new entry: removed from the list */
+        REMOVED,
+        /** Undo of a change: back to [previous] */
+        RESTORED,
+        /** The change (or the undo) failed: [errorMessage] says why */
+        FAILED,
+    }
 }

@@ -16,6 +16,8 @@ import com.axiel7.moelist.data.repository.DefaultPreferencesRepository
 import com.axiel7.moelist.data.repository.MangaRepository
 import com.axiel7.moelist.ui.base.navigation.Route
 import com.axiel7.moelist.ui.base.viewmodel.BaseViewModel
+import com.axiel7.moelist.utils.ApiErrorMapper
+import com.axiel7.moelist.utils.toUiMessage
 import com.axiel7.moelist.worker.NotificationWorkerManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -70,13 +72,21 @@ class MediaDetailsViewModel(
     }
 
     override fun setListStatus(status: ListStatus) {
-        val details = mutableUiState.value.mediaDetails ?: return
-        val previous = details.myListStatus?.status
+        val state = mutableUiState.value
+        // One change at a time: ignore taps while a save or undo is still running
+        if (state.isUpdatingStatus) return
+        val details = state.mediaDetails ?: return
+        val previousEntry = details.myListStatus
+        val previous = previousEntry?.status
         val today = LocalDate.now().toString() // ISO yyyy-MM-dd, as the API expects
         val isCompleting = status == ListStatus.COMPLETED
         val isStarting = status.isCurrent() && (previous == null || previous.isPlanning())
 
+        // Show the new status on the button right away, with a loading indicator
+        mutableUiState.update { it.copy(pendingStatus = status, isUpdatingStatus = true) }
+
         viewModelScope.launch(Dispatchers.IO) {
+            var error: Throwable? = null
             val result: BaseMyListStatus? = when (details) {
                 is AnimeDetails -> animeRepository.updateAnimeEntry(
                     animeId = details.id,
@@ -84,6 +94,7 @@ class MediaDetailsViewModel(
                     watchedEpisodes = details.numEpisodes?.takeIf { isCompleting && it > 0 },
                     startDate = today.takeIf { isStarting },
                     endDate = today.takeIf { isCompleting },
+                    onError = { error = it },
                 )
 
                 is MangaDetails -> mangaRepository.updateMangaEntry(
@@ -93,17 +104,107 @@ class MediaDetailsViewModel(
                     volumesRead = details.numVolumes?.takeIf { isCompleting && it > 0 },
                     startDate = today.takeIf { isStarting },
                     endDate = today.takeIf { isCompleting },
+                    onError = { error = it },
                 )
 
                 else -> null
             }
-            if (result != null) {
-                onChangedMyListStatus(result)
-            } else {
-                showMessage("Unable to update the status")
-            }
+            if (result != null) onChangedMyListStatus(result)
+            finishStatusChange(
+                if (result != null) {
+                    StatusChangeResult(
+                        kind = if (previousEntry == null) StatusChangeResult.Kind.ADDED
+                        else StatusChangeResult.Kind.CHANGED,
+                        status = status,
+                        previous = previousEntry,
+                    )
+                } else {
+                    // The button falls back to the real (unchanged) status
+                    StatusChangeResult(
+                        kind = StatusChangeResult.Kind.FAILED,
+                        status = status,
+                        previous = previousEntry,
+                        errorMessage = error.toReadableMessage(),
+                    )
+                }
+            )
         }
     }
+
+    override fun undoStatusChange(previous: BaseMyListStatus?) {
+        val state = mutableUiState.value
+        if (state.isUpdatingStatus) return
+        val details = state.mediaDetails ?: return
+
+        mutableUiState.update { it.copy(pendingStatus = previous?.status, isUpdatingStatus = true) }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            var error: Throwable? = null
+            val success: Boolean
+            if (previous == null) {
+                // It was a new entry: take it off the list again
+                success = when (details) {
+                    is AnimeDetails -> animeRepository.deleteAnimeEntry(details.id)
+                    is MangaDetails -> mangaRepository.deleteMangaEntry(details.id)
+                    else -> false
+                }
+                if (success) onChangedMyListStatus(null, removed = true)
+            } else {
+                // Put back the previous status, progress and dates (Completed fills them in)
+                val result: BaseMyListStatus? = when (details) {
+                    is AnimeDetails -> animeRepository.updateAnimeEntry(
+                        animeId = details.id,
+                        status = previous.status,
+                        watchedEpisodes = previous.progress,
+                        startDate = previous.startDate,
+                        endDate = previous.finishDate,
+                        onError = { error = it },
+                    )
+
+                    is MangaDetails -> mangaRepository.updateMangaEntry(
+                        mangaId = details.id,
+                        status = previous.status,
+                        chaptersRead = previous.progress,
+                        volumesRead = (previous as? MyMangaListStatus)?.numVolumesRead,
+                        startDate = previous.startDate,
+                        endDate = previous.finishDate,
+                        onError = { error = it },
+                    )
+
+                    else -> null
+                }
+                success = result != null
+                if (result != null) onChangedMyListStatus(result)
+            }
+            finishStatusChange(
+                StatusChangeResult(
+                    kind = when {
+                        !success -> StatusChangeResult.Kind.FAILED
+                        previous == null -> StatusChangeResult.Kind.REMOVED
+                        else -> StatusChangeResult.Kind.RESTORED
+                    },
+                    status = previous?.status,
+                    previous = null,
+                    errorMessage = if (success) null else error.toReadableMessage(),
+                    fromUndo = true,
+                )
+            )
+        }
+    }
+
+    override fun onStatusResultShown() {
+        mutableUiState.update { it.copy(statusResult = null) }
+    }
+
+    private fun finishStatusChange(result: StatusChangeResult) {
+        mutableUiState.update {
+            it.copy(pendingStatus = null, isUpdatingStatus = false, statusResult = result)
+        }
+    }
+
+    /** "No connection", "Session expired"... instead of a raw exception text */
+    private fun Throwable?.toReadableMessage(): String =
+        this?.toUiMessage() ?: ApiErrorMapper.mapApiError(null)
 
     override fun getCharacters() {
         viewModelScope.launch(Dispatchers.IO) {

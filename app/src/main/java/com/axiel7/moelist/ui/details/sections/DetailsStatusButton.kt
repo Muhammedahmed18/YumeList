@@ -11,6 +11,8 @@ import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.SelectableDropdownMenuItem
@@ -53,6 +55,9 @@ private val StatusButtonHeight: Dp = 48.dp
  *
  * @param currentStatus null when the entry isn't in the user's list
  * @param statuses the statuses for this media type, in menu order
+ * @param isUpdating a status change (or its undo) is being saved: the button shows
+ *   [pendingStatus] with a loading indicator and can't be used until it's done
+ * @param pendingStatus the status being saved (null = being removed from the list)
  */
 // Opt-in kept for safety: some Expressive menu APIs were experimental in earlier 1.5 builds
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -63,9 +68,13 @@ fun DetailsStatusButton(
     onEditClick: () -> Unit,
     onStatusSelected: (ListStatus) -> Unit,
     modifier: Modifier = Modifier,
+    isUpdating: Boolean = false,
+    pendingStatus: ListStatus? = null,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
-    val colors = if (currentStatus == null) ButtonDefaults.buttonColors()
+    // While saving, show the status being saved so the change is visible straight away
+    val shownStatus = if (isUpdating) pendingStatus else currentStatus
+    val colors = if (shownStatus == null) ButtonDefaults.buttonColors()
     else ButtonDefaults.filledTonalButtonColors()
     val changeStatusLabel = stringResource(R.string.change_status)
 
@@ -74,7 +83,8 @@ fun DetailsStatusButton(
             modifier = Modifier.fillMaxWidth(),
             leadingButton = {
                 SplitButtonDefaults.LeadingButton(
-                    onClick = onEditClick,
+                    // Taps are ignored while saving (kept enabled so the new status isn't greyed out)
+                    onClick = { if (!isUpdating) onEditClick() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = StatusButtonHeight),
@@ -82,14 +92,23 @@ fun DetailsStatusButton(
                     colors = colors,
                     contentPadding = SplitButtonDefaults.leadingButtonContentPaddingFor(StatusButtonHeight),
                 ) {
-                    Icon(
-                        imageVector = currentStatus?.icon ?: Icons.Rounded.Add,
-                        contentDescription = null,
-                        modifier = Modifier.size(SplitButtonDefaults.leadingButtonIconSizeFor(StatusButtonHeight))
-                    )
+                    if (isUpdating) {
+                        LoadingIndicator(
+                            modifier = Modifier.size(
+                                SplitButtonDefaults.leadingButtonIconSizeFor(StatusButtonHeight) + 6.dp
+                            ),
+                            color = LocalContentColor.current,
+                        )
+                    } else {
+                        Icon(
+                            imageVector = shownStatus?.icon ?: Icons.Rounded.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(SplitButtonDefaults.leadingButtonIconSizeFor(StatusButtonHeight))
+                        )
+                    }
                     Spacer(modifier = Modifier.size(ButtonDefaults.IconSpacing))
                     Text(
-                        text = currentStatus?.localized() ?: stringResource(R.string.add),
+                        text = shownStatus?.localized() ?: stringResource(R.string.add),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -98,7 +117,7 @@ fun DetailsStatusButton(
             trailingButton = {
                 SplitButtonDefaults.TrailingButton(
                     checked = menuOpen,
-                    onCheckedChange = { menuOpen = it },
+                    onCheckedChange = { if (!isUpdating) menuOpen = it },
                     modifier = Modifier
                         .heightIn(min = StatusButtonHeight)
                         .semantics {
@@ -128,7 +147,7 @@ fun DetailsStatusButton(
         // M3 Expressive menu: rounded group with selectable rows. The current status is
         // highlighted (tinted, rounded background, bold text) instead of showing a tick.
         DropdownMenuPopup(
-            expanded = menuOpen,
+            expanded = menuOpen && !isUpdating,
             onDismissRequest = { menuOpen = false },
         ) {
             DropdownMenuGroup(

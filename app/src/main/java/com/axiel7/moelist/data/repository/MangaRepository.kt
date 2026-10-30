@@ -129,6 +129,8 @@ class MangaRepository(
         @IntRange(0, 2) priority: Int? = null,
         tags: String? = null,
         comments: String? = null,
+        // Receives the failure (no internet, expired session...) so callers can explain it
+        onError: (Throwable) -> Unit = {},
     ): MyMangaListStatus? {
         // Optimistic update
         val previousList = _userMangaList.value
@@ -204,8 +206,9 @@ class MangaRepository(
                 newList
             }
             result
-        } catch (_: Exception) {
+        } catch (e: Exception) {
             _userMangaList.value = previousList
+            onError(e)
             null
         }
     }

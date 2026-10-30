@@ -26,6 +26,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -180,6 +183,73 @@ private fun MediaDetailsContent(
         if (uiState.message != null) {
             snackbarHostState.showAppSnackbar(uiState.message, type = SnackbarType.ERROR)
             event?.onMessageDisplayed()
+        }
+    }
+
+    // Feedback for a quick status change from the split button
+    val haptic = LocalHapticFeedback.current
+    val addedToText = stringResource(R.string.added_to_status)
+    val movedToText = stringResource(R.string.moved_to_status)
+    val backToText = stringResource(R.string.back_to_status)
+    val removedText = stringResource(R.string.removed_from_list)
+    val statusFailedText = stringResource(R.string.status_update_failed)
+    val undoText = stringResource(R.string.undo)
+    val retryText = stringResource(R.string.retry)
+    // Status names, resolved here because they're needed outside composition
+    val statusNames = ListStatus.entries.associateWith { stringResource(it.stringRes) }
+    LaunchedEffect(uiState.statusResult) {
+        val result = uiState.statusResult ?: return@LaunchedEffect
+        val title = uiState.mediaDetails?.userPreferredTitle()
+        val statusName = result.status?.let { statusNames[it] }.orEmpty()
+        event?.onStatusResultShown()
+        haptic.performHapticFeedback(
+            if (result.kind == StatusChangeResult.Kind.FAILED) HapticFeedbackType.Reject
+            else HapticFeedbackType.Confirm
+        )
+        // Separate scope: clearing the result restarts this effect, which must not cancel the
+        // snackbar that's showing
+        scope.launch {
+            when (result.kind) {
+                StatusChangeResult.Kind.ADDED,
+                StatusChangeResult.Kind.CHANGED -> {
+                    val action = snackbarHostState.showAppSnackbar(
+                        message = (if (result.kind == StatusChangeResult.Kind.ADDED) addedToText
+                        else movedToText).format(statusName),
+                        type = SnackbarType.SUCCESS,
+                        highlight = title,
+                        actionLabel = undoText,
+                    )
+                    if (action == SnackbarResult.ActionPerformed) {
+                        event?.undoStatusChange(result.previous)
+                    }
+                }
+
+                StatusChangeResult.Kind.RESTORED -> snackbarHostState.showAppSnackbar(
+                    message = backToText.format(statusName),
+                    type = SnackbarType.INFO,
+                    highlight = title,
+                )
+
+                StatusChangeResult.Kind.REMOVED -> snackbarHostState.showAppSnackbar(
+                    message = removedText,
+                    type = SnackbarType.INFO,
+                    highlight = title,
+                )
+
+                StatusChangeResult.Kind.FAILED -> {
+                    val action = snackbarHostState.showAppSnackbar(
+                        message = statusFailedText,
+                        type = SnackbarType.ERROR,
+                        highlight = result.errorMessage,
+                        // An Undo that failed isn't retried as a normal change
+                        actionLabel = if (!result.fromUndo && result.status != null) retryText
+                        else null,
+                    )
+                    if (action == SnackbarResult.ActionPerformed) {
+                        result.status?.let { event?.setListStatus(it) }
+                    }
+                }
+            }
         }
     }
 

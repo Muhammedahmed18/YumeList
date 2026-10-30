@@ -18,6 +18,15 @@ interface MediaDetailsEvent : UiEvent {
      */
     fun setListStatus(status: ListStatus)
 
+    /**
+     * Undoes the last quick status change: removes the entry if it was new, otherwise puts back
+     * the previous status, progress and dates.
+     */
+    fun undoStatusChange(previous: BaseMyListStatus?)
+
+    /** The quick status change's snackbar was shown. */
+    fun onStatusResultShown()
+
     fun getCharacters()
 
     fun scheduleAiringAnimeNotification(

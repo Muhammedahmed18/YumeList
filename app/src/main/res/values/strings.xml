@@ -449,6 +449,11 @@
     <string name="highlight_notifications_desc">Airing notifications on your home screen</string>
     <string name="copyright">© 2026 YumeList · Licensed under GPL-3.0</string>
     <string name="added_to_plan_to_watch">Added to Plan to Watch</string>
+    <string name="added_to_status">Added to %1$s</string>
+    <string name="moved_to_status">Moved to %1$s</string>
+    <string name="back_to_status">Back to %1$s</string>
+    <string name="removed_from_list">Removed from your list</string>
+    <string name="status_update_failed">Couldn\'t update the status</string>
     <string name="undo">Undo</string>
     <string name="updated">Updated</string>
     <string name="clear">Clear</string>
