@@ -2,7 +2,6 @@ package com.axiel7.moelist.ui.editmedia
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -40,7 +39,6 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconButtonShapes
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -442,8 +440,8 @@ private fun StatusSection(
 
 /**
  * Progress stepper: − / rolling number / +. Both buttons morph on press (round -> rounded
- * square). Manga gets a connected Chapters / Volumes switch. The wavy bar shows how far along
- * the entry is (static wave, no endless animation).
+ * square). Manga gets a connected Chapters / Volumes switch. No progress bar: the number and
+ * its "/ total" already say how far along the entry is.
  */
 @Composable
 private fun ProgressSection(
@@ -534,23 +532,6 @@ private fun ProgressSection(
             ) {
                 Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.plus_one))
             }
-        }
-
-        if (total != null && total > 0) {
-            val animatedProgress by animateFloatAsState(
-                targetValue = (current.toFloat() / total).coerceIn(0f, 1f),
-                animationSpec = Motion.spatial(),
-                label = "editProgress"
-            )
-            // Flat M3 Expressive bar: thick rounded track, small gap, end-stop dot
-            LinearProgressIndicator(
-                progress = { animatedProgress.coerceIn(0f, 1f) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp),
-                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                gapSize = 4.dp,
-            )
         }
     }
 }

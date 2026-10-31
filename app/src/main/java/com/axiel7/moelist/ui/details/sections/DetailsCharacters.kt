@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
@@ -26,7 +27,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.axiel7.moelist.R
-import com.axiel7.moelist.ui.composables.InfoTitle
 import com.axiel7.moelist.ui.composables.defaultPlaceholder
 import com.axiel7.moelist.ui.composables.media.MediaItemVertical
 import com.axiel7.moelist.ui.details.MediaDetailsUiState
@@ -35,7 +35,7 @@ import com.axiel7.moelist.utils.CHARACTER_URL
 import com.axiel7.moelist.utils.ContextExtensions.openLink
 
 /**
- * Characters row (anime only). Characters load on demand unless the "load characters"
+ * Characters row (anime only), in a rounded section card. Characters load on demand unless the "load characters"
  * setting is on; tapping a character opens its MAL page.
  */
 @Composable
@@ -46,35 +46,36 @@ fun DetailsCharacters(
 ) {
     val context = LocalContext.current
     Column(modifier = modifier) {
-        InfoTitle(text = stringResource(R.string.characters))
+        DetailsSectionTitle(text = stringResource(R.string.characters))
         if (uiState.characters.isNotEmpty() || uiState.isLoadingCharacters) {
-            LazyRow(
-                modifier = Modifier.padding(top = 8.dp),
-                contentPadding = PaddingValues(horizontal = DetailsHorizontalPadding),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(
-                    items = uiState.characters,
-                    contentType = { "character" }
-                ) { item ->
-                    MediaItemVertical(
-                        imageUrl = item.node.mainPicture?.medium,
-                        title = item.fullName(),
-                        subtitle = {
-                            CharacterRolePill(
-                                role = item.role?.localized().orEmpty(),
-                                isMain = item.role?.name.equals("MAIN", ignoreCase = true)
-                            )
-                        },
-                        minLines = 2,
-                        onClick = {
-                            context.openLink(CHARACTER_URL + item.node.id)
+            DetailsSectionCard(contentPadding = PaddingValues(vertical = 12.dp)) {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(
+                        items = uiState.characters,
+                        contentType = { "character" }
+                    ) { item ->
+                        MediaItemVertical(
+                            imageUrl = item.node.mainPicture?.medium,
+                            title = item.fullName(),
+                            subtitle = {
+                                CharacterRolePill(
+                                    role = item.role?.localized().orEmpty(),
+                                    isMain = item.role?.name.equals("MAIN", ignoreCase = true)
+                                )
+                            },
+                            minLines = 2,
+                            onClick = {
+                                context.openLink(CHARACTER_URL + item.node.id)
+                            }
+                        )
+                    }
+                    if (uiState.isLoadingCharacters && uiState.characters.isEmpty()) {
+                        items(4, contentType = { "placeholder" }) {
+                            CharacterShimmerItem()
                         }
-                    )
-                }
-                if (uiState.isLoadingCharacters && uiState.characters.isEmpty()) {
-                    items(4, contentType = { "placeholder" }) {
-                        CharacterShimmerItem()
                     }
                 }
             }
@@ -83,8 +84,9 @@ fun DetailsCharacters(
                 onClick = onLoadCharacters,
                 shapes = ButtonDefaults.shapes(),
                 modifier = Modifier
-                    .padding(horizontal = DetailsHorizontalPadding, vertical = 8.dp)
-                    .fillMaxWidth(),
+                    .padding(horizontal = DetailsHorizontalPadding)
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp),
             ) {
                 Text(text = stringResource(R.string.view_characters))
             }

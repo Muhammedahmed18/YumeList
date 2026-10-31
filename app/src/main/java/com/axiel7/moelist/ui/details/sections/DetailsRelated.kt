@@ -1,19 +1,11 @@
 package com.axiel7.moelist.ui.details.sections
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
-import androidx.compose.material3.InputChip
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,16 +13,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.dropUnlessResumed
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.data.model.media.RelationType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
-import com.axiel7.moelist.ui.composables.InfoTitle
 import com.axiel7.moelist.ui.composables.PosterSection
 import com.axiel7.moelist.ui.composables.media.MediaItemVertical
 import com.axiel7.moelist.ui.composables.media.RelationTag
@@ -54,8 +45,9 @@ private data class RelatedRow(
 )
 
 /**
- * Franchise timeline (sequels / prequels) and the other related entries, filterable by relation.
- * Each poster is a shared element scoped to this details screen (see [PosterSection.details]).
+ * Franchise timeline (sequels / prequels) and the other related entries, filterable by relation
+ * with rounded filter pills. Each group sits in a rounded section card. Each poster is a shared
+ * element scoped to this details screen (see [PosterSection.details]).
  */
 @Composable
 fun DetailsRelated(
@@ -94,37 +86,38 @@ fun DetailsRelated(
         val others = all.filter { it.relationType != RelationType.SEQUEL && it.relationType != RelationType.PREQUEL }
 
         if (timeline.isNotEmpty()) {
-            InfoTitle(text = stringResource(R.string.franchise_timeline))
-            LazyRow(
-                modifier = Modifier.padding(top = 8.dp),
-                contentPadding = PaddingValues(horizontal = DetailsHorizontalPadding),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(
-                    items = timeline,
-                    key = { "${it.mediaType}-${it.id}" }
-                ) { row ->
-                    MediaItemVertical(
-                        imageUrl = row.imageUrl,
-                        posterKey = posterSharedKey(relatedSection, row.mediaType, row.id),
-                        title = row.title,
-                        subtitle = { RelationTag(text = row.relation) },
-                        minLines = 2,
-                        onClick = dropUnlessResumed {
-                            navActionManager.toMediaDetails(
-                                row.mediaType,
-                                row.id,
-                                posterUrl = row.imageUrl,
-                                posterKey = posterSharedKey(relatedSection, row.mediaType, row.id),
-                            )
-                        }
-                    )
+            DetailsSectionTitle(text = stringResource(R.string.franchise_timeline))
+            DetailsSectionCard(contentPadding = PaddingValues(vertical = 12.dp)) {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(
+                        items = timeline,
+                        key = { "${it.mediaType}-${it.id}" }
+                    ) { row ->
+                        MediaItemVertical(
+                            imageUrl = row.imageUrl,
+                            posterKey = posterSharedKey(relatedSection, row.mediaType, row.id),
+                            title = row.title,
+                            subtitle = { RelationTag(text = row.relation) },
+                            minLines = 2,
+                            onClick = dropUnlessResumed {
+                                navActionManager.toMediaDetails(
+                                    row.mediaType,
+                                    row.id,
+                                    posterUrl = row.imageUrl,
+                                    posterKey = posterSharedKey(relatedSection, row.mediaType, row.id),
+                                )
+                            }
+                        )
+                    }
                 }
             }
         }
 
         if (others.isNotEmpty()) {
-            InfoTitle(
+            DetailsSectionTitle(
                 text = if (uiState.isAnime) stringResource(R.string.related_anime)
                 else stringResource(R.string.related_manga)
             )
@@ -138,69 +131,57 @@ fun DetailsRelated(
             LaunchedEffect(selectedCategory) { showAll = false }
             val displayItems = if (showAll || filtered.size <= 5) filtered else filtered.take(5)
 
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = DetailsHorizontalPadding),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(vertical = 4.dp)
-            ) {
-                items(categories) { category ->
-                    val selected = selectedCategory == category
-                    InputChip(
-                        selected = selected,
-                        onClick = { selectedCategory = category },
-                        label = {
-                            Text(text = category ?: stringResource(R.string.all))
-                        },
-                        leadingIcon = if (selected) {
-                            {
-                                Icon(
-                                    imageVector = Icons.Rounded.Check,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
+            DetailsSectionCard(contentPadding = PaddingValues(vertical = 12.dp)) {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    items(categories) { category ->
+                        DetailsFilterPill(
+                            text = category ?: stringResource(R.string.all),
+                            selected = selectedCategory == category,
+                            onClick = { selectedCategory = category },
+                            selectedIcon = Icons.Rounded.Check,
+                        )
+                    }
+                }
+
+                LazyRow(
+                    modifier = Modifier.padding(top = 12.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(
+                        items = displayItems,
+                        key = { "${it.mediaType}-${it.id}" }
+                    ) { row ->
+                        MediaItemVertical(
+                            imageUrl = row.imageUrl,
+                            posterKey = posterSharedKey(relatedSection, row.mediaType, row.id),
+                            title = row.title,
+                            subtitle = { RelationTag(text = row.relation) },
+                            minLines = 2,
+                            onClick = dropUnlessResumed {
+                                navActionManager.toMediaDetails(
+                                    row.mediaType,
+                                    row.id,
+                                    posterUrl = row.imageUrl,
+                                    posterKey = posterSharedKey(relatedSection, row.mediaType, row.id),
                                 )
                             }
-                        } else null
+                        )
+                    }
+                }
+
+                if (filtered.size > 5) {
+                    DetailsExpandButton(
+                        expanded = showAll,
+                        onClick = { showAll = !showAll },
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(top = 8.dp)
                     )
                 }
-            }
-
-            LazyRow(
-                modifier = Modifier.padding(top = 8.dp),
-                contentPadding = PaddingValues(horizontal = DetailsHorizontalPadding),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(
-                    items = displayItems,
-                    key = { "${it.mediaType}-${it.id}" }
-                ) { row ->
-                    MediaItemVertical(
-                        imageUrl = row.imageUrl,
-                        posterKey = posterSharedKey(relatedSection, row.mediaType, row.id),
-                        title = row.title,
-                        subtitle = { RelationTag(text = row.relation) },
-                        minLines = 2,
-                        onClick = dropUnlessResumed {
-                            navActionManager.toMediaDetails(
-                                row.mediaType,
-                                row.id,
-                                posterUrl = row.imageUrl,
-                                posterKey = posterSharedKey(relatedSection, row.mediaType, row.id),
-                            )
-                        }
-                    )
-                }
-            }
-
-            if (filtered.size > 5) {
-                Text(
-                    text = if (showAll) stringResource(R.string.show_less)
-                    else stringResource(R.string.show_more),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .padding(start = 16.dp, top = 4.dp, bottom = 8.dp)
-                        .clickable { showAll = !showAll }
-                )
             }
         }
     }

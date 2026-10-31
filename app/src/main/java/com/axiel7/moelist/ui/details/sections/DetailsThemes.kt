@@ -36,7 +36,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.axiel7.moelist.R
-import com.axiel7.moelist.ui.composables.InfoTitle
 import com.axiel7.moelist.ui.icons.Icons
 import com.axiel7.moelist.ui.icons.rounded.MusicNote
 import com.axiel7.moelist.ui.icons.rounded.PlayArrow
@@ -70,11 +69,11 @@ fun DetailsThemes(
     val hasBoth = openings.isNotEmpty() && endings.isNotEmpty()
 
     Column(modifier = modifier) {
-        InfoTitle(text = stringResource(R.string.music_themes))
+        DetailsSectionTitle(text = stringResource(R.string.music_themes))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = DetailsHorizontalPadding, vertical = 4.dp),
+                .padding(horizontal = DetailsHorizontalPadding),
             horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
         ) {
             if (openings.isNotEmpty()) {

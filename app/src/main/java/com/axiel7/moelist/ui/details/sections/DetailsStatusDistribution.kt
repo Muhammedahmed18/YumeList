@@ -25,7 +25,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.axiel7.moelist.R
-import com.axiel7.moelist.ui.composables.InfoTitle
 import com.axiel7.moelist.ui.composables.defaultPlaceholder
 import com.axiel7.moelist.ui.details.MediaDetailsUiState
 import com.axiel7.moelist.utils.NumExtensions.format
@@ -41,31 +40,20 @@ fun DetailsStatusDistribution(
 ) {
     if (!uiState.isLoadingStatusDistribution && uiState.statusDistribution == null) return
     Column(modifier = modifier) {
-        InfoTitle(text = stringResource(R.string.status_distribution))
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = DetailsHorizontalPadding),
-            shape = RoundedCornerShape(DetailsCardCorner),
-            color = MaterialTheme.colorScheme.surfaceContainerLow
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                val stats = uiState.statusDistribution
-                if (uiState.isLoadingStatusDistribution || stats == null) {
-                    repeat(5) { StatusDistributionShimmerRow() }
-                } else {
-                    val total = remember(stats) { stats.sumOf { it.value.toDouble() } }
-                    stats.forEach { stat ->
-                        StatusBarRow(
-                            color = stat.type.primaryColor(),
-                            label = stat.type.localized(),
-                            value = stat.value.toDouble(),
-                            total = total
-                        )
-                    }
+        DetailsSectionTitle(text = stringResource(R.string.status_distribution))
+        DetailsSectionCard(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            val stats = uiState.statusDistribution
+            if (uiState.isLoadingStatusDistribution || stats == null) {
+                repeat(5) { StatusDistributionShimmerRow() }
+            } else {
+                val total = remember(stats) { stats.sumOf { it.value.toDouble() } }
+                stats.forEach { stat ->
+                    StatusBarRow(
+                        color = stat.type.primaryColor(),
+                        label = stat.type.localized(),
+                        value = stat.value.toDouble(),
+                        total = total
+                    )
                 }
             }
         }
