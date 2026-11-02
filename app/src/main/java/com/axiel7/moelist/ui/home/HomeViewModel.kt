@@ -12,6 +12,7 @@ import com.axiel7.moelist.data.repository.DefaultPreferencesRepository
 import com.axiel7.moelist.ui.base.viewmodel.BaseViewModel
 import com.axiel7.moelist.utils.SeasonCalendar
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -27,13 +28,40 @@ class HomeViewModel(
 
     override val mutableUiState = MutableStateFlow(HomeUiState())
 
+    /** The current (or last) load of both sections. */
+    private var loadJob: Job? = null
+
+    /** Login state the sections were last loaded for (null = never loaded). */
+    private var loadedForLoggedIn: Boolean? = null
+
     override fun initRequestChain(isLoggedIn: Boolean) {
-        viewModelScope.launch(Dispatchers.IO) {
-            mutableUiState.update { it.copy(isLoading = true) }
-            getTodayAiringAnimes()
-            getSeasonalAnimes()
-            mutableUiState.update { it.copy(isLoading = false) }
+        loadJob?.cancel()
+        val loginChanged = loadedForLoggedIn != isLoggedIn
+        loadedForLoggedIn = isLoggedIn
+        mutableUiState.update {
+            it.copy(
+                isLoadingToday = true,
+                isLoadingSeason = true,
+                // A different login state means different data: drop it and show the
+                // skeleton again instead of the old lists
+                todayAnimes = if (loginChanged) emptyList() else it.todayAnimes,
+                seasonalAnimes = if (loginChanged) emptyList() else it.seasonalAnimes,
+                todayLoaded = it.todayLoaded && !loginChanged,
+                seasonLoaded = it.seasonLoaded && !loginChanged,
+            )
         }
+        // Both sections load at the same time, each finishing on its own
+        loadJob = viewModelScope.launch(Dispatchers.IO) {
+            launch { getTodayAiringAnimes() }
+            launch { getSeasonalAnimes() }
+        }
+    }
+
+    override fun loadIfNeeded(isLoggedIn: Boolean) {
+        val state = mutableUiState.value
+        val upToDate = loadedForLoggedIn == isLoggedIn &&
+            (loadJob?.isActive == true || (state.todayLoaded && state.seasonLoaded))
+        if (!upToDate) initRequestChain(isLoggedIn)
     }
 
     /** The local date the Today row was built for, to rebuild it after midnight. */
@@ -43,6 +71,8 @@ class HomeViewModel(
     fun refreshTodayIfDayChanged() {
         val loadedFor = todayLoadedFor ?: return
         if (loadedFor != LocalDate.now()) {
+            // todayLoaded stays true, so what's on screen stays until the new day's list is in
+            mutableUiState.update { it.copy(isLoadingToday = true) }
             viewModelScope.launch(Dispatchers.IO) { getTodayAiringAnimes() }
         }
     }
@@ -74,8 +104,11 @@ class HomeViewModel(
                     }
                 )
             todayLoadedFor = today
-            mutableUiState.update { it.copy(todayAnimes = tempList) }
+            mutableUiState.update {
+                it.copy(todayAnimes = tempList, isLoadingToday = false, todayLoaded = true)
+            }
         } else {
+            mutableUiState.update { it.copy(isLoadingToday = false) }
             showMessage(result.message ?: result.error)
         }
     }
@@ -88,8 +121,11 @@ class HomeViewModel(
             fields = AnimeRepository.SEASONAL_FIELDS
         )
         if (result.data != null) {
-            mutableUiState.update { it.copy(seasonalAnimes = result.data) }
+            mutableUiState.update {
+                it.copy(seasonalAnimes = result.data, isLoadingSeason = false, seasonLoaded = true)
+            }
         } else {
+            mutableUiState.update { it.copy(isLoadingSeason = false) }
             showMessage(result.message ?: result.error)
         }
     }

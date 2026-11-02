@@ -18,3 +18,6 @@
 # Signing keys (never commit)
 *.jks
 *.keystore
+
+# Website (kept locally, not on GitHub)
+/website/

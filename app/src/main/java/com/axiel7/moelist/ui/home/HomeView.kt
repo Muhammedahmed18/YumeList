@@ -1,12 +1,15 @@
 package com.axiel7.moelist.ui.home
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
@@ -65,6 +68,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -347,9 +351,15 @@ private fun HomeViewContent(
         onMessageConsumed = { event?.onMessageDisplayed() },
     )
 
+    // Home is rebuilt every time you come back to it: only load when nothing is loaded yet
+    // (or the login state changed), so coming back doesn't flash the skeletons again
     LaunchedEffect(isLoggedIn) {
-        event?.initRequestChain(isLoggedIn)
+        event?.loadIfNeeded(isLoggedIn)
     }
+
+    // Read here: Motion specs need a composable scope, AnimatedContent's transitionSpec isn't one
+    val todayFadeSpec = Motion.effects<Float>()
+    val todaySizeSpec = Motion.spatial<IntSize>()
 
     // Uses the app's own season artwork (same icons as the season chart), picked from the
     // current anime season, so the tile updates automatically every season
@@ -468,42 +478,63 @@ private fun HomeViewContent(
         }
 
         item(key = "today", contentType = "today") {
-            when {
-                !isLoggedIn -> LoginPrompt(
-                    onClick = dropUnlessResumed { navActionManager.toLogin() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                        .padding(horizontal = 16.dp, vertical = 4.dp)
-                )
+            val todayState = when {
+                !isLoggedIn -> TodaySectionState.LOGIN
+                loadError.value != null && uiState.todayAnimes.isEmpty() && !uiState.isLoadingToday ->
+                    TodaySectionState.ERROR
+                uiState.todayAnimes.isNotEmpty() -> TodaySectionState.CONTENT
+                // Skeleton only before the first successful load; a reload keeps what's shown
+                uiState.isLoadingToday && !uiState.todayLoaded -> TodaySectionState.LOADING
+                else -> TodaySectionState.EMPTY
+            }
+            // The states have different heights (carousel 260dp, empty / error 140dp), so the
+            // switch fades and resizes smoothly instead of snapping and jumping the list below
+            AnimatedContent(
+                targetState = todayState,
+                transitionSpec = {
+                    (fadeIn(todayFadeSpec) togetherWith fadeOut(todayFadeSpec))
+                        .using(SizeTransform(clip = false) { _, _ -> todaySizeSpec })
+                },
+                label = "todaySection",
+            ) { state ->
+                when (state) {
+                    TodaySectionState.LOGIN -> LoginPrompt(
+                        onClick = dropUnlessResumed { navActionManager.toLogin() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                            .padding(horizontal = 16.dp, vertical = 4.dp)
+                    )
 
-                loadError.value != null && uiState.todayAnimes.isEmpty() && !uiState.isLoading ->
-                    SectionError(height = 140.dp)
+                    TodaySectionState.ERROR -> SectionError(height = 140.dp)
 
-                !uiState.isLoading && uiState.todayAnimes.isEmpty() -> EmptyState(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(140.dp),
-                    icon = Icons.Outlined.EventBusy,
-                    title = stringResource(R.string.nothing_airing_today),
-                    description = stringResource(R.string.nothing_airing_today_desc),
-                    compact = true,
-                )
+                    TodaySectionState.EMPTY -> EmptyState(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp),
+                        icon = Icons.Outlined.EventBusy,
+                        title = stringResource(R.string.nothing_airing_today),
+                        description = stringResource(R.string.nothing_airing_today_desc),
+                        compact = true,
+                    )
 
-                else -> TodayCarousel(
-                    items = uiState.todayAnimes,
-                    isLoading = uiState.isLoading,
-                    hideScore = uiState.hideScore,
-                    posterKey = { posterSharedKey(PosterSection.HOME_TODAY, MediaType.ANIME, it.node.id) },
-                    onClick = { item, posterKey ->
-                        navActionManager.toMediaDetails(
-                            MediaType.ANIME,
-                            item.node.id,
-                            posterUrl = item.node.mainPicture?.large ?: item.node.mainPicture?.medium,
-                            posterKey = posterKey,
-                        )
-                    },
-                )
+                    TodaySectionState.LOADING,
+                    TodaySectionState.CONTENT -> TodayCarousel(
+                        items = if (state == TodaySectionState.CONTENT) uiState.todayAnimes
+                        else emptyList(),
+                        isLoading = state == TodaySectionState.LOADING,
+                        hideScore = uiState.hideScore,
+                        posterKey = { posterSharedKey(PosterSection.HOME_TODAY, MediaType.ANIME, it.node.id) },
+                        onClick = { item, posterKey ->
+                            navActionManager.toMediaDetails(
+                                MediaType.ANIME,
+                                item.node.id,
+                                posterUrl = item.node.mainPicture?.large ?: item.node.mainPicture?.medium,
+                                posterKey = posterKey,
+                            )
+                        },
+                    )
+                }
             }
         }
 
@@ -517,10 +548,11 @@ private fun HomeViewContent(
 
         item(key = "season", contentType = "season") {
             when {
-                loadError.value != null && uiState.seasonalAnimes.isEmpty() && !uiState.isLoading ->
+                loadError.value != null && uiState.seasonalAnimes.isEmpty() && !uiState.isLoadingSeason ->
                     SectionError(height = MEDIA_ITEM_VERTICAL_HEIGHT.dp)
 
-                !uiState.isLoading && uiState.seasonalAnimes.isEmpty() -> EmptyState(
+                uiState.seasonalAnimes.isEmpty() &&
+                    (uiState.seasonLoaded || !uiState.isLoadingSeason) -> EmptyState(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(MEDIA_ITEM_VERTICAL_HEIGHT.dp),
@@ -563,7 +595,8 @@ private fun HomeViewContent(
                             }
                         )
                     }
-                    if (uiState.isLoading) {
+                    // Placeholders only before the first successful load
+                    if (uiState.isLoadingSeason && !uiState.seasonLoaded) {
                         items(5, contentType = { "placeholder" }) {
                             MediaItemVerticalPlaceholder()
                         }
@@ -716,3 +749,6 @@ private fun LoginPrompt(
         }
     }
 }
+
+/** What the Today section shows. Each value is one AnimatedContent state. */
+private enum class TodaySectionState { LOGIN, ERROR, LOADING, EMPTY, CONTENT }
