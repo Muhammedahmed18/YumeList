@@ -8,4 +8,6 @@ interface NavigationSettingsEvent : UiEvent {
     fun setStartTab(value: StartTab)
     fun setPinnedNavBar(value: Boolean)
     fun setTabletMode(value: TabletMode)
+    fun setUseListTabs(value: Boolean)
+    fun setRandomListEntryEnabled(value: Boolean)
 }

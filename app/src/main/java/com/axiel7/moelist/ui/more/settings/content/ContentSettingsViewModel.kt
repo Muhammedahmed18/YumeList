@@ -40,12 +40,6 @@ class ContentSettingsViewModel(
         }
     }
 
-    override fun setRandomListEntryEnabled(value: Boolean) {
-        viewModelScope.launch {
-            defaultPreferencesRepository.setRandomListEntryEnabled(value)
-        }
-    }
-
     init {
         defaultPreferencesRepository.titleLang
             .onEach { value -> mutableUiState.update { it.copy(titleLanguage = value) } }
@@ -61,10 +55,6 @@ class ContentSettingsViewModel(
 
         defaultPreferencesRepository.loadCharacters
             .onEach { value -> mutableUiState.update { it.copy(loadCharacters = value) } }
-            .launchIn(viewModelScope)
-
-        defaultPreferencesRepository.randomListEntryEnabled
-            .onEach { value -> mutableUiState.update { it.copy(randomListEntryEnabled = value) } }
             .launchIn(viewModelScope)
     }
 }

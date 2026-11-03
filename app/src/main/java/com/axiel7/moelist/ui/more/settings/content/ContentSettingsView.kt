@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,14 +24,13 @@ import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.media.TitleLanguage
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.preferences.SettingsChoiceCard
-import com.axiel7.moelist.ui.composables.preferences.SettingsGroup
 import com.axiel7.moelist.ui.composables.preferences.SettingsScaffold
+import com.axiel7.moelist.ui.composables.preferences.SettingsSection
 import com.axiel7.moelist.ui.composables.preferences.SettingsSectionHeader
 import com.axiel7.moelist.ui.composables.preferences.SettingsSwitchItem
 import com.axiel7.moelist.ui.icons.Icons
-import com.axiel7.moelist.ui.icons.rounded.Block
-import com.axiel7.moelist.ui.icons.rounded.Casino
 import com.axiel7.moelist.ui.icons.rounded.Group
+import com.axiel7.moelist.ui.icons.rounded.PriorityHigh
 import com.axiel7.moelist.ui.icons.rounded.Star
 import com.axiel7.moelist.ui.theme.MoeListTheme
 import org.koin.androidx.compose.koinViewModel
@@ -56,11 +57,15 @@ private fun ContentSettingsViewContent(
         title = stringResource(R.string.content),
         onBack = navActionManager::goBack,
     ) {
-        // ── Title Language ───────────────────────────────────────────────────
+        // ── Title language ───────────────────────────────────────────────────
+        // Cards rather than a list here: the sample title is the clearest way to show the choice
         SettingsSectionHeader(stringResource(R.string.title_language))
 
         Row(
-            modifier = Modifier.height(IntrinsicSize.Max),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Max)
+                .selectableGroup(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             TitleLanguage.entries.forEach { language ->
@@ -75,42 +80,39 @@ private fun ContentSettingsViewContent(
             }
         }
 
-        // ── Content Filters ──────────────────────────────────────────────────
-        SettingsSectionHeader(stringResource(R.string.content_filters))
+        // ── Filters ──────────────────────────────────────────────────────────
+        SettingsSection(title = stringResource(R.string.content_filters)) {
+            item {
+                SettingsSwitchItem(
+                    title = stringResource(R.string.show_nsfw),
+                    subtitle = stringResource(R.string.show_nsfw_summary),
+                    icon = Icons.Rounded.PriorityHigh,
+                    checked = uiState.showNsfw,
+                    onCheckedChange = { event?.setShowNsfw(it) },
+                )
+            }
+            item {
+                SettingsSwitchItem(
+                    title = stringResource(R.string.hide_scores),
+                    subtitle = stringResource(R.string.hide_scores_summary),
+                    icon = Icons.Rounded.Star,
+                    checked = uiState.hideScores,
+                    onCheckedChange = { event?.setHideScores(it) },
+                )
+            }
+        }
 
-        SettingsGroup {
-            SettingsSwitchItem(
-                title = stringResource(R.string.show_nsfw),
-                icon = Icons.Rounded.Block,
-                checked = uiState.showNsfw,
-                onCheckedChange = { event?.setShowNsfw(it) },
-                index = 0,
-                count = 4,
-            )
-            SettingsSwitchItem(
-                title = stringResource(R.string.hide_scores),
-                icon = Icons.Rounded.Star,
-                checked = uiState.hideScores,
-                onCheckedChange = { event?.setHideScores(it) },
-                index = 1,
-                count = 4,
-            )
-            SettingsSwitchItem(
-                title = stringResource(R.string.always_load_characters),
-                icon = Icons.Rounded.Group,
-                checked = uiState.loadCharacters,
-                onCheckedChange = { event?.setLoadCharacters(it) },
-                index = 2,
-                count = 4,
-            )
-            SettingsSwitchItem(
-                title = stringResource(R.string.random_button_on_list),
-                icon = Icons.Rounded.Casino,
-                checked = uiState.randomListEntryEnabled,
-                onCheckedChange = { event?.setRandomListEntryEnabled(it) },
-                index = 3,
-                count = 4,
-            )
+        // ── Details page ─────────────────────────────────────────────────────
+        SettingsSection(title = stringResource(R.string.details_page)) {
+            item {
+                SettingsSwitchItem(
+                    title = stringResource(R.string.always_load_characters),
+                    subtitle = stringResource(R.string.always_load_characters_summary),
+                    icon = Icons.Rounded.Group,
+                    checked = uiState.loadCharacters,
+                    onCheckedChange = { event?.setLoadCharacters(it) },
+                )
+            }
         }
     }
 }
@@ -136,8 +138,7 @@ private fun TitleLanguageCard(
         modifier = modifier,
     ) {
         Column(
-            // End padding leaves room for the check
-            modifier = Modifier.padding(start = 12.dp, top = 12.dp, end = 24.dp, bottom = 12.dp),
+            modifier = Modifier.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
@@ -148,13 +149,16 @@ private fun TitleLanguageCard(
                 else MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                // Only the label shares the top row with the check, so only it leaves room
+                modifier = Modifier.padding(end = 14.dp),
             )
+            // The sample gets the card's full width, so it no longer gets cut off early
             Text(
                 text = sampleTitle,
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
+                maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
             )
         }

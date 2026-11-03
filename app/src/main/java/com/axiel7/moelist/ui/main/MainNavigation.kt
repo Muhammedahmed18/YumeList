@@ -60,7 +60,6 @@ import com.axiel7.moelist.ui.more.notifications.NotificationsView
 import com.axiel7.moelist.ui.more.settings.SettingsView
 import com.axiel7.moelist.ui.more.settings.appearance.AppearanceView
 import com.axiel7.moelist.ui.more.settings.content.ContentSettingsView
-import com.axiel7.moelist.ui.more.settings.list.ListStyleSettingsView
 import com.axiel7.moelist.ui.more.settings.navigation.NavigationSettingsView
 import com.axiel7.moelist.ui.profile.ProfileView
 import com.axiel7.moelist.ui.ranking.MediaRankingView
@@ -275,14 +274,6 @@ fun MainNavigation(
                 composable<Route.Appearance> {
                     ProvideNavAnimatedScope {
                         AppearanceView(
-                            navActionManager = navActionManager
-                        )
-                    }
-                }
-
-                composable<Route.ListStyleSettings> {
-                    ProvideNavAnimatedScope {
-                        ListStyleSettingsView(
                             navActionManager = navActionManager
                         )
                     }

@@ -1,39 +1,22 @@
 package com.axiel7.moelist.ui.more.settings.navigation
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.axiel7.moelist.R
 import com.axiel7.moelist.ui.base.StartTab
 import com.axiel7.moelist.ui.base.TabletMode
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
-import com.axiel7.moelist.ui.composables.preferences.SettingsChoiceCard
-import com.axiel7.moelist.ui.composables.preferences.SettingsGroup
+import com.axiel7.moelist.ui.composables.preferences.SettingsRadioItem
 import com.axiel7.moelist.ui.composables.preferences.SettingsScaffold
-import com.axiel7.moelist.ui.composables.preferences.SettingsSectionHeader
+import com.axiel7.moelist.ui.composables.preferences.SettingsSection
 import com.axiel7.moelist.ui.composables.preferences.SettingsSwitchItem
 import com.axiel7.moelist.ui.icons.Icons
 import com.axiel7.moelist.ui.icons.rounded.Book
+import com.axiel7.moelist.ui.icons.rounded.Casino
 import com.axiel7.moelist.ui.icons.rounded.Devices
 import com.axiel7.moelist.ui.icons.rounded.History
 import com.axiel7.moelist.ui.icons.rounded.Home
@@ -42,9 +25,16 @@ import com.axiel7.moelist.ui.icons.rounded.MoreHoriz
 import com.axiel7.moelist.ui.icons.rounded.PushPin
 import com.axiel7.moelist.ui.icons.rounded.ScreenRotation
 import com.axiel7.moelist.ui.icons.rounded.Smartphone
+import com.axiel7.moelist.ui.icons.rounded.Tab
 import com.axiel7.moelist.ui.icons.rounded.Tablet
 import com.axiel7.moelist.ui.theme.MoeListTheme
 import org.koin.androidx.compose.koinViewModel
+
+/*
+ * "Lists & navigation": where the app opens, the navigation bar, how the anime/manga lists
+ * behave and when the tablet layout is used. The list switches used to live on their own
+ * "Media lists" screen; their preference keys are unchanged.
+ */
 
 @Composable
 fun NavigationSettingsView(navActionManager: NavActionManager) {
@@ -65,70 +55,83 @@ private fun NavigationSettingsViewContent(
     navActionManager: NavActionManager,
 ) {
     SettingsScaffold(
-        title = stringResource(R.string.navigation),
+        title = stringResource(R.string.lists_and_navigation),
         onBack = navActionManager::goBack,
     ) {
-        // ── Default Tab ──────────────────────────────────────────────────────
-        SettingsSectionHeader(stringResource(R.string.default_section))
-
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            val startTabs = StartTab.entries.filter { it != StartTab.MORE }
-            startTabs.chunked(2).forEach { pair ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(IntrinsicSize.Max),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    pair.forEach { tab ->
-                        ChoiceTile(
+        // ── Default tab ──────────────────────────────────────────────────────
+        SettingsSection(
+            title = stringResource(R.string.default_tab),
+            selectableGroup = true,
+        ) {
+            StartTab.entries
+                .filter { it != StartTab.MORE }
+                .forEach { tab ->
+                    item {
+                        SettingsRadioItem(
+                            title = stringResource(tab.stringRes),
+                            subtitle = if (tab == StartTab.LAST_USED) {
+                                stringResource(R.string.default_tab_last_used_summary)
+                            } else null,
                             icon = tab.icon,
-                            label = stringResource(tab.stringRes),
                             selected = uiState.startTab == tab,
                             onClick = { event?.setStartTab(tab) },
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight(),
                         )
                     }
                 }
-            }
         }
 
-        // ── Tablet Mode ──────────────────────────────────────────────────────
-        SettingsSectionHeader(stringResource(R.string.tablet_mode))
-
-        Row(
-            modifier = Modifier.height(IntrinsicSize.Max),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            TabletMode.entries.forEach { mode ->
-                ChoiceTile(
-                    icon = mode.icon,
-                    label = stringResource(mode.stringRes),
-                    selected = uiState.tabletMode == mode,
-                    onClick = { event?.setTabletMode(mode) },
-                    compact = true,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
+        // ── Navigation bar ───────────────────────────────────────────────────
+        SettingsSection(title = stringResource(R.string.navigation_bar)) {
+            item {
+                SettingsSwitchItem(
+                    title = stringResource(R.string.pinned_navigation_bar),
+                    subtitle = stringResource(R.string.pinned_navigation_bar_summary),
+                    icon = Icons.Rounded.PushPin,
+                    checked = uiState.pinnedNavBar,
+                    onCheckedChange = { event?.setPinnedNavBar(it) },
                 )
             }
         }
 
-        // ── Navigation Bar ───────────────────────────────────────────────────
-        SettingsSectionHeader(stringResource(R.string.navigation_bar))
+        // ── Lists ────────────────────────────────────────────────────────────
+        SettingsSection(title = stringResource(R.string.anime_manga_lists)) {
+            item {
+                SettingsSwitchItem(
+                    title = stringResource(R.string.enable_list_tabs),
+                    subtitle = stringResource(R.string.enable_list_tabs_subtitle),
+                    icon = Icons.Rounded.Tab,
+                    checked = uiState.useListTabs,
+                    onCheckedChange = { event?.setUseListTabs(it) },
+                )
+            }
+            item {
+                SettingsSwitchItem(
+                    title = stringResource(R.string.random_button_on_list),
+                    subtitle = stringResource(R.string.random_button_on_list_summary),
+                    icon = Icons.Rounded.Casino,
+                    checked = uiState.randomListEntryEnabled,
+                    onCheckedChange = { event?.setRandomListEntryEnabled(it) },
+                )
+            }
+        }
 
-        SettingsGroup {
-            SettingsSwitchItem(
-                title = stringResource(R.string.pinned_navigation_bar),
-                subtitle = stringResource(R.string.pinned_navigation_bar_summary),
-                icon = Icons.Rounded.PushPin,
-                checked = uiState.pinnedNavBar,
-                onCheckedChange = { event?.setPinnedNavBar(it) },
-                index = 0,
-                count = 1,
-            )
+        // ── Tablet layout ────────────────────────────────────────────────────
+        // Last, since most phone users never need it. Each option says what it does.
+        SettingsSection(
+            title = stringResource(R.string.tablet_layout),
+            selectableGroup = true,
+        ) {
+            TabletMode.entries.forEach { mode ->
+                item {
+                    SettingsRadioItem(
+                        title = stringResource(mode.stringRes),
+                        subtitle = stringResource(mode.summaryRes),
+                        icon = mode.icon,
+                        selected = uiState.tabletMode == mode,
+                        onClick = { event?.setTabletMode(mode) },
+                    )
+                }
+            }
         }
     }
 }
@@ -150,55 +153,13 @@ private val TabletMode.icon: ImageVector
         TabletMode.NEVER -> Icons.Rounded.Smartphone
     }
 
-/** Icon + label picker tile (start tab, tablet mode). */
-@Composable
-private fun ChoiceTile(
-    icon: ImageVector,
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    compact: Boolean = false,
-) {
-    val tint = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
-    else MaterialTheme.colorScheme.onSurfaceVariant
-
-    SettingsChoiceCard(
-        selected = selected,
-        onClick = onClick,
-        modifier = modifier,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    horizontal = if (compact) 8.dp else 16.dp,
-                    vertical = if (compact) 14.dp else 18.dp
-                ),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = if (selected) MaterialTheme.colorScheme.primary else tint,
-                modifier = Modifier.size(if (compact) 24.dp else 28.dp),
-            )
-            Text(
-                text = label,
-                style = when {
-                    compact && selected -> MaterialTheme.typography.labelMediumEmphasized
-                    compact -> MaterialTheme.typography.labelMedium
-                    selected -> MaterialTheme.typography.labelLargeEmphasized
-                    else -> MaterialTheme.typography.labelLarge
-                },
-                color = if (selected) tint else Color.Unspecified,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
+private val TabletMode.summaryRes: Int
+    get() = when (this) {
+        TabletMode.AUTO -> R.string.tablet_mode_auto_summary
+        TabletMode.ALWAYS -> R.string.tablet_mode_always_summary
+        TabletMode.LANDSCAPE -> R.string.tablet_mode_landscape_summary
+        TabletMode.NEVER -> R.string.tablet_mode_never_summary
     }
-}
 
 // ── Preview ───────────────────────────────────────────────────────────────────
 

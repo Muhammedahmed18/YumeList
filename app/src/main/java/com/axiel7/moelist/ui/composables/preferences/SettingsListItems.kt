@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,6 +33,7 @@ import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Surface
@@ -41,6 +43,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +56,9 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.axiel7.moelist.ui.composables.BackIconButton
 import com.axiel7.moelist.ui.icons.Icons
@@ -64,9 +72,12 @@ import com.axiel7.moelist.ui.theme.Motion
  * Shared M3 Expressive building blocks for the More, Settings and About screens.
  *
  * - [SettingsScaffold]: large flexible top bar that collapses on scroll + a scrolling column.
- * - [SettingsGroup] + [SettingsNavItem] / [SettingsSwitchItem]: grouped (segmented) list items.
- *   Items in a group share one rounded block (16dp outer corners, 4dp inner, 2dp gaps) and
- *   their corners morph while pressed. Pass each item's `index` and the group's `count`.
+ * - [SettingsSection] + [SettingsNavItem] / [SettingsSwitchItem] / [SettingsRadioItem]: grouped
+ *   (segmented) list items. Items in a section share one rounded block (16dp outer corners, 4dp
+ *   inner, 2dp gaps) and their corners morph while pressed. The section works out each item's
+ *   position itself, so items can be added, removed or hidden without renumbering anything.
+ * - [SettingsGroup]: the plain column behind a section, for callers that still pass `index` and
+ *   `count` by hand.
  * - [SettingsChoiceCard]: a selectable visual card (theme, tab, style pickers); selection fills
  *   it and rounds its corners with an expressive spring.
  */
@@ -163,6 +174,65 @@ fun SettingsGroup(
     )
 }
 
+/** Where an item sits inside its section; decides which corners are rounded. */
+@Immutable
+data class SettingsItemPosition(val index: Int, val count: Int)
+
+/**
+ * Position of the current item, provided by [SettingsSection]. Outside a section an item is a
+ * standalone block (index 0 of 1), so every corner is rounded.
+ */
+val LocalSettingsItemPosition = compositionLocalOf { SettingsItemPosition(index = 0, count = 1) }
+
+/** Collects the items of a [SettingsSection]. Skip an item by not calling [item] for it. */
+class SettingsSectionScope internal constructor() {
+    internal val items = mutableListOf<@Composable () -> Unit>()
+
+    fun item(content: @Composable () -> Unit) {
+        items += content
+    }
+}
+
+/**
+ * An optional section header over a group of items. Each item gets its index and the item
+ * count automatically, so the rounded corners stay right when items are conditional:
+ *
+ * ```
+ * SettingsSection(title = "Filters") {
+ *     item { SettingsSwitchItem(...) }
+ *     if (supported) item { SettingsSwitchItem(...) }
+ * }
+ * ```
+ *
+ * Set [selectableGroup] when the items are radio choices, so TalkBack reads them as one group.
+ * Nothing is drawn (not even the header) when the section has no items.
+ */
+@Composable
+fun SettingsSection(
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    selectableGroup: Boolean = false,
+    content: SettingsSectionScope.() -> Unit,
+) {
+    val items = SettingsSectionScope().apply(content).items
+    if (items.isEmpty()) return
+
+    if (title != null) {
+        SettingsSectionHeader(text = title)
+    }
+    SettingsGroup(
+        modifier = if (selectableGroup) modifier.selectableGroup() else modifier,
+    ) {
+        items.forEachIndexed { index, item ->
+            CompositionLocalProvider(
+                LocalSettingsItemPosition provides SettingsItemPosition(index, items.size)
+            ) {
+                item()
+            }
+        }
+    }
+}
+
 /** Leading icon of a settings item: the icon in a tonal rounded square. */
 @Composable
 fun SettingsIcon(
@@ -197,8 +267,8 @@ private val SettingsIconShape = RoundedCornerShape(12.dp)
 @Composable
 fun SettingsNavItem(
     title: String,
-    index: Int,
-    count: Int,
+    index: Int = LocalSettingsItemPosition.current.index,
+    count: Int = LocalSettingsItemPosition.current.count,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
@@ -249,8 +319,8 @@ fun SettingsNavItem(
 @Composable
 fun SettingsNavItem(
     title: String,
-    index: Int,
-    count: Int,
+    index: Int = LocalSettingsItemPosition.current.index,
+    count: Int = LocalSettingsItemPosition.current.count,
     icon: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -280,8 +350,8 @@ fun SettingsSwitchItem(
     title: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
-    index: Int,
-    count: Int,
+    index: Int = LocalSettingsItemPosition.current.index,
+    count: Int = LocalSettingsItemPosition.current.count,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     icon: ImageVector? = null,
@@ -326,6 +396,70 @@ fun SettingsSwitchItem(
     }
 }
 
+/**
+ * A grouped item for picking one option out of several (use it inside a [SettingsSection] with
+ * `selectableGroup = true`). The whole row selects, a radio button at the end shows the state
+ * and TalkBack reads it as a radio button. The selected row is tinted, like the format picker.
+ */
+@Composable
+fun SettingsRadioItem(
+    title: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    icon: ImageVector? = null,
+    enabled: Boolean = true,
+    index: Int = LocalSettingsItemPosition.current.index,
+    count: Int = LocalSettingsItemPosition.current.count,
+) {
+    val colors = MaterialTheme.colorScheme
+
+    SegmentedListItem(
+        selected = selected,
+        onClick = onClick,
+        shapes = ListItemDefaults.segmentedShapes(index = index, count = count),
+        modifier = modifier.semantics { role = Role.RadioButton },
+        enabled = enabled,
+        colors = ListItemDefaults.segmentedColors(
+            containerColor = colors.surfaceContainer,
+            supportingContentColor = colors.onSurfaceVariant,
+            selectedContainerColor = colors.secondaryContainer,
+            selectedContentColor = colors.onSecondaryContainer,
+            selectedSupportingContentColor = colors.onSecondaryContainer,
+            selectedTrailingContentColor = colors.primary,
+        ),
+        leadingContent = icon?.let {
+            {
+                val container by animateColorAsState(
+                    targetValue = if (selected) colors.primaryContainer
+                    else colors.surfaceContainerHighest,
+                    animationSpec = Motion.effects(),
+                    label = "settingsRadioIconContainer",
+                )
+                val content by animateColorAsState(
+                    targetValue = if (selected) colors.onPrimaryContainer
+                    else colors.onSurfaceVariant,
+                    animationSpec = Motion.effects(),
+                    label = "settingsRadioIconContent",
+                )
+                SettingsIcon(
+                    painter = rememberVectorPainter(it),
+                    containerColor = container,
+                    contentColor = content,
+                )
+            }
+        },
+        supportingContent = subtitle?.let { { Text(text = it) } },
+        trailingContent = {
+            // onClick = null: the row handles the selection, so TalkBack reads one control
+            RadioButton(selected = selected, onClick = null, enabled = enabled)
+        },
+    ) {
+        Text(text = title)
+    }
+}
+
 /** M3 switch with a check / cross icon in the thumb. Display only (the row toggles it). */
 @Composable
 fun SettingsSwitch(
@@ -353,8 +487,8 @@ fun SettingsSwitch(
  * A selectable visual card for pickers (start tab, title language, list style...).
  *
  * Unselected: `surfaceContainer` with 16dp corners. Selected: `secondaryContainer`, corners
- * spring open to 28dp and a check pops in at the top end. Selection semantics are set, so
- * TalkBack reads "selected".
+ * spring open to 28dp and a check pops in at the top end. Radio-button semantics are set, so
+ * TalkBack reads "radio button, selected". Put a row of cards in a `selectableGroup()`.
  */
 @Composable
 fun SettingsChoiceCard(
@@ -378,7 +512,8 @@ fun SettingsChoiceCard(
     Surface(
         selected = selected,
         onClick = onClick,
-        modifier = modifier,
+        // A one-of-several choice: TalkBack reads "radio button, selected"
+        modifier = modifier.semantics { role = Role.RadioButton },
         shape = RoundedCornerShape(corner),
         color = container,
     ) {

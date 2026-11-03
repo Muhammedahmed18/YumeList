@@ -59,9 +59,6 @@ sealed interface Route {
     data object Appearance : Route
 
     @Serializable
-    data object ListStyleSettings : Route
-
-    @Serializable
     data object NavigationSettings : Route
 
     @Serializable

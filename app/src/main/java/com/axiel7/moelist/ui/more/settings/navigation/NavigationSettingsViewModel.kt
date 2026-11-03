@@ -36,6 +36,18 @@ class NavigationSettingsViewModel(
         }
     }
 
+    override fun setUseListTabs(value: Boolean) {
+        viewModelScope.launch {
+            defaultPreferencesRepository.setUseListTabs(value)
+        }
+    }
+
+    override fun setRandomListEntryEnabled(value: Boolean) {
+        viewModelScope.launch {
+            defaultPreferencesRepository.setRandomListEntryEnabled(value)
+        }
+    }
+
     init {
         defaultPreferencesRepository.startTab
             .filterNotNull()
@@ -49,6 +61,14 @@ class NavigationSettingsViewModel(
         defaultPreferencesRepository.tabletMode
             .filterNotNull()
             .onEach { value -> mutableUiState.update { it.copy(tabletMode = value) } }
+            .launchIn(viewModelScope)
+
+        defaultPreferencesRepository.useListTabs
+            .onEach { value -> mutableUiState.update { it.copy(useListTabs = value) } }
+            .launchIn(viewModelScope)
+
+        defaultPreferencesRepository.randomListEntryEnabled
+            .onEach { value -> mutableUiState.update { it.copy(randomListEntryEnabled = value) } }
             .launchIn(viewModelScope)
     }
 }

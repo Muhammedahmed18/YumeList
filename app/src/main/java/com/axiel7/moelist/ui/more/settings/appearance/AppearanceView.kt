@@ -48,9 +48,10 @@ import com.axiel7.moelist.R
 import com.axiel7.moelist.ui.base.ColorPalette
 import com.axiel7.moelist.ui.base.ThemeStyle
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
-import com.axiel7.moelist.ui.composables.preferences.SettingsGroup
+import com.axiel7.moelist.ui.composables.preferences.LocalSettingsItemPosition
 import com.axiel7.moelist.ui.composables.preferences.SettingsIcon
 import com.axiel7.moelist.ui.composables.preferences.SettingsScaffold
+import com.axiel7.moelist.ui.composables.preferences.SettingsSection
 import com.axiel7.moelist.ui.composables.preferences.SettingsSwitchItem
 import com.axiel7.moelist.ui.composables.preferences.icon
 import com.axiel7.moelist.ui.composables.preferences.settingsItemColors
@@ -103,42 +104,51 @@ private fun AppearanceViewContent(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 12.dp, bottom = 20.dp)
+                .padding(top = 10.dp, bottom = 16.dp)
         )
 
-        SettingsGroup {
-            ThemeModeItem(
-                selected = uiState.theme,
-                onSelect = { event?.setTheme(it) },
-            )
-            SettingsSwitchItem(
-                title = stringResource(R.string.pure_black_mode),
-                subtitle = stringResource(
-                    if (isLight) R.string.pure_black_dark_only else R.string.pure_black_summary
-                ),
-                icon = Icons.Rounded.Contrast,
-                checked = uiState.pureBlack,
-                onCheckedChange = { event?.setPureBlack(it) },
-                // Only meaningful when the app can be dark (Dark, or System at night)
-                enabled = !isLight,
-                index = 1,
-                count = 3,
-            )
-            SettingsSwitchItem(
-                title = stringResource(R.string.dynamic_colors),
-                subtitle = stringResource(
-                    if (isDynamicAvailable) R.string.dynamic_colors_summary
-                    else R.string.dynamic_colors_unavailable
-                ),
-                icon = Icons.Rounded.AutoAwesome,
-                checked = isDynamicAvailable && uiState.colorPalette == ColorPalette.DYNAMIC,
-                onCheckedChange = { on ->
-                    event?.setColorPalette(if (on) ColorPalette.DYNAMIC else ColorPalette.YUME)
-                },
-                enabled = isDynamicAvailable,
-                index = 2,
-                count = 3,
-            )
+        SettingsSection {
+            item {
+                ThemeModeItem(
+                    selected = uiState.theme,
+                    onSelect = { event?.setTheme(it) },
+                )
+            }
+            item {
+                SettingsSwitchItem(
+                    title = stringResource(R.string.pure_black_mode),
+                    // Pure black only shows while the app is dark. Say so in every mode, so in
+                    // System mode during the day the switch doesn't look like it does nothing.
+                    subtitle = stringResource(
+                        when (uiState.theme) {
+                            ThemeStyle.LIGHT -> R.string.pure_black_dark_only
+                            ThemeStyle.DARK -> R.string.pure_black_summary
+                            ThemeStyle.FOLLOW_SYSTEM -> R.string.pure_black_system_summary
+                        }
+                    ),
+                    icon = Icons.Rounded.Contrast,
+                    checked = uiState.pureBlack,
+                    onCheckedChange = { event?.setPureBlack(it) },
+                    enabled = !isLight,
+                )
+            }
+            // Wallpaper colours need Android 12+. On older versions the row could never be
+            // turned on, so it isn't shown at all.
+            if (isDynamicAvailable) {
+                item {
+                    SettingsSwitchItem(
+                        title = stringResource(R.string.dynamic_colors),
+                        subtitle = stringResource(R.string.dynamic_colors_summary),
+                        icon = Icons.Rounded.AutoAwesome,
+                        checked = uiState.colorPalette == ColorPalette.DYNAMIC,
+                        onCheckedChange = { on ->
+                            event?.setColorPalette(
+                                if (on) ColorPalette.DYNAMIC else ColorPalette.YUME
+                            )
+                        },
+                    )
+                }
+            }
         }
     }
 }
@@ -154,8 +164,9 @@ private fun ThemeModeItem(
     selected: ThemeStyle,
     onSelect: (ThemeStyle) -> Unit,
 ) {
+    val position = LocalSettingsItemPosition.current
     SegmentedListItem(
-        shapes = ListItemDefaults.segmentedShapes(index = 0, count = 3),
+        shapes = ListItemDefaults.segmentedShapes(index = position.index, count = position.count),
         colors = settingsItemColors(),
         leadingContent = {
             SettingsIcon(painter = rememberVectorPainter(selected.icon))
@@ -257,7 +268,7 @@ private fun AnimePreviewCard(modifier: Modifier = Modifier) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(132.dp),
+                .height(116.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             // Poster

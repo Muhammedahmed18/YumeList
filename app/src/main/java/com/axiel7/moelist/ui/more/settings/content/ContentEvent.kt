@@ -8,5 +8,4 @@ interface ContentEvent : UiEvent {
     fun setShowNsfw(value: Boolean)
     fun setHideScores(value: Boolean)
     fun setLoadCharacters(value: Boolean)
-    fun setRandomListEntryEnabled(value: Boolean)
 }

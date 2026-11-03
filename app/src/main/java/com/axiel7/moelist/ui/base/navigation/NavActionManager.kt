@@ -66,10 +66,6 @@ class NavActionManager(
         navController.navigate(Route.Appearance)
     }
 
-    fun toListStyleSettings() {
-        navController.navigate(Route.ListStyleSettings)
-    }
-
     fun toNavigationSettings() {
         navController.navigate(Route.NavigationSettings)
     }

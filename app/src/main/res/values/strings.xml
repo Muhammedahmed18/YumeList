@@ -122,7 +122,6 @@
     <string name="days">Days</string>
     <string name="search">Search</string>
     <string name="show_nsfw">Show NSFW content</string>
-    <string name="default_section">Default section</string>
     <string name="logout">Log Out</string>
     <string name="logout_summary">Log out only from YumeList, not MAL.</string>
     <string name="github" translatable="false">GitHub</string>
@@ -232,16 +231,13 @@
     <string name="show_more">Show more</string>
     <string name="show_less">Show less</string>
     <string name="content">Content</string>
-    <string name="navigation">Navigation</string>
-    <string name="media_lists">Media Lists</string>
     <string name="app_integration">App Integration</string>
     <string name="content_filters">Content Filters</string>
     <string name="navigation_bar">Navigation Bar</string>
     <string name="pinned_navigation_bar_summary">Stays visible while scrolling</string>
-    <string name="settings_appearance_hint">Theme · Color Palette</string>
-    <string name="settings_navigation_hint">Default tab · Nav bar · Tablet mode</string>
-    <string name="settings_media_lists_hint">List tabs</string>
-    <string name="settings_content_hint">Title language · Scores · NSFW</string>
+    <string name="settings_appearance_hint">Theme · Pure black · Dynamic colors</string>
+    <string name="settings_lists_navigation_hint">Default tab · List tabs · Tablet layout</string>
+    <string name="settings_content_hint">Title language · NSFW · Scores</string>
     <plurals name="num_years">
         <item quantity="one">%d year</item>
         <item quantity="other">%d years</item>
@@ -365,7 +361,6 @@
     <string name="mode_always">Always</string>
     <string name="mode_landscape">Landscape</string>
     <string name="mode_never">Never</string>
-    <string name="tablet_mode">Tablet mode</string>
     <string name="refresh">Refresh</string>
 
     <string name="change_status">Change status</string>
@@ -463,7 +458,24 @@
     <string name="appearance_flavor">Your list, your colors ✿</string>
     <string name="dynamic_colors">Dynamic colors</string>
     <string name="dynamic_colors_summary">Use colors from your wallpaper</string>
-    <string name="dynamic_colors_unavailable">Available on Android 12 and newer</string>
+    <!-- Settings (v3.1.6) -->
+    <string name="pure_black_system_summary">Applies while the dark theme is on. Saves battery on OLED screens</string>
+    <string name="lists_and_navigation">Lists &amp; navigation</string>
+    <string name="default_tab">Default tab</string>
+    <string name="default_tab_last_used_summary">Open where you left off</string>
+    <string name="anime_manga_lists">Anime &amp; manga lists</string>
+    <string name="random_button_on_list_summary">Adds a button that picks a random title from your list</string>
+    <string name="tablet_layout">Tablet layout</string>
+    <string name="tablet_mode_auto_summary">Use the tablet layout on wide screens</string>
+    <string name="tablet_mode_always_summary">Always use the tablet layout</string>
+    <string name="tablet_mode_landscape_summary">Use the tablet layout when the device is sideways</string>
+    <string name="tablet_mode_never_summary">Always use the phone layout</string>
+    <string name="show_nsfw_summary">Include adult titles in search, rankings and seasons</string>
+    <string name="hide_scores_summary">Hide the MyAnimeList score on titles across the app</string>
+    <string name="details_page">Details page</string>
+    <string name="always_load_characters_summary">Load the cast automatically instead of tapping to load it</string>
+    <string name="app_integration_not_set_up_summary">Tap to let YumeList open MyAnimeList links</string>
+    <string name="app_integration_active_summary">MyAnimeList links open in YumeList</string>
     <!-- Onboarding / login / about (moved from hardcoded text) -->
     <string name="onboarding_next">Next</string>
     <string name="onboarding_step">Step %1$d of %2$d</string>

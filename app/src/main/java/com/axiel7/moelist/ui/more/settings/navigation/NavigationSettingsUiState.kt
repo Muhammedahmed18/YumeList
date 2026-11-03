@@ -8,6 +8,8 @@ data class NavigationSettingsUiState(
     val startTab: StartTab = StartTab.LAST_USED,
     val pinnedNavBar: Boolean = false,
     val tabletMode: TabletMode = TabletMode.AUTO,
+    val useListTabs: Boolean = false,
+    val randomListEntryEnabled: Boolean = false,
     override val isLoading: Boolean = false,
     override val message: String? = null,
 ) : UiState() {
