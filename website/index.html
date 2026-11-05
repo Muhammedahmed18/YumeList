@@ -176,9 +176,21 @@
   @media (max-width: 760px) { .features { grid-template-columns: 1fr; } }
 
   /* ── Screens gallery ── */
-  .gallery { display: flex; gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; margin-top: 48px;
-             padding: 4px max(var(--gutter), (100vw - var(--max)) / 2) 20px; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
-  .gallery figure { flex: 0 0 clamp(200px, 22vw, 250px); scroll-snap-align: center; }
+  .gallery-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+  .gallery-nav { display: flex; gap: 8px; flex-shrink: 0; }
+  .gallery-nav button { width: 56px; height: 56px; border: 0; border-radius: 50%; cursor: pointer; display: grid; place-items: center;
+      background: var(--surface-hi); color: var(--text); transition: border-radius .35s var(--spring), background-color .3s, color .3s, opacity .3s; }
+  .gallery-nav button:hover { background: var(--line); }
+  .gallery-nav button:active { border-radius: 18px; }
+  .gallery-nav .next:not(:disabled) { background: var(--primary); color: var(--on-primary); }
+  .gallery-nav button:disabled { opacity: .38; cursor: default; }
+  .gallery-nav svg { width: 24px; height: 24px; fill: currentColor; }
+  /* Moved by the arrow buttons (swipe still works on touch); no scrollbar */
+  .gallery { display: flex; gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; margin-top: 40px;
+             padding: 4px max(var(--gutter), (100vw - var(--max)) / 2) 4px; scroll-padding-inline: max(var(--gutter), (100vw - var(--max)) / 2);
+             scrollbar-width: none; }
+  .gallery::-webkit-scrollbar { display: none; }
+  .gallery figure { flex: 0 0 clamp(200px, 22vw, 250px); scroll-snap-align: start; }
   .gallery img { border-radius: 26px; border: 1px solid var(--line); background: var(--surface); }
   .gallery figcaption { margin-top: 14px; font-weight: 700; }
   .gallery figcaption small { display: block; font-weight: 500; color: var(--muted); font-size: .88rem; margin-top: 2px; }
@@ -366,10 +378,14 @@
   </section>
 
   <section id="screens" style="padding-top:0">
-    <div class="wrap">
+    <div class="wrap gallery-head">
       <h2>Take a look around.</h2>
+      <div class="gallery-nav">
+        <button type="button" class="prev" aria-label="Previous screens" aria-controls="gallery"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M15.4 7.4 14 6l-6 6 6 6 1.4-1.4L10.8 12z"/></svg></button>
+        <button type="button" class="next" aria-label="Next screens" aria-controls="gallery"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8.6 16.6 10 18l6-6-6-6-1.4 1.4 4.6 4.6z"/></svg></button>
+      </div>
     </div>
-    <div class="gallery" tabindex="0" aria-label="App screenshots, scroll sideways">
+    <div class="gallery" id="gallery" tabindex="0" aria-label="App screenshots">
       <figure><img src="images/welcome.webp" alt="Login screen" width="540" height="1147" loading="lazy"><figcaption>Sign in or continue as guest</figcaption></figure>
       <figure><img src="images/your-stats.webp" alt="Your stats screen" width="540" height="1200" loading="lazy"><figcaption>Your stats<small>Shown after signing in</small></figcaption></figure>
       <figure><img src="images/make-it-yours.webp" alt="Make it yours setup screen" width="540" height="1149" loading="lazy" onerror="this.closest('figure').remove()"><figcaption>Make it yours</figcaption></figure>
@@ -466,6 +482,28 @@
         try { localStorage.setItem('yumelist-palette', b.dataset.palette); } catch (e) {}
       });
     });
+  })();
+
+  // Screens gallery: the arrow buttons move it one page at a time and switch off at the ends
+  (function () {
+    var g = document.getElementById('gallery');
+    var prev = document.querySelector('.gallery-nav .prev');
+    var next = document.querySelector('.gallery-nav .next');
+    function step() {
+      var fig = g.querySelector('figure');
+      var w = fig ? fig.getBoundingClientRect().width + 20 : 270;
+      return Math.max(w, Math.floor((g.clientWidth - 80) / w) * w);
+    }
+    function update() {
+      prev.disabled = g.scrollLeft <= 2;
+      next.disabled = g.scrollLeft + g.clientWidth >= g.scrollWidth - 2;
+    }
+    prev.addEventListener('click', function () { g.scrollBy({ left: -step() }); });
+    next.addEventListener('click', function () { g.scrollBy({ left: step() }); });
+    g.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    window.addEventListener('load', update);
+    update();
   })();
 
   // Hairline under the nav once the page scrolls
