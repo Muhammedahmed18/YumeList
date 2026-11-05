@@ -235,9 +235,9 @@
     <string name="content_filters">Content Filters</string>
     <string name="navigation_bar">Navigation Bar</string>
     <string name="pinned_navigation_bar_summary">Stays visible while scrolling</string>
-    <string name="settings_appearance_hint">Theme · Pure black · Dynamic colors</string>
-    <string name="settings_lists_navigation_hint">Default tab · List tabs · Tablet layout</string>
-    <string name="settings_content_hint">Title language · NSFW · Scores</string>
+    <string name="settings_appearance_hint">Theme · Colors · Start tab · Titles · List tabs</string>
+    <string name="settings_lists_navigation_hint">Pinned bar · Random button · Tablet layout</string>
+    <string name="settings_content_hint">NSFW · Scores · Characters</string>
     <plurals name="num_years">
         <item quantity="one">%d year</item>
         <item quantity="other">%d years</item>
@@ -506,4 +506,71 @@
     <string name="login_with_mal">Log in with MyAnimeList</string>
     <string name="about_made_with">Made with</string>
     <string name="about_by_author">by Muhammed</string>
+
+    <!-- v3.1.7: onboarding redesign, guest mode, floating nav bar, accents -->
+    <string name="onboarding_headline">Every story you dream of, in one list.</string>
+    <string name="onboarding_subtitle">Track anime and manga with MyAnimeList, and never miss an airing episode.</string>
+    <string name="continue_with_mal">Continue with MyAnimeList</string>
+    <string name="continue_as_guest">Continue as guest</string>
+    <string name="new_to_mal">New to MyAnimeList?</string>
+    <string name="create_free_account">Create a free account</string>
+    <string name="onboarding_okaeri">Okaeri,</string>
+    <string name="onboarding_import_desc">Your lists are coming over from MyAnimeList.</string>
+    <string name="onboarding_import_title">Bringing your list over</string>
+    <string name="onboarding_import_anime">Anime list</string>
+    <string name="onboarding_import_manga">Manga list</string>
+    <string name="onboarding_import_watching">Currently watching</string>
+    <string name="onboarding_import_airing">Airing this week</string>
+    <string name="onboarding_background_refresh">Everything after this refreshes quietly in the background.</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_make_it_yours">Make it yours</string>
+    <string name="onboarding_make_it_yours_desc">Pick a look. You can change it later in Settings.</string>
+    <string name="onboarding_looks_good">Looks good</string>
+    <string name="onboarding_change_later">You can change all of this later in Settings → Appearance.</string>
+    <plurals name="import_entries">
+        <item quantity="one">%d entry</item>
+        <item quantity="other">%d entries</item>
+    </plurals>
+    <plurals name="import_shows">
+        <item quantity="one">%d show</item>
+        <item quantity="other">%d shows</item>
+    </plurals>
+    <plurals name="import_this_week">
+        <item quantity="one">%d episode</item>
+        <item quantity="other">%d episodes</item>
+    </plurals>
+    <string name="stat_days_watched">%1$s days watched</string>
+    <plurals name="stat_episodes">
+        <item quantity="one">%1$s episode</item>
+        <item quantity="other">%1$s episodes</item>
+    </plurals>
+    <string name="stat_mean_score">Mean score %1$s</string>
+    <string name="stat_completed">%1$s completed</string>
+    <string name="theme_section">Theme</string>
+    <string name="accent_color">Accent color</string>
+    <string name="start_on">Start on</string>
+    <string name="palette_lavender">Lavender</string>
+    <string name="palette_sakura">Sakura</string>
+    <string name="palette_sunset">Sunset</string>
+    <string name="palette_matcha">Matcha</string>
+    <string name="palette_ocean">Ocean</string>
+    <string name="guest_anime_title">Track your anime</string>
+    <string name="guest_anime_desc">Sign in with MyAnimeList to keep your watching list, progress and scores here.</string>
+    <string name="guest_manga_title">Track your manga</string>
+    <string name="guest_manga_desc">Sign in with MyAnimeList to keep your reading list, chapters and scores here.</string>
+    <string name="guest_profile_title">Your profile lives here</string>
+    <string name="guest_profile_desc">Sign in with MyAnimeList to see your stats, favorites and history.</string>
+    <string name="sign_in_sheet_title">Sign in to add this</string>
+    <string name="sign_in_sheet_desc">Lists, progress and scores are saved to your MyAnimeList account.</string>
+    <string name="not_now">Not now</string>
+    <string name="follow_system">Follow system</string>
+    <string name="colors_section">Colors</string>
+    <string name="pure_black_chip">Pure black</string>
+    <string name="pure_black_system_hint">Used when your phone is in dark mode</string>
+    <string name="title_shown_as">Shown as: %1$s</string>
+    <string name="list_switch_title">Switch list status with</string>
+    <string name="list_style_fab">Floating button</string>
+    <string name="list_style_tabs">Tabs</string>
+    <string name="list_style_fab_desc">A button at the bottom opens the status menu.</string>
+    <string name="list_style_tabs_desc">Tabs along the top switch between statuses.</string>
 </resources>

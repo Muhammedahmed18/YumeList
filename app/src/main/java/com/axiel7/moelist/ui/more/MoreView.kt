@@ -1,5 +1,6 @@
 package com.axiel7.moelist.ui.more
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -82,6 +83,9 @@ private fun MoreViewContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            // Opaque like the other tabs: switching tabs fades the new one in over the old one,
+            // so a see-through More screen showed both at once and then popped
+            .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
             .verticalScroll(scrollState)
             .padding(padding)

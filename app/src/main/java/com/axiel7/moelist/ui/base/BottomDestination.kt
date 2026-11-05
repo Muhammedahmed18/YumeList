@@ -11,13 +11,13 @@ import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.Route
 import com.axiel7.moelist.ui.icons.Icons
-import com.axiel7.moelist.ui.icons.outlined.Book
+import com.axiel7.moelist.ui.icons.automirrored.outlined.MenuBook
+import com.axiel7.moelist.ui.icons.automirrored.rounded.MenuBook
+import com.axiel7.moelist.ui.icons.filled.Tv
 import com.axiel7.moelist.ui.icons.outlined.Home
-import com.axiel7.moelist.ui.icons.outlined.LocalMovies
 import com.axiel7.moelist.ui.icons.outlined.Person
-import com.axiel7.moelist.ui.icons.rounded.Book
+import com.axiel7.moelist.ui.icons.outlined.Tv
 import com.axiel7.moelist.ui.icons.rounded.Home
-import com.axiel7.moelist.ui.icons.rounded.LocalMovies
 import com.axiel7.moelist.ui.icons.rounded.MoreHoriz
 import com.axiel7.moelist.ui.icons.rounded.Person
 
@@ -40,16 +40,17 @@ sealed class BottomDestination(
         value = "anime",
         route = Route.Tab.Anime(mediaType = MediaType.ANIME),
         title = R.string.title_anime_list,
-        icon = Icons.Outlined.LocalMovies,
-        iconSelected = Icons.Rounded.LocalMovies
+        // A TV for anime and an open book for manga; outlined until selected, then filled
+        icon = Icons.Outlined.Tv,
+        iconSelected = Icons.Filled.Tv
     )
 
     data object MangaList : BottomDestination(
         value = "manga",
         route = Route.Tab.Manga(MediaType.MANGA),
         title = R.string.title_manga_list,
-        icon = Icons.Outlined.Book,
-        iconSelected = Icons.Rounded.Book
+        icon = Icons.AutoMirrored.Outlined.MenuBook,
+        iconSelected = Icons.AutoMirrored.Rounded.MenuBook
     )
 
     data object Profile : BottomDestination(

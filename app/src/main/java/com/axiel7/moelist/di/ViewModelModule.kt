@@ -10,6 +10,7 @@ import com.axiel7.moelist.ui.more.notifications.NotificationsViewModel
 import com.axiel7.moelist.ui.more.settings.appearance.AppearanceViewModel
 import com.axiel7.moelist.ui.more.settings.content.ContentSettingsViewModel
 import com.axiel7.moelist.ui.more.settings.navigation.NavigationSettingsViewModel
+import com.axiel7.moelist.ui.onboarding.OnboardingViewModel
 import com.axiel7.moelist.ui.profile.ProfileViewModel
 import com.axiel7.moelist.ui.ranking.MediaRankingViewModel
 import com.axiel7.moelist.ui.search.SearchViewModel
@@ -35,6 +36,7 @@ val viewModelModule = module {
     }
     viewModelOf(::HomeViewModel)
     viewModelOf(::MainViewModel)
+    viewModelOf(::OnboardingViewModel)
     viewModel {
         NotificationsViewModel(
             dataStore = get(named(NOTIFICATIONS_DATA_STORE)),

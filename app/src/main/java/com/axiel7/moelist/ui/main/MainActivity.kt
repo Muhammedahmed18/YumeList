@@ -132,6 +132,9 @@ class MainActivity : AppCompatActivity() {
         val isOnboardingCompleted by viewModel.isOnboardingCompleted.collectAsStateWithLifecycle(
             initialValue = startup.isOnboardingCompleted
         )
+        val welcomePending by viewModel.welcomePending.collectAsStateWithLifecycle(
+            initialValue = startup.welcomePending
+        )
         val isDark = when (theme) {
             ThemeStyle.FOLLOW_SYSTEM -> isSystemInDarkTheme()
             ThemeStyle.LIGHT -> false
@@ -166,10 +169,12 @@ class MainActivity : AppCompatActivity() {
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.background
             ) {
-                if (!isOnboardingCompleted) {
+                // First run, or a guest who just logged in (stats + personalise, once)
+                if (!isOnboardingCompleted || (isLoggedIn && welcomePending)) {
                     OnboardingView(
                         viewModel = viewModel,
-                        onFinished = viewModel::completeOnboarding
+                        onFinished = viewModel::completeOnboarding,
+                        onContinueAsGuest = viewModel::completeOnboardingAsGuest,
                     )
                 } else {
                     MainView(

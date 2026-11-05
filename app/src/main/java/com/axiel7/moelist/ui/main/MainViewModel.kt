@@ -36,6 +36,7 @@ data class StartupState(
     val colorPalette: ColorPalette,
     val tabletMode: TabletMode,
     val isOnboardingCompleted: Boolean,
+    val welcomePending: Boolean,
     val startTab: StartTab?,
     val lastTab: Int,
 )
@@ -76,6 +77,10 @@ class MainViewModel(
     val accessToken = defaultPreferencesRepository.accessToken
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    /** A guest who has just logged in: show the stats + personalise steps once. */
+    val welcomePending = defaultPreferencesRepository.welcomePending
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     /**
      * Suspends (never blocks) until the preferences are loaded. Reads straight from the repository
      * instead of the stateIn() flows above, so the first frame gets the real saved values rather
@@ -96,6 +101,7 @@ class MainViewModel(
             colorPalette = prefs.colorPalette.first(),
             tabletMode = prefs.tabletMode.first(),
             isOnboardingCompleted = prefs.isOnboardingCompleted.first(),
+            welcomePending = prefs.welcomePending.first(),
             startTab = prefs.startTab.first(),
             lastTab = prefs.lastTab.first(),
         ).also { cachedStartupState = it }
@@ -173,7 +179,18 @@ class MainViewModel(
         defaultPreferencesRepository.setColorPalette(value)
     }
 
+    /** Finished the whole flow while logged in (stats + "make it yours" done). */
     fun completeOnboarding() = viewModelScope.launch {
+        defaultPreferencesRepository.setWelcomePending(false)
+        defaultPreferencesRepository.setOnboardingCompleted(true)
+    }
+
+    /**
+     * "Continue as guest": straight to Home with the default settings. The stats and
+     * personalise steps are kept for when they log in later.
+     */
+    fun completeOnboardingAsGuest() = viewModelScope.launch {
+        defaultPreferencesRepository.setWelcomePending(true)
         defaultPreferencesRepository.setOnboardingCompleted(true)
     }
 }

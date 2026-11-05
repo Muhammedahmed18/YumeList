@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,7 +21,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.LocalContentColor
@@ -39,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -58,16 +63,21 @@ import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 /**
- * Shown on the Anime / Manga tabs and the profile while logged out.
+ * Shown on the Anime / Manga tabs and the profile while logged out (guest mode).
  *
- * M3 Expressive: the logo in a scalloped shape, an emphasized title, a large login button with
+ * M3 Expressive: an icon in a scalloped shape, an emphasized title, a large login button with
  * the press morph (it shows a loading indicator while the login link is being prepared, so it
  * can't be tapped twice), and "use external browser" as a grouped switch.
+ *
+ * [title] / [subtitle] / [icon] let each screen say what signing in unlocks there.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LoginView(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    title: String = stringResource(R.string.login_welcome),
+    subtitle: String = stringResource(R.string.please_login_to_use_this_feature),
+    icon: ImageVector? = null,
 ) {
     val context = LocalContext.current
     val viewModel = koinViewModel<MainViewModel>()
@@ -100,18 +110,27 @@ fun LoginView(
                         .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_yumelist_logo),
-                        contentDescription = null,
-                        modifier = Modifier.size(60.dp),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                    if (icon != null) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            modifier = Modifier.size(52.dp),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_yumelist_logo),
+                            contentDescription = null,
+                            modifier = Modifier.size(60.dp),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(28.dp))
 
                 Text(
-                    text = stringResource(R.string.login_welcome),
+                    text = title,
                     style = MaterialTheme.typography.headlineMediumEmphasized,
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
@@ -120,7 +139,7 @@ fun LoginView(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = stringResource(R.string.please_login_to_use_this_feature),
+                    text = subtitle,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -129,6 +148,7 @@ fun LoginView(
                 Spacer(modifier = Modifier.height(40.dp))
 
                 LoginButton(
+                    text = stringResource(R.string.continue_with_mal),
                     isLoading = isOpening,
                     onClick = {
                         isOpening = true
@@ -165,7 +185,7 @@ fun LoginView(
 
 /**
  * Full-width "Log in with MyAnimeList" button: 56dp, press morph, and a loading indicator in
- * place of the icon while [isLoading]. Shared with the onboarding login step.
+ * place of the icon while [isLoading]. Shared with the onboarding login step and the sign-in sheet.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -173,10 +193,12 @@ fun LoginButton(
     isLoading: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    text: String = stringResource(R.string.login_with_mal),
 ) {
     Button(
-        onClick = onClick,
-        enabled = !isLoading,
+        // Not disabled while loading: a disabled button turns grey and see-through, which
+        // flashed on every tap. It keeps its colour and just ignores taps until it's done.
+        onClick = { if (!isLoading) onClick() },
         shapes = ButtonDefaults.shapes(),
         modifier = modifier
             .fillMaxWidth()
@@ -197,9 +219,86 @@ fun LoginButton(
         }
         Spacer(modifier = Modifier.width(ButtonDefaults.iconSpacingFor(56.dp)))
         Text(
-            text = stringResource(R.string.login_with_mal),
+            text = text,
             style = ButtonDefaults.textStyleFor(56.dp)
         )
+    }
+}
+
+/**
+ * Guest mode: asked when a guest taps something that needs an account (add to list, edit,
+ * score...). Says why, and offers to sign in right there instead of failing quietly.
+ */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun SignInSheet(
+    onDismiss: () -> Unit,
+    title: String = stringResource(R.string.sign_in_sheet_title),
+    subtitle: String = stringResource(R.string.sign_in_sheet_desc),
+) {
+    val context = LocalContext.current
+    val viewModel = koinViewModel<MainViewModel>()
+    val scope = rememberCoroutineScope()
+    var isOpening by remember { mutableStateOf(false) }
+
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(start = 24.dp, end = 24.dp, bottom = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .clip(MaterialShapes.Cookie9Sided.toShape())
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_yumelist_logo),
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineSmallEmphasized,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            LoginButton(
+                text = stringResource(R.string.continue_with_mal),
+                isLoading = isOpening,
+                onClick = {
+                    isOpening = true
+                    scope.launch {
+                        try {
+                            context.openLoginUrl(
+                                loginUrl = viewModel.generateLoginUrl(),
+                                useExternalBrowser = false
+                            )
+                        } finally {
+                            isOpening = false
+                        }
+                    }
+                }
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            TextButton(onClick = onDismiss, shapes = ButtonDefaults.shapes()) {
+                Text(text = stringResource(R.string.not_now))
+            }
+        }
     }
 }
 

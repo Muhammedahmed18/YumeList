@@ -1,5 +1,6 @@
 package com.axiel7.moelist.ui.theme
 
+import android.content.Context
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
@@ -107,6 +108,31 @@ private fun ColorScheme.toBlack() = this.copy(
     surfaceContainerHighest = surfaceContainerHighest.copy(alpha = 0.8f).compositeOver(Color.Black),
 )
 
+/**
+ * The colour scheme of [palette] in light or dark, before pure black is applied. Used by the
+ * theme itself and by the colour picker swatches, so a swatch always shows the real colours.
+ * [ColorPalette.DYNAMIC] needs Android 12+ (wallpaper colours); older versions get Yume Blue.
+ */
+fun colorSchemeFor(palette: ColorPalette, darkTheme: Boolean, context: Context): ColorScheme =
+    when (palette) {
+        ColorPalette.DYNAMIC -> {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (darkTheme) dynamicDarkColorScheme(context)
+                else dynamicLightColorScheme(context)
+            } else {
+                if (darkTheme) DarkColors else LightColors
+            }
+        }
+        // YumeList's own palette
+        ColorPalette.YUME -> if (darkTheme) DarkColors else LightColors
+        // Accent palettes (AccentSchemes.kt)
+        ColorPalette.LAVENDER -> if (darkTheme) LavenderDarkColors else LavenderLightColors
+        ColorPalette.SAKURA -> if (darkTheme) SakuraDarkColors else SakuraLightColors
+        ColorPalette.SUNSET -> if (darkTheme) SunsetDarkColors else SunsetLightColors
+        ColorPalette.MATCHA -> if (darkTheme) MatchaDarkColors else MatchaLightColors
+        ColorPalette.OCEAN -> if (darkTheme) OceanDarkColors else OceanLightColors
+    }
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MoeListTheme(
@@ -117,23 +143,8 @@ fun MoeListTheme(
 ) {
     val context = LocalContext.current
     val colorScheme = remember(colorPalette, darkTheme, useBlackColors) {
-        var scheme = when (colorPalette) {
-            ColorPalette.DYNAMIC -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    if (darkTheme) dynamicDarkColorScheme(context)
-                    else dynamicLightColorScheme(context)
-                } else {
-                    if (darkTheme) DarkColors else LightColors
-                }
-            }
-            // YumeList's own palette (the dynamic switch is off)
-            ColorPalette.YUME -> if (darkTheme) DarkColors else LightColors
-        }
-
-        if (darkTheme && useBlackColors) {
-            scheme = scheme.toBlack()
-        }
-        scheme
+        val scheme = colorSchemeFor(colorPalette, darkTheme, context)
+        if (darkTheme && useBlackColors) scheme.toBlack() else scheme
     }
 
     // Material 3 Expressive theme:

@@ -41,6 +41,7 @@ import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
 import com.axiel7.moelist.ui.composables.SnackbarType
 import com.axiel7.moelist.ui.composables.showAppSnackbar
+import com.axiel7.moelist.ui.login.SignInSheet
 import com.axiel7.moelist.ui.details.composables.MediaDetailsTopAppBar
 import com.axiel7.moelist.ui.details.composables.MusicStreamingSheet
 import com.axiel7.moelist.ui.details.sections.DetailsBackdrop
@@ -123,12 +124,14 @@ private fun MediaDetailsContent(
     var showMusicSheet by remember { mutableStateOf(false) }
     var selectedSong by remember { mutableStateOf<String?>(null) }
 
-    // Pre-calculate strings to avoid Context.getString lint in Composable
-    val pleaseLoginMessage = stringResource(R.string.please_login_to_use_this_feature)
-
+    // Guest mode: anything that needs an account asks to sign in with a sheet
+    var showSignInSheet by remember { mutableStateOf(false) }
     fun requireLogin(action: () -> Unit) {
         if (isLoggedIn) action()
-        else scope.launch { snackbarHostState.showAppSnackbar(pleaseLoginMessage, type = SnackbarType.INFO) }
+        else showSignInSheet = true
+    }
+    if (showSignInSheet) {
+        SignInSheet(onDismiss = { showSignInSheet = false })
     }
 
     val openEditSheet: () -> Unit = { requireLogin { showSheet = true } }

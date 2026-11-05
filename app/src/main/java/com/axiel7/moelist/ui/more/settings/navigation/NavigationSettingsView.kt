@@ -7,7 +7,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.axiel7.moelist.R
-import com.axiel7.moelist.ui.base.StartTab
 import com.axiel7.moelist.ui.base.TabletMode
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.preferences.SettingsRadioItem
@@ -15,24 +14,18 @@ import com.axiel7.moelist.ui.composables.preferences.SettingsScaffold
 import com.axiel7.moelist.ui.composables.preferences.SettingsSection
 import com.axiel7.moelist.ui.composables.preferences.SettingsSwitchItem
 import com.axiel7.moelist.ui.icons.Icons
-import com.axiel7.moelist.ui.icons.rounded.Book
 import com.axiel7.moelist.ui.icons.rounded.Casino
 import com.axiel7.moelist.ui.icons.rounded.Devices
-import com.axiel7.moelist.ui.icons.rounded.History
-import com.axiel7.moelist.ui.icons.rounded.Home
-import com.axiel7.moelist.ui.icons.rounded.LocalMovies
-import com.axiel7.moelist.ui.icons.rounded.MoreHoriz
 import com.axiel7.moelist.ui.icons.rounded.PushPin
 import com.axiel7.moelist.ui.icons.rounded.ScreenRotation
 import com.axiel7.moelist.ui.icons.rounded.Smartphone
-import com.axiel7.moelist.ui.icons.rounded.Tab
 import com.axiel7.moelist.ui.icons.rounded.Tablet
 import com.axiel7.moelist.ui.theme.MoeListTheme
 import org.koin.androidx.compose.koinViewModel
 
 /*
- * "Lists & navigation": where the app opens, the navigation bar, how the anime/manga lists
- * behave and when the tablet layout is used. The list switches used to live on their own
+ * "Lists & navigation": how the navigation bar behaves, how the anime/manga lists behave and
+ * when the tablet layout is used. Where the app opens and list tabs live in Appearance. The list switches used to live on their own
  * "Media lists" screen; their preference keys are unchanged.
  */
 
@@ -58,28 +51,6 @@ private fun NavigationSettingsViewContent(
         title = stringResource(R.string.lists_and_navigation),
         onBack = navActionManager::goBack,
     ) {
-        // ── Default tab ──────────────────────────────────────────────────────
-        SettingsSection(
-            title = stringResource(R.string.default_tab),
-            selectableGroup = true,
-        ) {
-            StartTab.entries
-                .filter { it != StartTab.MORE }
-                .forEach { tab ->
-                    item {
-                        SettingsRadioItem(
-                            title = stringResource(tab.stringRes),
-                            subtitle = if (tab == StartTab.LAST_USED) {
-                                stringResource(R.string.default_tab_last_used_summary)
-                            } else null,
-                            icon = tab.icon,
-                            selected = uiState.startTab == tab,
-                            onClick = { event?.setStartTab(tab) },
-                        )
-                    }
-                }
-        }
-
         // ── Navigation bar ───────────────────────────────────────────────────
         SettingsSection(title = stringResource(R.string.navigation_bar)) {
             item {
@@ -95,15 +66,6 @@ private fun NavigationSettingsViewContent(
 
         // ── Lists ────────────────────────────────────────────────────────────
         SettingsSection(title = stringResource(R.string.anime_manga_lists)) {
-            item {
-                SettingsSwitchItem(
-                    title = stringResource(R.string.enable_list_tabs),
-                    subtitle = stringResource(R.string.enable_list_tabs_subtitle),
-                    icon = Icons.Rounded.Tab,
-                    checked = uiState.useListTabs,
-                    onCheckedChange = { event?.setUseListTabs(it) },
-                )
-            }
             item {
                 SettingsSwitchItem(
                     title = stringResource(R.string.random_button_on_list),
@@ -135,15 +97,6 @@ private fun NavigationSettingsViewContent(
         }
     }
 }
-
-private val StartTab.icon: ImageVector
-    get() = when (this) {
-        StartTab.LAST_USED -> Icons.Rounded.History
-        StartTab.HOME -> Icons.Rounded.Home
-        StartTab.ANIME -> Icons.Rounded.LocalMovies
-        StartTab.MANGA -> Icons.Rounded.Book
-        StartTab.MORE -> Icons.Rounded.MoreHoriz
-    }
 
 private val TabletMode.icon: ImageVector
     get() = when (this) {

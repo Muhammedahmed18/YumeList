@@ -139,6 +139,15 @@ class DefaultPreferencesRepository(
         dataStore.setValue(ONBOARDING_COMPLETED_KEY, value)
     }
 
+    /**
+     * True for someone who finished onboarding as a guest. When they log in later, the
+     * "your stats" and "make it yours" steps are shown once, then this is cleared.
+     */
+    val welcomePending = dataStore.getValue(WELCOME_PENDING_KEY, false)
+    suspend fun setWelcomePending(value: Boolean) {
+        dataStore.setValue(WELCOME_PENDING_KEY, value)
+    }
+
     val lastTab = dataStore.getValue(LAST_TAB_KEY, 0)
     suspend fun setLastTab(value: Int) {
         dataStore.setValue(LAST_TAB_KEY, value)
@@ -306,6 +315,7 @@ class DefaultPreferencesRepository(
         private val COLOR_PALETTE_KEY = stringPreferencesKey("color_palette")
         private val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
         private val LAST_TAB_KEY = intPreferencesKey("last_tab")
+        private val WELCOME_PENDING_KEY = booleanPreferencesKey("welcome_pending")
         private val PINNED_NAV_BAR_KEY = booleanPreferencesKey("pinned_nav_bar")
         private val PURE_BLACK_KEY = booleanPreferencesKey("pure_black")
 

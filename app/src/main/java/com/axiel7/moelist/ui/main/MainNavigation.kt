@@ -52,6 +52,9 @@ import com.axiel7.moelist.ui.composables.ProvideNavAnimatedScope
 import com.axiel7.moelist.ui.details.MediaDetailsView
 import com.axiel7.moelist.ui.fullposter.FullPosterView
 import com.axiel7.moelist.ui.home.HomeView
+import com.axiel7.moelist.ui.icons.Icons
+import com.axiel7.moelist.ui.icons.automirrored.rounded.MenuBook
+import com.axiel7.moelist.ui.icons.filled.Tv
 import com.axiel7.moelist.ui.login.LoginView
 import com.axiel7.moelist.ui.more.MoreView
 import com.axiel7.moelist.ui.more.about.AboutView
@@ -190,7 +193,12 @@ fun MainNavigation(
                 ) {
                     ProvideNavAnimatedScope {
                         if (!isLoggedIn) {
-                            LoginView()
+                            // Guest: say what signing in unlocks here
+                            LoginView(
+                                title = stringResource(R.string.guest_anime_title),
+                                subtitle = stringResource(R.string.guest_anime_desc),
+                                icon = Icons.Filled.Tv,
+                            )
                         } else {
                             UserMediaListWithTabsView(
                                 mediaType = MediaType.ANIME,
@@ -209,7 +217,11 @@ fun MainNavigation(
                 ) {
                     ProvideNavAnimatedScope {
                         if (!isLoggedIn) {
-                            LoginView()
+                            LoginView(
+                                title = stringResource(R.string.guest_manga_title),
+                                subtitle = stringResource(R.string.guest_manga_desc),
+                                icon = Icons.AutoMirrored.Rounded.MenuBook,
+                            )
                         } else {
                             UserMediaListWithTabsView(
                                 mediaType = MediaType.MANGA,
@@ -371,7 +383,11 @@ fun MainNavigation(
                                 title = stringResource(R.string.title_profile),
                                 navigateBack = { navController.popBackStack() }
                             ) { padding ->
-                                LoginView(modifier = Modifier.padding(padding))
+                                LoginView(
+                                    modifier = Modifier.padding(padding),
+                                    title = stringResource(R.string.guest_profile_title),
+                                    subtitle = stringResource(R.string.guest_profile_desc),
+                                )
                             }
                         } else {
                             ProfileView(
