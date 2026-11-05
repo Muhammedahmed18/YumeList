@@ -30,9 +30,9 @@ YumeList is an unofficial Android client for [MyAnimeList](https://myanimelist.n
     <th colspan="4">Onboarding</th>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/01-welcome.jpeg" width="200"/><br/><sub>Welcome</sub></td>
-    <td align="center"><img src="screenshots/02-theme.jpeg" width="200"/><br/><sub>Choose your theme</sub></td>
-    <td align="center"><img src="screenshots/03-login.jpeg" width="200"/><br/><sub>Sync with MyAnimeList</sub></td>
+    <td align="center"><img src="screenshots/01-welcome.jpeg" width="200"/><br/><sub>Sign in or continue as guest</sub></td>
+    <td align="center"><img src="screenshots/02-your-stats.jpeg" width="200"/><br/><sub>Your stats</sub><br/><sub><i>Shown after signing in with MyAnimeList</i></sub></td>
+    <td align="center"><img src="screenshots/03-make-it-yours.jpeg" width="200"/><br/><sub>Make it yours</sub></td>
     <td></td>
   </tr>
   <tr>
@@ -59,9 +59,10 @@ YumeList is an unofficial Android client for [MyAnimeList](https://myanimelist.n
 
 **Track**
 - Manage your anime and manga lists, synced with your MyAnimeList account
+- **Guest mode**: browse Home, seasons, rankings and details before signing in
 - One-tap **+1** progress buttons with progress bars
 - "Airing in X days" countdowns on the shows you're watching
-- Sort and filter your lists, with a choice of list styles
+- Sort and filter your lists, and switch status with a floating button or tabs
 - Edit status, score, progress and dates from a single sheet
 
 **Discover**
@@ -78,10 +79,12 @@ YumeList is an unofficial Android client for [MyAnimeList](https://myanimelist.n
 - Status distribution and manga statistics (via Jikan)
 
 **Make it yours**
+- Set everything up in one screen on first launch: theme, colors, start tab, title language and more
 - Light, dark or follow-system themes, plus **pure black mode** for OLED screens
+- **Color palettes**: Dynamic (your wallpaper), Yume Blue, Lavender, Sakura, Sunset, Matcha and Ocean
 - Material 3 Expressive design with smooth shared-element transitions
-- Choose your start tab and navigation layout, with tablet support (navigation rail)
-- Title language and content preferences
+- Choose your start tab, with tablet support (navigation rail)
+- Title language (Romaji, English or Japanese) and content preferences, including NSFW
 
 **More**
 - Airing notifications

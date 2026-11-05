@@ -203,6 +203,8 @@ class OnboardingViewModel(
         .stateIn(viewModelScope, SharingStarted.Eagerly, TitleLanguage.ROMAJI)
     val useListTabs = defaultPreferencesRepository.useListTabs
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val nsfw = defaultPreferencesRepository.nsfw
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     fun setTheme(value: ThemeStyle) = viewModelScope.launch {
         defaultPreferencesRepository.setTheme(value)
@@ -226,6 +228,10 @@ class OnboardingViewModel(
 
     fun setUseListTabs(value: Boolean) = viewModelScope.launch {
         defaultPreferencesRepository.setUseListTabs(value)
+    }
+
+    fun setNsfw(value: Boolean) = viewModelScope.launch {
+        defaultPreferencesRepository.setNsfw(value)
     }
 
     init {

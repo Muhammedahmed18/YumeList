@@ -169,12 +169,13 @@ class MainActivity : AppCompatActivity() {
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.background
             ) {
-                // First run, or a guest who just logged in (stats + personalise, once)
+                // First run, or a guest who just logged in (their stats, once)
                 if (!isOnboardingCompleted || (isLoggedIn && welcomePending)) {
                     OnboardingView(
                         viewModel = viewModel,
                         onFinished = viewModel::completeOnboarding,
                         onContinueAsGuest = viewModel::completeOnboardingAsGuest,
+                        statsOnly = isOnboardingCompleted,
                     )
                 } else {
                     MainView(

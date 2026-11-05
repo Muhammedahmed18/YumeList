@@ -120,6 +120,7 @@ import com.axiel7.moelist.ui.icons.rounded.Contrast
 import com.axiel7.moelist.ui.icons.rounded.Info
 import com.axiel7.moelist.ui.icons.rounded.LiveTv
 import com.axiel7.moelist.ui.icons.rounded.PlayCircle
+import com.axiel7.moelist.ui.icons.rounded.PriorityHigh
 import com.axiel7.moelist.ui.icons.rounded.Remove
 import com.axiel7.moelist.ui.login.LoginButton
 import com.axiel7.moelist.ui.login.openLoginUrl
@@ -141,8 +142,8 @@ import java.text.NumberFormat
  * - Your stats: the account coming over, row by row, then a few fun numbers.
  * - Make it yours: theme, colours, start tab, title language, pure black and list tabs.
  *
- * A guest skips straight to Home. If they log in later, Stats and Make it yours are shown once
- * (see MainActivity / DefaultPreferencesRepository.welcomePending).
+ * A guest goes Login → Make it yours → Home. If they log in later, only Your stats is shown,
+ * once (see MainActivity / DefaultPreferencesRepository.welcomePending).
  */
 
 private enum class OnboardingStep { LOGIN, STATS, PERSONALIZE }
@@ -154,6 +155,8 @@ fun OnboardingView(
     viewModel: MainViewModel,
     onFinished: () -> Unit,
     onContinueAsGuest: () -> Unit,
+    // A guest who just logged in: they already made their choices, so only the stats are shown
+    statsOnly: Boolean = false,
 ) {
     val onboardingViewModel: OnboardingViewModel = koinViewModel()
     val sessionStatus by viewModel.sessionStatus.collectAsState()
@@ -164,6 +167,8 @@ fun OnboardingView(
     var stepName by rememberSaveable { mutableStateOf<String?>(null) }
     val step = stepName?.let { OnboardingStep.valueOf(it) }
     var isOpeningLogin by remember { mutableStateOf(false) }
+    // True when "Make it yours" was opened with "Continue as guest" (no stats step before it)
+    var asGuest by rememberSaveable { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -174,15 +179,18 @@ fun OnboardingView(
         }
         // Logged in from the login screen (the redirect came back): on to the stats
         if (isLoggedIn && step == OnboardingStep.LOGIN) {
+            asGuest = false
             stepName = OnboardingStep.STATS.name
         }
     }
 
-    // Back from "Make it yours" returns to the stats. Back on the stats does nothing (the
-    // account is already connected), and on the login screen it leaves the app as usual.
-    BackHandler(enabled = step == OnboardingStep.PERSONALIZE) {
-        stepName = OnboardingStep.STATS.name
+    // Back from "Make it yours" returns to where it was opened from: the login screen for a
+    // guest, the stats otherwise. Back on the stats does nothing (the account is already
+    // connected), and on the login screen it leaves the app as usual.
+    val personalizeBack: () -> Unit = {
+        stepName = if (asGuest) OnboardingStep.LOGIN.name else OnboardingStep.STATS.name
     }
+    BackHandler(enabled = step == OnboardingStep.PERSONALIZE, onBack = personalizeBack)
 
     if (step == null) {
         OnboardingLoading()
@@ -219,7 +227,11 @@ fun OnboardingView(
                             }
                         }
                     },
-                    onGuestClick = onContinueAsGuest,
+                    // Guests pick their look first, then go to Home
+                    onGuestClick = {
+                        asGuest = true
+                        stepName = OnboardingStep.PERSONALIZE.name
+                    },
                     onCreateAccountClick = { context.openCustomTab(MAL_SIGN_UP_URL) },
                 )
             }
@@ -233,7 +245,13 @@ fun OnboardingView(
                     username = username,
                     profilePicture = profilePicture,
                     importState = importState,
-                    onContinue = { stepName = OnboardingStep.PERSONALIZE.name },
+                    onContinue = {
+                        if (statsOnly) {
+                            onFinished()
+                        } else {
+                            stepName = OnboardingStep.PERSONALIZE.name
+                        }
+                    },
                 )
             }
 
@@ -245,6 +263,7 @@ fun OnboardingView(
                 val titleLanguage by onboardingViewModel.titleLanguage.collectAsStateWithLifecycle()
                 val titleSample by onboardingViewModel.titleSample.collectAsStateWithLifecycle()
                 val useListTabs by onboardingViewModel.useListTabs.collectAsStateWithLifecycle()
+                val nsfw by onboardingViewModel.nsfw.collectAsStateWithLifecycle()
                 PersonalizeStep(
                     theme = theme,
                     pureBlack = pureBlack,
@@ -253,14 +272,16 @@ fun OnboardingView(
                     titleLanguage = titleLanguage,
                     titleSample = titleSample,
                     useListTabs = useListTabs,
+                    nsfw = nsfw,
                     onThemeChange = { onboardingViewModel.setTheme(it) },
                     onPureBlackChange = { onboardingViewModel.setPureBlack(it) },
                     onColorPaletteChange = { onboardingViewModel.setColorPalette(it) },
                     onStartTabChange = { onboardingViewModel.setStartTab(it) },
                     onTitleLanguageChange = { onboardingViewModel.setTitleLanguage(it) },
                     onUseListTabsChange = { onboardingViewModel.setUseListTabs(it) },
-                    onBack = { stepName = OnboardingStep.STATS.name },
-                    onDone = onFinished,
+                    onNsfwChange = { onboardingViewModel.setNsfw(it) },
+                    onBack = personalizeBack,
+                    onDone = if (asGuest && !isLoggedIn) onContinueAsGuest else onFinished,
                 )
             }
         }
@@ -1063,12 +1084,14 @@ private fun PersonalizeStep(
     titleLanguage: TitleLanguage,
     titleSample: TitleSample?,
     useListTabs: Boolean,
+    nsfw: Boolean,
     onThemeChange: (ThemeStyle) -> Unit,
     onPureBlackChange: (Boolean) -> Unit,
     onColorPaletteChange: (ColorPalette) -> Unit,
     onStartTabChange: (StartTab) -> Unit,
     onTitleLanguageChange: (TitleLanguage) -> Unit,
     onUseListTabsChange: (Boolean) -> Unit,
+    onNsfwChange: (Boolean) -> Unit,
     onBack: () -> Unit,
     onDone: () -> Unit,
 ) {
@@ -1113,7 +1136,7 @@ private fun PersonalizeStep(
                 .padding(padding),
         ) {
             // On short phones the two one-line explanations step aside so everything still fits
-            val roomy = maxHeight >= 560.dp
+            val roomy = maxHeight >= 620.dp
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -1183,6 +1206,19 @@ private fun PersonalizeStep(
                             showDescription = roomy,
                         )
                     }
+
+                    Spacer(Modifier.height(12.dp))
+                    SettingsSection(modifier = Modifier.revealOnEnter(4)) {
+                        item {
+                            SettingsSwitchItem(
+                                title = stringResource(R.string.show_nsfw),
+                                subtitle = stringResource(R.string.nsfw_onboarding_summary),
+                                icon = Icons.Rounded.PriorityHigh,
+                                checked = nsfw,
+                                onCheckedChange = onNsfwChange,
+                            )
+                        }
+                    }
                     Spacer(Modifier.height(8.dp))
                 }
             }
@@ -1237,12 +1273,14 @@ private fun PersonalizeStepPreview() {
             titleLanguage = TitleLanguage.ROMAJI,
             titleSample = null,
             useListTabs = false,
+            nsfw = false,
             onThemeChange = {},
             onPureBlackChange = {},
             onColorPaletteChange = {},
             onStartTabChange = {},
             onTitleLanguageChange = {},
             onUseListTabsChange = {},
+            onNsfwChange = {},
             onBack = {},
             onDone = {},
         )

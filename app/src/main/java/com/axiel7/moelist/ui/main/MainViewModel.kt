@@ -77,7 +77,7 @@ class MainViewModel(
     val accessToken = defaultPreferencesRepository.accessToken
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    /** A guest who has just logged in: show the stats + personalise steps once. */
+    /** A guest who has just logged in: show their stats once. */
     val welcomePending = defaultPreferencesRepository.welcomePending
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
@@ -186,8 +186,8 @@ class MainViewModel(
     }
 
     /**
-     * "Continue as guest": straight to Home with the default settings. The stats and
-     * personalise steps are kept for when they log in later.
+     * A guest finished "Make it yours": on to Home. The stats step is kept for when they log
+     * in later.
      */
     fun completeOnboardingAsGuest() = viewModelScope.launch {
         defaultPreferencesRepository.setWelcomePending(true)
