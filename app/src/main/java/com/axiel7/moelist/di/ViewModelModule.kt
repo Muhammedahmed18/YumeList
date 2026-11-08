@@ -13,6 +13,7 @@ import com.axiel7.moelist.ui.more.settings.navigation.NavigationSettingsViewMode
 import com.axiel7.moelist.ui.onboarding.OnboardingViewModel
 import com.axiel7.moelist.ui.profile.ProfileViewModel
 import com.axiel7.moelist.ui.ranking.MediaRankingViewModel
+import com.axiel7.moelist.ui.recommendations.RecommendationsViewModel
 import com.axiel7.moelist.ui.search.SearchViewModel
 import com.axiel7.moelist.ui.season.SeasonChartViewModel
 import com.axiel7.moelist.ui.userlist.UserMediaListViewModel
@@ -51,6 +52,13 @@ val viewModelModule = module {
             defaultPreferencesRepository = get(),
             animeRepository = get(),
             mangaRepository = get()
+        )
+    }
+    viewModel { params ->
+        RecommendationsViewModel(
+            mediaType = params.get(),
+            recommendationRepository = get(),
+            defaultPreferencesRepository = get(),
         )
     }
     viewModelOf(::SearchViewModel)

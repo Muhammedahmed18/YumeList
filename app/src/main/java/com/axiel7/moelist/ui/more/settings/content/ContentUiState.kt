@@ -8,6 +8,7 @@ data class ContentUiState(
     val showNsfw: Boolean = false,
     val hideScores: Boolean = false,
     val loadCharacters: Boolean = false,
+    val showForYou: Boolean = true,
     override val isLoading: Boolean = false,
     override val message: String? = null,
 ) : UiState() {

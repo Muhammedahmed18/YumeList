@@ -4,6 +4,7 @@ import com.axiel7.moelist.data.repository.AnimeRepository
 import com.axiel7.moelist.data.repository.DefaultPreferencesRepository
 import com.axiel7.moelist.data.repository.LoginRepository
 import com.axiel7.moelist.data.repository.MangaRepository
+import com.axiel7.moelist.data.repository.RecommendationRepository
 import com.axiel7.moelist.data.repository.UserRepository
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.qualifier.named
@@ -15,4 +16,5 @@ val repositoryModule = module {
     singleOf(::MangaRepository)
     singleOf(::LoginRepository)
     singleOf(::UserRepository)
+    singleOf(::RecommendationRepository)
 }

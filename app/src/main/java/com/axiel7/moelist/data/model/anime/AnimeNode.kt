@@ -37,4 +37,7 @@ data class AnimeNode(
     override val mean: Float? = null,
     @SerialName("my_list_status")
     override val myListStatus: BasicMyListStatus? = null,
+    /** "white" (safe), "gray" (maybe) or "black" (adult). Only filled when requested. */
+    @SerialName("nsfw")
+    val nsfw: String? = null,
 ) : BaseMediaNode()

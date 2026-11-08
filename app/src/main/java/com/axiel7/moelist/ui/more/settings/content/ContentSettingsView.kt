@@ -11,6 +11,7 @@ import com.axiel7.moelist.ui.composables.preferences.SettingsScaffold
 import com.axiel7.moelist.ui.composables.preferences.SettingsSection
 import com.axiel7.moelist.ui.composables.preferences.SettingsSwitchItem
 import com.axiel7.moelist.ui.icons.Icons
+import com.axiel7.moelist.ui.icons.rounded.AutoAwesome
 import com.axiel7.moelist.ui.icons.rounded.Group
 import com.axiel7.moelist.ui.icons.rounded.PriorityHigh
 import com.axiel7.moelist.ui.icons.rounded.Star
@@ -58,6 +59,19 @@ private fun ContentSettingsViewContent(
                     icon = Icons.Rounded.Star,
                     checked = uiState.hideScores,
                     onCheckedChange = { event?.setHideScores(it) },
+                )
+            }
+        }
+
+        // ── Home ─────────────────────────────────────────────────────────────
+        SettingsSection(title = stringResource(R.string.title_home)) {
+            item {
+                SettingsSwitchItem(
+                    title = stringResource(R.string.show_for_you),
+                    subtitle = stringResource(R.string.show_for_you_summary),
+                    icon = Icons.Rounded.AutoAwesome,
+                    checked = uiState.showForYou,
+                    onCheckedChange = { event?.setShowForYou(it) },
                 )
             }
         }

@@ -109,9 +109,19 @@ object PosterSection {
     const val RANKING = "ranking"
     const val SEASON_CHART = "season_chart"
     const val CALENDAR = "calendar"
+    const val HOME_FOR_YOU = "home_for_you"
 
     /** Related / franchise rows on the details screen of [mediaId]. */
     fun details(mediaId: Int?) = "details_$mediaId"
+
+    /** Recommendations row on the details screen of [mediaId]. */
+    fun detailsRecommendations(mediaId: Int?) = "details_recs_$mediaId"
+
+    /**
+     * A part of the Recommendations screen ([part]: "top", "more", a group's seed id...). The
+     * same title can be in several parts at once, so each part gets its own section.
+     */
+    fun recommendations(part: String) = "recommendations_$part"
 }
 
 /**

@@ -109,6 +109,15 @@ interface MalService {
     @DELETE("anime/{id}/my_list_status")
     suspend fun deleteAnimeEntry(@Path("id") animeId: Int): HttpResponse<Unit>
 
+    /** Personal suggestions for the logged-in user (anime only, MAL has none for manga). */
+    @GET("anime/suggestions")
+    suspend fun getAnimeSuggestions(
+        @Query("limit") limit: Int,
+        @Query("offset") offset: Int?,
+        @Query("nsfw") nsfw: Int,
+        @Query("fields") fields: String?,
+    ): HttpResponse<Response<List<AnimeList>>>
+
     @GET("anime/{id}")
     suspend fun getAnimeDetails(
         @Path("id") animeId: Int,

@@ -574,4 +574,30 @@
     <string name="list_style_tabs">Tabs</string>
     <string name="list_style_fab_desc">A button at the bottom opens the status menu.</string>
     <string name="list_style_tabs_desc">Tabs along the top switch between statuses.</string>
+
+    <!-- Recommendations -->
+    <string name="recommendations">Recommendations</string>
+    <string name="for_you">For You</string>
+    <string name="suggested_for_you">Suggested for you</string>
+    <string name="popular_right_now">Popular right now</string>
+    <string name="because_you_liked">Because you liked %1$s</string>
+    <string name="because_you_liked_header">Because you liked</string>
+    <string name="top_picks_for_you">Top picks for you</string>
+    <string name="more_picks">More picks</string>
+    <string name="not_interested">Not interested</string>
+    <string name="recommendation_hidden">We won\'t recommend this again</string>
+    <string name="add_to_plan_to_watch">Add to Plan to Watch</string>
+    <string name="add_to_plan_to_read">Add to Plan to Read</string>
+    <string name="added_to_plan_to_read">Added to Plan to Read</string>
+    <string name="recommendations_error">Couldn\'t load recommendations</string>
+    <string name="no_recommendations">No recommendations yet</string>
+    <string name="no_recommendations_desc">Rate a few titles you\'ve finished to get picks made for you.</string>
+    <string name="for_you_starter_hint">Rate a few titles you\'ve finished and these picks will be based on your taste.</string>
+    <string name="for_you_login_hint">Log in to get picks based on your list.</string>
+    <string name="show_for_you">For You on Home</string>
+    <string name="show_for_you_summary">Show recommendations based on your list on the Home screen</string>
+    <plurals name="num_recommended_by">
+        <item quantity="one">%d user</item>
+        <item quantity="other">%d users</item>
+    </plurals>
 </resources>

@@ -3,7 +3,10 @@ package com.axiel7.moelist.ui.home
 import androidx.compose.runtime.Immutable
 import com.axiel7.moelist.data.model.anime.AnimeRanking
 import com.axiel7.moelist.data.model.anime.AnimeSeasonal
+import com.axiel7.moelist.data.model.media.ListStatus
+import com.axiel7.moelist.data.model.recommendation.ForYouResult
 import com.axiel7.moelist.ui.base.state.UiState
+import com.axiel7.moelist.ui.recommendations.composables.RecommendationActionResult
 
 /**
  * Home state. Today and This Season load independently, each with its own flags:
@@ -20,6 +23,14 @@ data class HomeUiState(
     val isLoadingSeason: Boolean = true,
     val todayLoaded: Boolean = false,
     val seasonLoaded: Boolean = false,
+    // For You: its own flags and error, so a failure here never turns Today / Season into an error
+    val showForYou: Boolean = true,
+    val forYou: ForYouResult? = null,
+    val isLoadingForYou: Boolean = false,
+    val forYouLoaded: Boolean = false,
+    val forYouError: String? = null,
+    val forYouStatuses: Map<Int, ListStatus> = emptyMap(),
+    val recommendationAction: RecommendationActionResult? = null,
     override val message: String? = null
 ) : UiState() {
     /** True while either section is loading. */

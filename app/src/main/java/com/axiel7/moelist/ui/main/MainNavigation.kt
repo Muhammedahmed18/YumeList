@@ -66,6 +66,7 @@ import com.axiel7.moelist.ui.more.settings.content.ContentSettingsView
 import com.axiel7.moelist.ui.more.settings.navigation.NavigationSettingsView
 import com.axiel7.moelist.ui.profile.ProfileView
 import com.axiel7.moelist.ui.ranking.MediaRankingView
+import com.axiel7.moelist.ui.recommendations.RecommendationsView
 import com.axiel7.moelist.ui.season.SeasonChartView
 import com.axiel7.moelist.ui.theme.Motion
 import com.axiel7.moelist.ui.userlist.UserMediaListWithTabsView
@@ -254,6 +255,19 @@ fun MainNavigation(
                         MediaRankingView(
                             mediaType = args.mediaType,
                             isCompactScreen = isCompactScreen,
+                            navActionManager = navActionManager,
+                        )
+                    }
+                }
+
+                composable<Route.Recommendations>(
+                    typeMap = mapOf(typeOf<MediaType>() to MediaType.navType)
+                ) {
+                    ProvideNavAnimatedScope {
+                        val args = it.toRoute<Route.Recommendations>()
+                        RecommendationsView(
+                            mediaType = args.mediaType,
+                            isLoggedIn = isLoggedIn,
                             navActionManager = navActionManager,
                         )
                     }

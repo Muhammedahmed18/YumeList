@@ -40,6 +40,12 @@ class ContentSettingsViewModel(
         }
     }
 
+    override fun setShowForYou(value: Boolean) {
+        viewModelScope.launch {
+            defaultPreferencesRepository.setShowForYou(value)
+        }
+    }
+
     init {
         defaultPreferencesRepository.titleLang
             .onEach { value -> mutableUiState.update { it.copy(titleLanguage = value) } }
@@ -55,6 +61,10 @@ class ContentSettingsViewModel(
 
         defaultPreferencesRepository.loadCharacters
             .onEach { value -> mutableUiState.update { it.copy(loadCharacters = value) } }
+            .launchIn(viewModelScope)
+
+        defaultPreferencesRepository.showForYou
+            .onEach { value -> mutableUiState.update { it.copy(showForYou = value) } }
             .launchIn(viewModelScope)
     }
 }

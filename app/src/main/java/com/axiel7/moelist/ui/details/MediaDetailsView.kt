@@ -50,6 +50,7 @@ import com.axiel7.moelist.ui.details.sections.DetailsGenres
 import com.axiel7.moelist.ui.details.sections.DetailsHero
 import com.axiel7.moelist.ui.details.sections.DetailsInfo
 import com.axiel7.moelist.ui.details.sections.DetailsRelated
+import com.axiel7.moelist.ui.details.sections.DetailsRecommendations
 import com.axiel7.moelist.ui.details.sections.DetailsStatTiles
 import com.axiel7.moelist.ui.details.sections.DetailsStatusDistribution
 import com.axiel7.moelist.ui.details.sections.DetailsSynopsis
@@ -335,6 +336,12 @@ private fun MediaDetailsContent(
                 if (uiState.relatedAnime.isNotEmpty() || uiState.relatedManga.isNotEmpty()) {
                     item(key = "related", contentType = "related") {
                         DetailsRelated(uiState = uiState, navActionManager = navActionManager)
+                    }
+                }
+
+                if (uiState.visibleRecommendations.isNotEmpty()) {
+                    item(key = "recommendations", contentType = "recommendations") {
+                        DetailsRecommendations(uiState = uiState, navActionManager = navActionManager)
                     }
                 }
 

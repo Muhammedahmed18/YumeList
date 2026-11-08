@@ -77,6 +77,7 @@ import androidx.lifecycle.compose.dropUnlessResumed
 import coil3.compose.AsyncImage
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.media.MediaType
+import com.axiel7.moelist.data.model.recommendation.ForYouResult
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.EmptyState
 import com.axiel7.moelist.ui.composables.ErrorState
@@ -88,6 +89,10 @@ import com.axiel7.moelist.ui.composables.media.MediaItemVerticalPlaceholder
 import com.axiel7.moelist.ui.composables.posterSharedKey
 import com.axiel7.moelist.ui.composables.rememberLoadErrorState
 import com.axiel7.moelist.ui.home.composables.TodayCarousel
+import com.axiel7.moelist.ui.icons.rounded.AutoAwesome
+import com.axiel7.moelist.ui.recommendations.composables.RECOMMENDATION_ROW_HEIGHT
+import com.axiel7.moelist.ui.recommendations.composables.RecommendationActionSnackbar
+import com.axiel7.moelist.ui.recommendations.composables.RecommendationPosterCard
 import com.axiel7.moelist.ui.icons.Icons
 import com.axiel7.moelist.ui.icons.automirrored.rounded.MenuBook
 import com.axiel7.moelist.ui.icons.automirrored.rounded.TrendingUp
@@ -601,6 +606,148 @@ private fun HomeViewContent(
                             MediaItemVerticalPlaceholder()
                         }
                     }
+                }
+            }
+        }
+
+        if (uiState.showForYou) {
+            item(key = "forYouHeader", contentType = "header") {
+                val kind = uiState.forYou?.kind
+                    ?: if (isLoggedIn) ForYouResult.Kind.PERSONAL else ForYouResult.Kind.POPULAR
+                SectionHeader(
+                    title = stringResource(
+                        when (kind) {
+                            ForYouResult.Kind.PERSONAL -> R.string.for_you
+                            ForYouResult.Kind.STARTER -> R.string.suggested_for_you
+                            ForYouResult.Kind.POPULAR -> R.string.popular_right_now
+                        }
+                    ),
+                    onSeeAll = dropUnlessResumed { navActionManager.toRecommendations(MediaType.ANIME) },
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+
+            item(key = "forYou", contentType = "forYou") {
+                ForYouSection(
+                    uiState = uiState,
+                    event = event,
+                    isLoggedIn = isLoggedIn,
+                    navActionManager = navActionManager,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Home's For You row: picks from the user's list, each with its "Because you liked …" reason.
+ * Logged out (or nothing to build from yet) it shows popular titles, with a line saying why.
+ * Long press a poster for Add to Plan to Watch / Not interested.
+ */
+@Composable
+private fun ForYouSection(
+    uiState: HomeUiState,
+    event: HomeEvent?,
+    isLoggedIn: Boolean,
+    navActionManager: NavActionManager,
+) {
+    val forYouListState = rememberLazyListState()
+    val result = uiState.forYou
+    val picks = result?.items.orEmpty()
+
+    RecommendationActionSnackbar(
+        result = uiState.recommendationAction,
+        onShown = { event?.onRecommendationActionShown() },
+        onUndoHide = { event?.undoHideRecommendation(it) },
+    )
+
+    Column {
+        if (result != null && !result.isPersonal && picks.isNotEmpty()) {
+            Text(
+                text = stringResource(
+                    if (result.kind == ForYouResult.Kind.POPULAR) R.string.for_you_login_hint
+                    else R.string.for_you_starter_hint
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .padding(start = 20.dp, end = 20.dp, bottom = 8.dp)
+                    .then(
+                        if (result.kind == ForYouResult.Kind.POPULAR) {
+                            Modifier.clickable { navActionManager.toLogin() }
+                        } else Modifier
+                    )
+            )
+        }
+
+        when {
+            picks.isNotEmpty() -> LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(RECOMMENDATION_ROW_HEIGHT.dp),
+                state = forYouListState,
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                flingBehavior = rememberSnapFlingBehavior(lazyListState = forYouListState),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(
+                    items = picks,
+                    key = { it.id },
+                    contentType = { "media" }
+                ) { item ->
+                    val posterKey = posterSharedKey(PosterSection.HOME_FOR_YOU, item.mediaType, item.id)
+                    RecommendationPosterCard(
+                        item = item,
+                        posterKey = posterKey,
+                        status = uiState.forYouStatuses[item.id],
+                        hideScore = uiState.hideScore,
+                        showReason = true,
+                        onClick = dropUnlessResumed {
+                            navActionManager.toMediaDetails(
+                                item.mediaType,
+                                item.id,
+                                posterUrl = item.picture,
+                                posterKey = posterKey,
+                            )
+                        },
+                        onAddToPlan = { event?.addRecommendationToPlan(item) },
+                        onNotInterested = { event?.hideRecommendation(item) },
+                    )
+                }
+            }
+
+            uiState.forYouError != null && !uiState.isLoadingForYou -> ErrorState(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(MEDIA_ITEM_VERTICAL_HEIGHT.dp),
+                icon = Icons.Outlined.CloudOff,
+                title = stringResource(R.string.recommendations_error),
+                message = uiState.forYouError,
+                onAction = { event?.retryForYou(isLoggedIn) },
+                compact = true,
+            )
+
+            uiState.forYouLoaded && !uiState.isLoadingForYou -> EmptyState(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(MEDIA_ITEM_VERTICAL_HEIGHT.dp),
+                icon = Icons.Rounded.AutoAwesome,
+                title = stringResource(R.string.no_recommendations),
+                description = stringResource(R.string.no_recommendations_desc),
+                compact = true,
+            )
+
+            // Loading (first time): poster placeholders
+            else -> LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(MEDIA_ITEM_VERTICAL_HEIGHT.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                userScrollEnabled = false,
+            ) {
+                items(5, contentType = { "placeholder" }) {
+                    MediaItemVerticalPlaceholder()
                 }
             }
         }

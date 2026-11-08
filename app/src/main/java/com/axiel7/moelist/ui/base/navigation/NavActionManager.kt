@@ -42,6 +42,10 @@ class NavActionManager(
         )
     }
 
+    fun toRecommendations(mediaType: MediaType = MediaType.ANIME) {
+        navController.navigate(Route.Recommendations(mediaType))
+    }
+
     fun toCalendar() {
         navController.navigate(Route.Calendar)
     }

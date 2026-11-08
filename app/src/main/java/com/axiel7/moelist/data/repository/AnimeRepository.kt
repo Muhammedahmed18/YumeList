@@ -44,6 +44,8 @@ class AnimeRepository(
                     ",my_list_status{status}"
         private const val LIST_STATUS_FIELDS =
             "start_date,finish_date,num_times_rewatched,is_rewatching,rewatch_value,priority,tags,comments"
+        /** Fields of each title inside a details response's `recommendations`. */
+        const val RECOMMENDATION_NODE_FIELDS = "alternative_titles{en,ja},media_type,mean,nsfw"
         private const val ANIME_DETAILS_FIELDS =
             "id,title,main_picture,pictures,alternative_titles,start_date,end_date," +
                     "synopsis,mean,rank,popularity,num_list_users,num_scoring_users,media_type,status,genres," +
@@ -51,6 +53,7 @@ class AnimeRepository(
                     "average_episode_duration,studios,opening_themes,ending_themes," +
                     "related_anime{media_type,alternative_titles{en,ja}}," +
                     "related_manga{media_type,alternative_titles{en,ja}}," +
+                    "recommendations{$RECOMMENDATION_NODE_FIELDS}," +
                     "background,statistics"
         private const val USER_ANIME_LIST_FIELDS =
             "alternative_titles{en,ja},list_status{$LIST_STATUS_FIELDS},num_episodes,media_type,status,broadcast,mean"

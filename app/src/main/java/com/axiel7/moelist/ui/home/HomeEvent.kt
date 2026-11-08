@@ -1,5 +1,6 @@
 package com.axiel7.moelist.ui.home
 
+import com.axiel7.moelist.data.model.recommendation.RecommendedMedia
 import com.axiel7.moelist.ui.base.event.UiEvent
 
 interface HomeEvent : UiEvent {
@@ -11,4 +12,12 @@ interface HomeEvent : UiEvent {
      * reload when both sections already loaded for the same login state.
      */
     fun loadIfNeeded(isLoggedIn: Boolean) = initRequestChain(isLoggedIn)
+
+    /** Retry of the For You section only. */
+    fun retryForYou(isLoggedIn: Boolean) {}
+
+    fun addRecommendationToPlan(item: RecommendedMedia) {}
+    fun hideRecommendation(item: RecommendedMedia) {}
+    fun undoHideRecommendation(item: RecommendedMedia) {}
+    fun onRecommendationActionShown() {}
 }

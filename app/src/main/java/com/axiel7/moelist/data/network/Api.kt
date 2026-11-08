@@ -148,6 +148,14 @@ class Api(
     suspend fun deleteAnimeEntry(animeId: Int): Boolean =
         service.deleteAnimeEntry(animeId).isSuccessful
 
+    suspend fun getAnimeSuggestions(
+        limit: Int,
+        offset: Int?,
+        nsfw: Int,
+        fields: String?,
+    ): Response<List<AnimeList>> =
+        service.getAnimeSuggestions(limit, offset, nsfw, fields).bodyOrError()
+
     suspend fun getAnimeDetails(
         animeId: Int,
         fields: String?,

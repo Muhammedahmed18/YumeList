@@ -35,6 +35,9 @@ sealed interface Route {
     ) : Route
 
     @Serializable
+    data class Recommendations(val mediaType: MediaType) : Route
+
+    @Serializable
     data object Calendar : Route
 
     @Serializable

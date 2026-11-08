@@ -40,6 +40,7 @@ abstract class BaseMediaDetails : BaseResponse {
     abstract val background: String?
     abstract val relatedAnime: List<RelatedAnime>?
     abstract val relatedManga: List<RelatedManga>?
+    abstract val recommendations: List<BaseRecommendation>?
 
     abstract val myListStatus: BaseMyListStatus?
     abstract val statistics: Statistics?

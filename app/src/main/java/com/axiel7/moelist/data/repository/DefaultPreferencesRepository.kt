@@ -11,6 +11,7 @@ import com.axiel7.moelist.App
 import com.axiel7.moelist.data.model.AccessToken
 import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.MediaSort
+import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.data.model.media.TitleLanguage
 import com.axiel7.moelist.di.getValue
 import com.axiel7.moelist.di.setValue
@@ -49,6 +50,11 @@ class DefaultPreferencesRepository(
             it.remove(REFRESH_TOKEN_KEY)
             it.remove(PROFILE_PICTURE_KEY)
             it.remove(USERNAME_KEY)
+            // Recommendations belong to the account that was logged in
+            it.remove(FOR_YOU_ANIME_CACHE_KEY)
+            it.remove(FOR_YOU_MANGA_CACHE_KEY)
+            it.remove(HIDDEN_ANIME_RECOMMENDATIONS_KEY)
+            it.remove(HIDDEN_MANGA_RECOMMENDATIONS_KEY)
         }
     }
 
@@ -301,7 +307,58 @@ class DefaultPreferencesRepository(
         dataStore.setValue(RANDOM_LIST_ENTRY_KEY, value)
     }
 
+    /** Show the "For You" section on Home. */
+    val showForYou = dataStore.getValue(SHOW_FOR_YOU_KEY, true)
+    suspend fun setShowForYou(value: Boolean) {
+        dataStore.setValue(SHOW_FOR_YOU_KEY, value)
+    }
+
+    /** Last "For You" result as JSON (see RecommendationRepository), null if none yet. */
+    suspend fun getForYouCache(mediaType: MediaType): String? =
+        dataStore.getValue(forYouCacheKey(mediaType)).first()
+
+    suspend fun setForYouCache(mediaType: MediaType, json: String?) {
+        dataStore.edit {
+            if (json == null) it.remove(forYouCacheKey(mediaType))
+            else it[forYouCacheKey(mediaType)] = json
+        }
+    }
+
+    /** Titles the user marked "Not interested": never recommended again. */
+    fun hiddenRecommendationIds(mediaType: MediaType) =
+        dataStore.getValue(hiddenRecommendationsKey(mediaType), emptySet())
+            .map { ids -> ids.mapNotNull { it.toIntOrNull() }.toSet() }
+
+    suspend fun addHiddenRecommendation(mediaType: MediaType, id: Int) {
+        dataStore.edit { prefs ->
+            val key = hiddenRecommendationsKey(mediaType)
+            prefs[key] = (prefs[key] ?: emptySet()) + id.toString()
+        }
+    }
+
+    suspend fun removeHiddenRecommendation(mediaType: MediaType, id: Int) {
+        dataStore.edit { prefs ->
+            val key = hiddenRecommendationsKey(mediaType)
+            prefs[key] = (prefs[key] ?: emptySet()) - id.toString()
+        }
+    }
+
     companion object {
+
+        private val SHOW_FOR_YOU_KEY = booleanPreferencesKey("show_for_you")
+        private val FOR_YOU_ANIME_CACHE_KEY = stringPreferencesKey("for_you_cache_anime")
+        private val FOR_YOU_MANGA_CACHE_KEY = stringPreferencesKey("for_you_cache_manga")
+        private val HIDDEN_ANIME_RECOMMENDATIONS_KEY =
+            stringSetPreferencesKey("hidden_recommendations_anime")
+        private val HIDDEN_MANGA_RECOMMENDATIONS_KEY =
+            stringSetPreferencesKey("hidden_recommendations_manga")
+
+        private fun forYouCacheKey(mediaType: MediaType) =
+            if (mediaType == MediaType.ANIME) FOR_YOU_ANIME_CACHE_KEY else FOR_YOU_MANGA_CACHE_KEY
+
+        private fun hiddenRecommendationsKey(mediaType: MediaType) =
+            if (mediaType == MediaType.ANIME) HIDDEN_ANIME_RECOMMENDATIONS_KEY
+            else HIDDEN_MANGA_RECOMMENDATIONS_KEY
 
         private val ACCESS_TOKEN_KEY = stringPreferencesKey("access_token")
         private val REFRESH_TOKEN_KEY = stringPreferencesKey("refresh_token")

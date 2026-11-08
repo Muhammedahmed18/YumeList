@@ -294,6 +294,7 @@ class MediaDetailsViewModel(
                         isLoadingStatusDistribution = mediaType == MediaType.MANGA,
                         relatedAnime = mediaDetails.relatedAnime.orEmpty(),
                         relatedManga = mediaDetails.relatedManga.orEmpty(),
+                        recommendations = mediaDetails.recommendations.orEmpty(),
                         picturesUrls = picturesUrls,
                         isLoading = false
                     )

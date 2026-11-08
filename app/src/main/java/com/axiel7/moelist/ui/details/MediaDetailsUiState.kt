@@ -8,6 +8,7 @@ import com.axiel7.moelist.data.model.manga.RelatedManga
 import com.axiel7.moelist.data.model.media.BaseMediaDetails
 import com.axiel7.moelist.data.model.media.BaseMediaNode
 import com.axiel7.moelist.data.model.media.BaseMyListStatus
+import com.axiel7.moelist.data.model.media.BaseRecommendation
 import com.axiel7.moelist.data.model.media.BaseRelated
 import com.axiel7.moelist.data.model.media.Character
 import com.axiel7.moelist.data.model.media.ListStatus
@@ -24,6 +25,7 @@ data class MediaDetailsUiState(
     val hideScore: Boolean = false,
     val relatedAnime: List<RelatedAnime> = emptyList(),
     val relatedManga: List<RelatedManga> = emptyList(),
+    val recommendations: List<BaseRecommendation> = emptyList(),
     val picturesUrls: List<String> = emptyList(),
     val characters: List<Character> = emptyList(),
     val isLoadingCharacters: Boolean = false,
@@ -59,6 +61,20 @@ data class MediaDetailsUiState(
 
     val allRelatedMedia: List<BaseRelated>
         get() = relatedAnime + relatedManga
+
+    /**
+     * "If you liked this" picks, most recommended first, without this title and without what
+     * the Related section already shows.
+     */
+    val visibleRecommendations: List<BaseRecommendation>
+        get() {
+            val shown = allRelatedMedia.map { it.node.mediaType to it.node.id }.toSet() +
+                (mediaDetails?.let { it.mediaType to it.id }?.let { setOf(it) } ?: emptySet())
+            return recommendations
+                .filterNot { (it.node.mediaType to it.node.id) in shown }
+                .distinctBy { it.node.id }
+                .sortedByDescending { it.numRecommendations }
+        }
 
     val coreRelatedMedia: List<BaseRelated>
         get() = allRelatedMedia.filter {
