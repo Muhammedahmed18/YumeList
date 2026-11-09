@@ -48,12 +48,17 @@ private data class RelatedRow(
  * Franchise timeline (sequels / prequels) and the other related entries, filterable by relation
  * with rounded filter pills. Each group sits in a rounded section card. Each poster is a shared
  * element scoped to this details screen (see [PosterSection.details]).
+ *
+ * @param showTimeline / showOthers which of the two parts to show, so the details screen can
+ * put other sections (Characters) between them
  */
 @Composable
 fun DetailsRelated(
     uiState: MediaDetailsUiState,
     navActionManager: NavActionManager,
     modifier: Modifier = Modifier,
+    showTimeline: Boolean = true,
+    showOthers: Boolean = true,
 ) {
     // Keys are scoped to this details screen, so a related poster never shares a key with the
     // hero of the details screen it came from (related lists are often two-way)
@@ -85,7 +90,7 @@ fun DetailsRelated(
         val timeline = all.filter { it.relationType == RelationType.SEQUEL || it.relationType == RelationType.PREQUEL }
         val others = all.filter { it.relationType != RelationType.SEQUEL && it.relationType != RelationType.PREQUEL }
 
-        if (timeline.isNotEmpty()) {
+        if (showTimeline && timeline.isNotEmpty()) {
             DetailsSectionTitle(text = stringResource(R.string.franchise_timeline))
             DetailsSectionCard(contentPadding = PaddingValues(vertical = 12.dp)) {
                 LazyRow(
@@ -116,7 +121,7 @@ fun DetailsRelated(
             }
         }
 
-        if (others.isNotEmpty()) {
+        if (showOthers && others.isNotEmpty()) {
             DetailsSectionTitle(
                 text = if (uiState.isAnime) stringResource(R.string.related_anime)
                 else stringResource(R.string.related_manga)

@@ -333,15 +333,14 @@ private fun MediaDetailsContent(
                     DetailsInfo(uiState = uiState)
                 }
 
-                if (uiState.relatedAnime.isNotEmpty() || uiState.relatedManga.isNotEmpty()) {
+                // Franchise timeline (sequels / prequels)
+                if (uiState.coreRelatedMedia.isNotEmpty()) {
                     item(key = "related", contentType = "related") {
-                        DetailsRelated(uiState = uiState, navActionManager = navActionManager)
-                    }
-                }
-
-                if (uiState.visibleRecommendations.isNotEmpty()) {
-                    item(key = "recommendations", contentType = "recommendations") {
-                        DetailsRecommendations(uiState = uiState, navActionManager = navActionManager)
+                        DetailsRelated(
+                            uiState = uiState,
+                            navActionManager = navActionManager,
+                            showOthers = false,
+                        )
                     }
                 }
 
@@ -351,6 +350,23 @@ private fun MediaDetailsContent(
                             uiState = uiState,
                             onLoadCharacters = { event?.getCharacters() }
                         )
+                    }
+                }
+
+                // Related anime / manga (side stories, spin-offs, adaptations...)
+                if (uiState.categorizedRelatedMedia.isNotEmpty()) {
+                    item(key = "relatedOthers", contentType = "relatedOthers") {
+                        DetailsRelated(
+                            uiState = uiState,
+                            navActionManager = navActionManager,
+                            showTimeline = false,
+                        )
+                    }
+                }
+
+                if (uiState.visibleRecommendations.isNotEmpty()) {
+                    item(key = "recommendations", contentType = "recommendations") {
+                        DetailsRecommendations(uiState = uiState, navActionManager = navActionManager)
                     }
                 }
 
