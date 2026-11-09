@@ -2,6 +2,8 @@ package com.axiel7.moelist.ui.profile.composables
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -25,6 +27,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.axiel7.moelist.R
@@ -121,11 +124,13 @@ fun UserStatsView(
         // Two compact rows so the whole Profile fits on one screen. Watching, Completed and
         // Plan to Watch/Read are in the ring's legend above, so they aren't repeated here.
 
-        // Row 1: totals
+        // Row 1: totals. Minimum height, not a fixed one: larger fonts make the row taller
+        // instead of cutting the labels off. IntrinsicSize keeps all tiles the same height.
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(76.dp),
+                .height(IntrinsicSize.Min)
+                .heightIn(min = 72.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             BentoStatCard(
@@ -164,7 +169,8 @@ fun UserStatsView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(64.dp),
+                .height(IntrinsicSize.Min)
+                .heightIn(min = 60.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             BentoStatCard(
@@ -233,7 +239,7 @@ fun BentoStatCard(
     isHero: Boolean = false
 ) {
     Card(
-        modifier = modifier,
+        modifier = modifier.fillMaxHeight(),
         colors = CardDefaults.cardColors(
             containerColor = containerColor,
             contentColor = contentColor
@@ -247,48 +253,53 @@ fun BentoStatCard(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = if (isHero) Alignment.Start else Alignment.CenterHorizontally
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = if (isHero) Arrangement.Start else Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                when (icon) {
-                    is ImageVector -> Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(if (isHero) 20.dp else 16.dp),
-                        tint = contentColor.copy(alpha = 0.8f)
-                    )
-                    is Int -> Icon(
-                        painter = painterResource(id = icon),
-                        contentDescription = null,
-                        modifier = Modifier.size(if (isHero) 20.dp else 16.dp),
-                        tint = contentColor.copy(alpha = 0.8f)
-                    )
-                }
-                if (isHero) {
+            if (isHero) {
+                // Hero: icon + title on top, big number below
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    StatIcon(icon = icon, size = 20.dp, tint = contentColor.copy(alpha = 0.8f))
                     Spacer(modifier = Modifier.size(6.dp))
                     Text(
                         text = title,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = contentColor.copy(alpha = 0.7f)
+                        color = contentColor.copy(alpha = 0.7f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
-            }
-            
-            Spacer(modifier = Modifier.height(if (isHero) 4.dp else 2.dp))
-            
-            Text(
-                text = value,
-                style = if (isHero) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleMedium,
-                fontSize = if (isHero) 24.sp else 16.sp,
-                fontWeight = FontWeight.Black,
-                modifier = Modifier.defaultPlaceholder(visible = isLoading),
-                color = contentColor
-            )
-            
-            if (!isHero) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Black,
+                    maxLines = 1,
+                    modifier = Modifier.defaultPlaceholder(visible = isLoading),
+                    color = contentColor
+                )
+            } else {
+                // Small tile: icon next to the number (saves a line), label below
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    StatIcon(icon = icon, size = 16.dp, tint = contentColor.copy(alpha = 0.8f))
+                    Spacer(modifier = Modifier.size(4.dp))
+                    Text(
+                        text = value,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Black,
+                        maxLines = 1,
+                        modifier = Modifier.defaultPlaceholder(visible = isLoading),
+                        color = contentColor
+                    )
+                }
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = title,
                     style = MaterialTheme.typography.labelSmall,
@@ -300,5 +311,23 @@ fun BentoStatCard(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun StatIcon(icon: Any, size: Dp, tint: Color) {
+    when (icon) {
+        is ImageVector -> Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(size),
+            tint = tint
+        )
+        is Int -> Icon(
+            painter = painterResource(id = icon),
+            contentDescription = null,
+            modifier = Modifier.size(size),
+            tint = tint
+        )
     }
 }

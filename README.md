@@ -30,7 +30,7 @@ YumeList is an unofficial Android client for [MyAnimeList](https://myanimelist.n
     <th colspan="4">Onboarding</th>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/01-welcome.jpeg" width="200"/><br/><sub>Sign in or continue as guest</sub></td>
+    <td align="center"><img src="screenshots/01-welcome-new.jpeg" width="200"/><br/><sub>Sign in or continue as guest</sub></td>
     <td align="center"><img src="screenshots/02-your-stats.jpeg" width="200"/><br/><sub>Your stats</sub><br/><sub><i>Shown after signing in with MyAnimeList</i></sub></td>
     <td align="center"><img src="screenshots/03-make-it-yours.jpeg" width="200"/><br/><sub>Make it yours</sub></td>
     <td></td>

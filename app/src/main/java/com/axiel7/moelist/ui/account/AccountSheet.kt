@@ -219,8 +219,8 @@ fun AccountSheet(
                 )
             }
 
-            // App
-            SettingsSectionHeader(text = stringResource(R.string.app_name))
+            // More: the items from the old More tab
+            SettingsSectionHeader(text = stringResource(R.string.more))
             SettingsGroup {
                 SettingsNavItem(
                     title = stringResource(R.string.notifications),
