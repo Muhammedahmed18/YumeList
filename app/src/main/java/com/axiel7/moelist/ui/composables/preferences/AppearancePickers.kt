@@ -78,7 +78,6 @@ import com.axiel7.moelist.ui.icons.rounded.History
 import com.axiel7.moelist.ui.icons.rounded.Home
 import com.axiel7.moelist.ui.icons.rounded.Tab
 import com.axiel7.moelist.ui.icons.rounded.KeyboardArrowDown
-import com.axiel7.moelist.ui.icons.rounded.MoreHoriz
 import com.axiel7.moelist.ui.theme.Motion
 import com.axiel7.moelist.ui.theme.colorSchemeFor
 
@@ -422,7 +421,6 @@ val StartTab.pickerIcon: ImageVector
         StartTab.HOME -> Icons.Rounded.Home
         StartTab.ANIME -> Icons.Filled.Tv
         StartTab.MANGA -> Icons.AutoMirrored.Rounded.MenuBook
-        StartTab.MORE -> Icons.Rounded.MoreHoriz
     }
 
 /** Last used / Home / Anime / Manga: icons above labels, as a connected button group. */

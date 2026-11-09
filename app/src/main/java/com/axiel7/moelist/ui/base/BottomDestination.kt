@@ -18,7 +18,6 @@ import com.axiel7.moelist.ui.icons.outlined.Home
 import com.axiel7.moelist.ui.icons.outlined.Person
 import com.axiel7.moelist.ui.icons.outlined.Tv
 import com.axiel7.moelist.ui.icons.rounded.Home
-import com.axiel7.moelist.ui.icons.rounded.MoreHoriz
 import com.axiel7.moelist.ui.icons.rounded.Person
 
 sealed class BottomDestination(
@@ -61,22 +60,14 @@ sealed class BottomDestination(
         iconSelected = Icons.Rounded.Person
     )
 
-    data object More : BottomDestination(
-        value = "more",
-        route = Route.Tab.More,
-        title = R.string.more,
-        icon = Icons.Rounded.MoreHoriz,
-        iconSelected = Icons.Rounded.MoreHoriz
-    )
-
     companion object {
-        val values = listOf(Home, AnimeList, MangaList, More)
+        // The old "More" tab is now the Account sheet (avatar on Home)
+        val values = listOf(Home, AnimeList, MangaList)
 
         fun String.toBottomDestinationIndex() = when (this) {
             Home.value -> 0
             AnimeList.value -> 1
             MangaList.value -> 2
-            More.value -> 3
             Profile.value -> 4
             else -> null
         }

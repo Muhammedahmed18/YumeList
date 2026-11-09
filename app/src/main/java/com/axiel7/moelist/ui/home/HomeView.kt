@@ -119,6 +119,7 @@ fun HomeView(
     searchActive: Boolean,
     onSearchActiveChange: (Boolean) -> Unit,
     profilePicture: String?,
+    onAccountClick: () -> Unit,
 ) {
     val viewModel: HomeViewModel = koinViewModel()
     // Coming back to the app on a new day (e.g. left open overnight) rebuilds the Today row
@@ -236,23 +237,23 @@ fun HomeView(
                 if (isLoggedIn && profilePicture != null) {
                     AsyncImage(
                         model = profilePicture,
-                        contentDescription = stringResource(R.string.title_profile),
+                        contentDescription = stringResource(R.string.account),
                         placeholder = painterResource(R.drawable.ic_round_account_circle_24),
                         error = painterResource(R.drawable.ic_round_account_circle_24),
                         modifier = Modifier
                             .clip(CircleShape)
                             .size(40.dp)
-                            .clickable { navActionManager.toProfile() }
+                            .clickable(onClick = onAccountClick)
                     )
                 } else {
                     Icon(
                         painter = painterResource(R.drawable.ic_round_account_circle_24),
-                        contentDescription = stringResource(R.string.title_profile),
+                        contentDescription = stringResource(R.string.account),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier
                             .clip(CircleShape)
                             .size(40.dp)
-                            .clickable { navActionManager.toProfile() }
+                            .clickable(onClick = onAccountClick)
                     )
                 }
             }

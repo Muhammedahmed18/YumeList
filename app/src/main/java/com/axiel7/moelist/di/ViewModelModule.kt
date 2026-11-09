@@ -5,7 +5,6 @@ import com.axiel7.moelist.ui.details.MediaDetailsViewModel
 import com.axiel7.moelist.ui.editmedia.EditMediaViewModel
 import com.axiel7.moelist.ui.home.HomeViewModel
 import com.axiel7.moelist.ui.main.MainViewModel
-import com.axiel7.moelist.ui.more.MoreViewModel
 import com.axiel7.moelist.ui.more.notifications.NotificationsViewModel
 import com.axiel7.moelist.ui.more.settings.appearance.AppearanceViewModel
 import com.axiel7.moelist.ui.more.settings.content.ContentSettingsViewModel
@@ -72,5 +71,4 @@ val viewModelModule = module {
             defaultPreferencesRepository = get()
         )
     }
-    viewModelOf(::MoreViewModel)
 }

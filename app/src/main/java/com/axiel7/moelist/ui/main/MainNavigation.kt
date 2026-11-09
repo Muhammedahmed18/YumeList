@@ -56,7 +56,6 @@ import com.axiel7.moelist.ui.icons.Icons
 import com.axiel7.moelist.ui.icons.automirrored.rounded.MenuBook
 import com.axiel7.moelist.ui.icons.filled.Tv
 import com.axiel7.moelist.ui.login.LoginView
-import com.axiel7.moelist.ui.more.MoreView
 import com.axiel7.moelist.ui.more.about.AboutView
 import com.axiel7.moelist.ui.more.credits.CreditsView
 import com.axiel7.moelist.ui.more.notifications.NotificationsView
@@ -89,6 +88,8 @@ fun MainNavigation(
     searchActive: Boolean = false,
     onSearchActiveChange: (Boolean) -> Unit = {},
     profilePicture: String? = null,
+    // Opens the Account sheet (tapping the avatar on Home)
+    onAccountClick: () -> Unit = {},
 ) {
     // NavHost transition lambdas aren't @Composable, so read the theme's motion specs here.
     // Screen slides use the *effects* spring (no overshoot) so full-screen pages never bounce
@@ -185,6 +186,7 @@ fun MainNavigation(
                             searchActive = searchActive,
                             onSearchActiveChange = onSearchActiveChange,
                             profilePicture = profilePicture,
+                            onAccountClick = onAccountClick,
                         )
                     }
                 }
@@ -233,16 +235,6 @@ fun MainNavigation(
                                 onSortClickTrigger = onSortClickTrigger
                             )
                         }
-                    }
-                }
-
-                composable<Route.Tab.More> {
-                    ProvideNavAnimatedScope {
-                        MoreView(
-                            navActionManager = navActionManager,
-                            padding = padding,
-                            isLoggedIn = isLoggedIn
-                        )
                     }
                 }
 
@@ -425,7 +417,7 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.isFadeTransition()
 
 private fun NavDestination.isTab(): Boolean =
     hasRoute<Route.Tab.Home>() || hasRoute<Route.Tab.Anime>() ||
-        hasRoute<Route.Tab.Manga>() || hasRoute<Route.Tab.More>()
+        hasRoute<Route.Tab.Manga>()
 
 @Composable
 private fun PaddingValues.withBottom(bottom: Dp): PaddingValues {

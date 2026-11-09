@@ -18,7 +18,6 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.axiel7.moelist.ui.base.BottomDestination
-import com.axiel7.moelist.ui.base.navigation.Route
 
 /**
  * Tablet / large-screen navigation: the Material 3 Expressive [WideNavigationRail]
@@ -47,12 +46,7 @@ fun MainNavigationRail(
                 selected = isSelected,
                 onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    if (isSelected) {
-                        // Tapping "More" again opens Settings (kept from the old rail)
-                        if (dest == BottomDestination.More) {
-                            navController.navigate(Route.Settings)
-                        }
-                    } else {
+                    if (!isSelected) {
                         onItemSelected(index)
                         navController.navigate(dest.route) {
                             popUpTo(navController.graph.findStartDestination().id) {

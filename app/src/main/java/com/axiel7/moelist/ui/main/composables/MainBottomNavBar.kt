@@ -24,7 +24,6 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.axiel7.moelist.ui.base.BottomDestination
-import com.axiel7.moelist.ui.base.navigation.Route
 import com.axiel7.moelist.ui.theme.Motion
 
 /** Top corners of the navigation bar. The bottom stays square: it runs under the gesture area. */
@@ -69,12 +68,7 @@ fun MainBottomNavBar(
                 selected = isSelected,
                 onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    if (isSelected) {
-                        // Tapping "More" again opens Settings (kept from the old bar)
-                        if (dest == BottomDestination.More) {
-                            navController.navigate(Route.Settings)
-                        }
-                    } else {
+                    if (!isSelected) {
                         onItemSelected(index)
                         navController.navigate(dest.route) {
                             popUpTo(navController.graph.findStartDestination().id) {

@@ -51,6 +51,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.axiel7.moelist.App
 import com.axiel7.moelist.data.model.media.MediaType
+import com.axiel7.moelist.ui.account.AccountSheet
 import com.axiel7.moelist.ui.base.BottomDestination.Companion.isBottomDestination
 import com.axiel7.moelist.ui.base.BottomDestination.Companion.toBottomDestinationIndex
 import com.axiel7.moelist.ui.base.TabletMode
@@ -307,6 +308,16 @@ fun MainView(
     // Hide bottom nav while the Home search bar is expanded
     val isBottomBarVisible = (isBottomDestination || pinnedNavBar) && !searchActive
 
+    // Account sheet (opened from the avatar on Home). Replaces the old "More" tab.
+    var showAccountSheet by rememberSaveable { mutableStateOf(false) }
+    if (showAccountSheet) {
+        AccountSheet(
+            isLoggedIn = isLoggedIn,
+            navActionManager = navActionManager,
+            onDismiss = { showAccountSheet = false },
+        )
+    }
+
     CompositionLocalProvider(
         LocalSnackbarHostState provides snackbarHostState,
         LocalSnackbarOffset provides snackbarOffset,
@@ -364,6 +375,7 @@ fun MainView(
                     onSearchActiveChange = { searchActive = it },
                     // Was missing on tablets, so Home showed the default avatar there
                     profilePicture = profilePicture,
+                    onAccountClick = { showAccountSheet = true },
                 )
             }
         } else {
@@ -390,6 +402,7 @@ fun MainView(
                 searchActive = searchActive,
                 onSearchActiveChange = { searchActive = it },
                 profilePicture = profilePicture,
+                onAccountClick = { showAccountSheet = true },
             )
         }
     }

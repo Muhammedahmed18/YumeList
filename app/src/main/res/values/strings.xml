@@ -218,6 +218,8 @@
     <string name="mal_announcements_summary">Updates, changes, and additions to MAL.</string>
     <string name="news_summary">Latest information about the industry.</string>
     <string name="more">More</string>
+    <string name="account">Account</string>
+    <string name="view_profile">View profile</string>
     <string name="upcoming">Upcoming</string>
     <string name="favorite">Favorite</string>
     <string name="use_external_browser">Use external browser</string>

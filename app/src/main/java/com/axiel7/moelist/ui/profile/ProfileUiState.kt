@@ -16,6 +16,10 @@ data class ProfileUiState(
     val userMangaStats: UserStats.MangaStats? = null,
     val isLoadingManga: Boolean = true,
     val isMangaError: Boolean = false,
+    /** The profile request failed and there is nothing to show (the ring turns grey). */
+    val isProfileError: Boolean = false,
+    /** Pull to refresh in progress: the current data stays on screen. */
+    val isRefreshing: Boolean = false,
     override val isLoading: Boolean = true,
     override val message: String? = null
 ) : UiState() {

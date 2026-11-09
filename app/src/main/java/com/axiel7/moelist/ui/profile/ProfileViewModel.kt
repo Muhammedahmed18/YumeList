@@ -4,7 +4,6 @@ import androidx.lifecycle.viewModelScope
 import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.Stat
 import com.axiel7.moelist.data.repository.DefaultPreferencesRepository
-import com.axiel7.moelist.data.repository.LoginRepository
 import com.axiel7.moelist.data.repository.UserRepository
 import com.axiel7.moelist.ui.base.viewmodel.BaseViewModel
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +16,6 @@ import kotlinx.coroutines.withContext
 
 class ProfileViewModel(
     private val userRepository: UserRepository,
-    private val loginRepository: LoginRepository,
     private val defaultPreferencesRepository: DefaultPreferencesRepository
 ) : BaseViewModel<ProfileUiState>(), ProfileEvent {
 
@@ -34,14 +32,31 @@ class ProfileViewModel(
         refreshUserProfile()
     }
 
-    private fun refreshUserProfile() {
+    /**
+     * @param isRefresh pull to refresh: keep the current data on screen and only flag
+     * [ProfileUiState.isRefreshing], instead of the first-load skeletons.
+     */
+    private fun refreshUserProfile(isRefresh: Boolean = false) {
         viewModelScope.launch {
-            setLoading(true)
+            if (isRefresh) {
+                mutableUiState.update { it.copy(isRefreshing = true) }
+            } else {
+                setLoading(true)
+            }
             val user = withContext(Dispatchers.IO) { userRepository.getMyUser() }
 
             if (user == null || user.message != null) {
                 showMessage(user?.message)
-                setLoading(false)
+                mutableUiState.update {
+                    it.copy(
+                        isLoading = false,
+                        isRefreshing = false,
+                        // Manga stats need the username, so they can't load either
+                        isLoadingManga = false,
+                        isMangaError = it.mangaStats.isEmpty(),
+                        isProfileError = it.user == null,
+                    )
+                }
             } else {
                 val tempAnimeStatList = mutableListOf<Stat<ListStatus>>()
                 user.animeStatistics?.let { stats ->
@@ -87,6 +102,8 @@ class ProfileViewModel(
                         user = user,
                         animeStats = tempAnimeStatList,
                         isLoading = false,
+                        isRefreshing = false,
+                        isProfileError = false,
                         isLoadingManga = user.name != null,
                     )
                 }
@@ -148,9 +165,8 @@ class ProfileViewModel(
         uiState.value.user?.name?.let { getMangaStats(it) }
     }
 
-    override fun logOut() {
-        viewModelScope.launch {
-            loginRepository.logOut()
-        }
+    override fun refresh() {
+        if (uiState.value.isRefreshing || uiState.value.isLoading) return
+        refreshUserProfile(isRefresh = true)
     }
 }

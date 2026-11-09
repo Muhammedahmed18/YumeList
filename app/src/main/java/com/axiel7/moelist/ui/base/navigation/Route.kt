@@ -14,9 +14,6 @@ sealed interface Route {
 
         @Serializable
         data class Manga(val mediaType: MediaType) : Tab
-
-        @Serializable
-        data object More : Tab
     }
 
     @Serializable

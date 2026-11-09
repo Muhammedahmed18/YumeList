@@ -11,8 +11,7 @@ enum class StartTab(
     LAST_USED("last_used"),
     HOME("home"),
     ANIME("anime"),
-    MANGA("manga"),
-    MORE("more");
+    MANGA("manga");
 
     val stringRes
         get() = when (this) {
@@ -20,7 +19,6 @@ enum class StartTab(
             HOME -> R.string.title_home
             ANIME -> R.string.title_anime_list
             MANGA -> R.string.title_manga_list
-            MORE -> R.string.more
         }
 
     @Composable
@@ -28,6 +26,8 @@ enum class StartTab(
 
     companion object {
         fun valueOf(tabName: String) = entries.find { it.value == tabName }
+            // "More" was removed (it's the Account sheet now): open Home instead
+            ?: if (tabName == "more") HOME else null
 
         val entriesLocalized = entries.associateWith { it.stringRes }
     }

@@ -137,6 +137,11 @@ class MainViewModel(
         }
     }
 
+    /** Logs out of YumeList only (the MAL session in the browser is untouched). */
+    fun logOut() = viewModelScope.launch {
+        loginRepository.logOut()
+    }
+
     suspend fun generateLoginUrl(): String {
         return loginRepository.generateLoginUrl()
     }
