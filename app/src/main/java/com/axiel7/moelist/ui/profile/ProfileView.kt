@@ -1,13 +1,15 @@
 package com.axiel7.moelist.ui.profile
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,7 +18,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -39,13 +40,10 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.toShape
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,13 +51,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -85,7 +79,6 @@ import com.axiel7.moelist.ui.profile.composables.LibraryRingLegend
 import com.axiel7.moelist.ui.profile.composables.RingSegment
 import com.axiel7.moelist.ui.profile.composables.UserStatsView
 import com.axiel7.moelist.ui.theme.MoeListTheme
-import com.axiel7.moelist.ui.theme.Motion
 import com.axiel7.moelist.utils.ContextExtensions.openLink
 import com.axiel7.moelist.utils.DateUtils.parseDateAndLocalize
 import com.axiel7.moelist.utils.MAL_PROFILE_URL
@@ -106,9 +99,24 @@ fun ProfileView(
     )
 }
 
-/** Height of the gradient header holding the avatar with its library ring, name and location. */
-private val HeaderHeight = 300.dp
+/** Height of the soft gradient behind the top of the screen. */
+private val GradientHeight = 320.dp
 
+/** Landscape / wide and short screens: identity on the left, stats on the right. */
+private val TwoPaneMinWidth = 560.dp
+
+/**
+ * Profile, laid out to fit on one screen (no scrolling on a normal phone):
+ *
+ * - Identity: avatar in the library ring, name, and one row of chips (location, birthday,
+ *   joined date)
+ * - Stats: Anime / Manga toggle, the ring's legend (Watching / Completed / Plan to), and two
+ *   compact rows of the other stats
+ *
+ * Wide and short screens (a phone in landscape) put the two side by side. If the content still
+ * doesn't fit (very small screen, large font or display size), it scrolls rather than being cut
+ * off. Pull to refresh works either way.
+ */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ProfileViewContent(
@@ -119,11 +127,9 @@ private fun ProfileViewContent(
     val context = LocalContext.current
     val snackbarHostState = LocalSnackbarHostState.current
     val scrollState = rememberScrollState()
+    // Only matters in the scroll fallback: the bar gets a background once content is under it
     val topAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     var selectedStatsTab by rememberSaveable { mutableIntStateOf(0) }
-    val density = LocalDensity.current
-    val windowInfo = LocalWindowInfo.current
-    val headerHeightPx = with(density) { HeaderHeight.toPx() }
 
     LaunchedEffect(uiState.message) {
         if (uiState.message != null) {
@@ -139,28 +145,19 @@ private fun ProfileViewContent(
         }
     }
 
-    // The name moves into the top bar once the header has mostly scrolled away
-    val showTitle by remember { derivedStateOf { scrollState.value > headerHeightPx * 0.6f } }
-    val titleAlpha by animateFloatAsState(
-        targetValue = if (showTitle) 1f else 0f,
-        animationSpec = Motion.effects(),
-        label = "titleAlpha"
-    )
+    val mediaType = if (selectedStatsTab == 0) MediaType.ANIME else MediaType.MANGA
+    val ringSegments = ringSegmentsFor(uiState = uiState, mediaType = mediaType)
+    val ringLoading = uiState.isRefreshing ||
+        if (mediaType == MediaType.ANIME) uiState.isLoading else uiState.isLoadingManga
+    val ringError = if (mediaType == MediaType.ANIME) uiState.isProfileError
+    else uiState.isMangaError
 
     Scaffold(
         modifier = Modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = uiState.user?.name ?: stringResource(R.string.title_profile),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.graphicsLayer { alpha = titleAlpha }
-                    )
-                },
+                // The name is always on screen below, so the bar has no title
+                title = {},
                 navigationIcon = {
                     IconButton(
                         onClick = navActionManager::goBack,
@@ -172,7 +169,7 @@ private fun ProfileViewContent(
                         )
                     }
                 },
-                // Settings and Log out moved to the Account sheet (avatar on Home)
+                // Settings and Log out are in the Account sheet (avatar on Home)
                 actions = {
                     IconButton(
                         onClick = openMalProfile,
@@ -193,215 +190,277 @@ private fun ProfileViewContent(
             )
         }
     ) { padding ->
-        val containerWidthDp = remember(windowInfo, density) {
-            with(density) { windowInfo.containerSize.width.toDp() }
-        }
-        val widthClass = when {
-            containerWidthDp < 600.dp -> WindowWidthSizeClass.Compact
-            containerWidthDp < 840.dp -> WindowWidthSizeClass.Medium
-            else -> WindowWidthSizeClass.Expanded
-        }
-        val horizontalPadding = when (widthClass) {
-            WindowWidthSizeClass.Compact -> 24.dp
-            WindowWidthSizeClass.Medium -> 32.dp
-            else -> 48.dp
-        }
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Soft accent wash behind the top bar and the avatar
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(GradientHeight)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                                MaterialTheme.colorScheme.background
+                            )
+                        )
+                    )
+            )
 
-        val mediaType = if (selectedStatsTab == 0) MediaType.ANIME else MediaType.MANGA
-        val ringSegments = ringSegmentsFor(uiState = uiState, mediaType = mediaType)
-        val ringLoading = uiState.isRefreshing ||
-            if (mediaType == MediaType.ANIME) uiState.isLoading else uiState.isLoadingManga
-        val ringError = if (mediaType == MediaType.ANIME) uiState.isProfileError
-        else uiState.isMangaError
-        val avatarSize = if (widthClass == WindowWidthSizeClass.Compact) 104.dp else 128.dp
-        val pullToRefreshState = rememberPullToRefreshState()
+            val pullToRefreshState = rememberPullToRefreshState()
 
-        // Pull down to fetch the profile again; the ring replays its loading wave meanwhile
-        PullToRefreshBox(
-            isRefreshing = uiState.isRefreshing,
-            onRefresh = { event?.refresh() },
-            state = pullToRefreshState,
-            modifier = Modifier.fillMaxSize(),
-            indicator = {
-                PullToRefreshDefaults.LoadingIndicator(
-                    state = pullToRefreshState,
-                    isRefreshing = uiState.isRefreshing,
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = padding.calculateTopPadding())
-                )
-            }
-        ) {
-            Column(
+            // Pull down to fetch the profile again; the ring replays its loading wave meanwhile
+            PullToRefreshBox(
+                isRefreshing = uiState.isRefreshing,
+                onRefresh = { event?.refresh() },
+                state = pullToRefreshState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .statusBarsPadding()
-                    // Was never scrollable before (the scroll state wasn't attached), so long
-                    // stats could be cut off and the title never appeared
-                    .verticalScroll(scrollState)
-                    .padding(bottom = padding.calculateBottomPadding()),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(top = padding.calculateTopPadding()),
+                indicator = {
+                    PullToRefreshDefaults.LoadingIndicator(
+                        state = pullToRefreshState,
+                        isRefreshing = uiState.isRefreshing,
+                        modifier = Modifier.align(Alignment.TopCenter)
+                    )
+                }
             ) {
-                // Header: gradient behind the top bar, shaped avatar, name and location.
-                // It shrinks and fades as it scrolls away (draw phase only, no recomposition).
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(HeaderHeight)
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-                                    MaterialTheme.colorScheme.background
-                                )
-                            )
-                        ),
-                    contentAlignment = Alignment.BottomCenter
-                ) {
+                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    val viewportHeight = maxHeight
+                    val twoPane = maxWidth > maxHeight && maxWidth >= TwoPaneMinWidth
+                    val avatarSize = when {
+                        twoPane -> 88.dp
+                        maxWidth >= 600.dp && maxHeight >= 800.dp -> 120.dp
+                        else -> 92.dp
+                    }
+                    val horizontalPadding = if (maxWidth >= 600.dp) 32.dp else 20.dp
+
+                    // Fills exactly one screen when the content fits (nothing to scroll), and
+                    // scrolls only when it doesn't. The scroll container also lets pull to refresh
+                    // work on a screen that doesn't move.
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .padding(bottom = 16.dp)
-                            .graphicsLayer {
-                                val progress = (scrollState.value / headerHeightPx).coerceIn(0f, 1f)
-                                val scale = 1f - 0.25f * progress
-                                scaleX = scale
-                                scaleY = scale
-                                alpha = 1f - progress
-                                transformOrigin = TransformOrigin(0.5f, 1f)
-                            }
+                            .fillMaxWidth()
+                            .verticalScroll(scrollState)
+                            .heightIn(min = viewportHeight)
+                            .padding(horizontal = horizontalPadding)
+                            .padding(top = 4.dp, bottom = padding.calculateBottomPadding() + 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        LibraryRing(
-                            segments = ringSegments,
-                            isLoading = ringLoading,
-                            isError = ringError,
-                            avatarSize = avatarSize,
-                        ) {
-                            ProfileAvatar(
-                                url = uiState.profilePictureUrl,
-                                size = avatarSize,
+                        val identity: @Composable (Modifier) -> Unit = { modifier ->
+                            ProfileIdentity(
+                                uiState = uiState,
+                                ringSegments = ringSegments,
+                                ringLoading = ringLoading,
+                                ringError = ringError,
+                                avatarSize = avatarSize,
                                 onAvatarClick = {
                                     uiState.profilePictureUrl?.let {
                                         navActionManager.toFullPoster(listOf(it))
                                     }
-                                }
+                                },
+                                modifier = modifier,
+                            )
+                        }
+                        val stats: @Composable (Modifier) -> Unit = { modifier ->
+                            ProfileStats(
+                                uiState = uiState,
+                                mediaType = mediaType,
+                                selectedStatsTab = selectedStatsTab,
+                                onStatsTabSelected = { selectedStatsTab = it },
+                                ringSegments = ringSegments,
+                                ringError = ringError && !ringLoading,
+                                onRefreshManga = { event?.refreshMangaStats() },
+                                modifier = modifier,
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text(
-                            text = uiState.user?.name ?: "Loading...",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Black,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            letterSpacing = (-1).sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(horizontal = 24.dp)
-                        )
-
-                        uiState.user?.location?.let { location ->
-                            if (location.isNotBlank()) {
-                                Surface(
-                                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
-                                    shape = CircleShape,
-                                    modifier = Modifier.padding(top = 4.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.ic_round_location_on_24),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(14.dp),
-                                            tint = MaterialTheme.colorScheme.primary
-                                        )
-                                        Text(
-                                            text = location,
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                                        )
-                                    }
-                                }
+                        if (twoPane) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(24.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                identity(Modifier.weight(0.42f))
+                                stats(Modifier.weight(0.58f))
                             }
+                        } else {
+                            identity(Modifier.fillMaxWidth())
+                            stats(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .widthIn(max = 600.dp)
+                            )
                         }
                     }
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .widthIn(max = 840.dp)
-                        .padding(horizontal = horizontalPadding),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // What the ring's colours mean, with the counts
-                    LibraryRingLegend(
-                        segments = ringSegments,
-                        isError = ringError && !ringLoading,
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Meta info row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        ProfileMetaItem(
-                            text = uiState.user?.birthday?.parseDateAndLocalize().orEmpty(),
-                            icon = R.drawable.ic_round_cake_24,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                        Text(
-                            text = "•",
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        ProfileMetaItem(
-                            text = uiState.user?.joinedAt?.parseDateAndLocalize(
-                                inputFormat = DateTimeFormatter.ISO_DATE_TIME
-                            ).orEmpty(),
-                            icon = R.drawable.ic_round_access_time_24,
-                            color = MaterialTheme.colorScheme.tertiary
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Anime / Manga stats switch: M3 Expressive connected button group
-                    StatsTypeButtonGroup(
-                        selectedIndex = selectedStatsTab,
-                        onSelected = { selectedStatsTab = it }
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    UserStatsView(
-                        uiState = uiState,
-                        mediaType = mediaType,
-                        showSectionTitle = false,
-                        compactStats = true,
-                        onRefreshManga = { event?.refreshMangaStats() }
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }
     }
 }
 
+/** Avatar in the library ring, name, and the chips row. */
+@Composable
+private fun ProfileIdentity(
+    uiState: ProfileUiState,
+    ringSegments: List<RingSegment>,
+    ringLoading: Boolean,
+    ringError: Boolean,
+    avatarSize: Dp,
+    onAvatarClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        LibraryRing(
+            segments = ringSegments,
+            isLoading = ringLoading,
+            isError = ringError,
+            avatarSize = avatarSize,
+        ) {
+            ProfileAvatar(
+                url = uiState.profilePictureUrl,
+                size = avatarSize,
+                onAvatarClick = onAvatarClick,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Text(
+            text = uiState.user?.name ?: stringResource(R.string.loading),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Black,
+            color = MaterialTheme.colorScheme.onSurface,
+            letterSpacing = (-0.5).sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ProfileChips(uiState = uiState)
+    }
+}
+
+/**
+ * Location, birthday and joined date as small chips in one row (they wrap if needed).
+ * Empty ones are skipped.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ProfileChips(uiState: ProfileUiState) {
+    val location = uiState.user?.location?.takeIf { it.isNotBlank() }
+    val birthday = uiState.user?.birthday?.parseDateAndLocalize()?.takeIf { it.isNotBlank() }
+    val joined = uiState.user?.joinedAt?.parseDateAndLocalize(
+        inputFormat = DateTimeFormatter.ISO_DATE_TIME
+    )?.takeIf { it.isNotBlank() }
+
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        location?.let {
+            ProfileChip(
+                text = it,
+                icon = R.drawable.ic_round_location_on_24,
+                iconTint = MaterialTheme.colorScheme.primary,
+            )
+        }
+        birthday?.let {
+            ProfileChip(
+                text = it,
+                icon = R.drawable.ic_round_cake_24,
+                iconTint = MaterialTheme.colorScheme.secondary,
+            )
+        }
+        joined?.let {
+            ProfileChip(
+                text = it,
+                icon = R.drawable.ic_round_access_time_24,
+                iconTint = MaterialTheme.colorScheme.tertiary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProfileChip(
+    text: String,
+    icon: Int,
+    iconTint: Color,
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+        shape = CircleShape,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+                tint = iconTint
+            )
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+/** Anime / Manga toggle, the ring's legend, and the two rows of stats. */
+@Composable
+private fun ProfileStats(
+    uiState: ProfileUiState,
+    mediaType: MediaType,
+    selectedStatsTab: Int,
+    onStatsTabSelected: (Int) -> Unit,
+    ringSegments: List<RingSegment>,
+    ringError: Boolean,
+    onRefreshManga: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        StatsTypeButtonGroup(
+            selectedIndex = selectedStatsTab,
+            onSelected = onStatsTabSelected
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // What the ring's colours mean, with the counts
+        LibraryRingLegend(
+            segments = ringSegments,
+            isError = ringError,
+        )
+
+        UserStatsView(
+            uiState = uiState,
+            mediaType = mediaType,
+            showSectionTitle = false,
+            compactStats = true,
+            onRefreshManga = onRefreshManga
+        )
+    }
+}
+
 /**
  * The ring's three parts for [mediaType]: Watching / Completed / Plan to Watch for anime,
- * Reading / Completed / Plan to Read for manga. On Hold and Dropped stay in the stats below.
+ * Reading / Completed / Plan to Read for manga. On Hold and Dropped are in the stats below.
  */
 @Composable
 private fun ringSegmentsFor(
@@ -490,33 +549,6 @@ private fun StatsTypeButtonGroup(
                 Text(text = label, fontWeight = FontWeight.Bold)
             }
         }
-    }
-}
-
-@Composable
-private fun ProfileMetaItem(
-    text: String,
-    icon: Int,
-    color: Color,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = modifier
-    ) {
-        Icon(
-            painter = painterResource(icon),
-            contentDescription = null,
-            tint = color.copy(alpha = 0.8f),
-            modifier = Modifier.size(18.dp)
-        )
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.Bold
-        )
     }
 }
 

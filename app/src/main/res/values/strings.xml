@@ -220,6 +220,8 @@
     <string name="more">More</string>
     <string name="account">Account</string>
     <string name="view_profile">View profile</string>
+    <string name="total_entries">Total entries</string>
+    <string name="rereads">Rereads</string>
     <string name="upcoming">Upcoming</string>
     <string name="favorite">Favorite</string>
     <string name="use_external_browser">Use external browser</string>
