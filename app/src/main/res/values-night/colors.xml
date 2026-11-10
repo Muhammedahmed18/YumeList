@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="md_theme_primary">#BAC3FF</color>
+    <!-- Splash screen 夢 in dark mode: white on the near-black splash background -->
+    <color name="colorSplashLogo">#FFFFFF</color>
 </resources>
