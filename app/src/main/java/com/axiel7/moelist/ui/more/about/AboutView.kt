@@ -32,8 +32,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -91,19 +93,20 @@ fun AboutView(navActionManager: NavActionManager) {
                 .padding(top = 12.dp, bottom = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // Logo in an M3 Expressive scalloped shape (same family as the profile avatar)
+            // Logo in an M3 Expressive scalloped shape (same family as the profile avatar),
+            // in the app icon's own colours: white 夢 on its indigo
             Box(
                 modifier = Modifier
                     .size(112.dp)
                     .clip(MaterialShapes.Cookie9Sided.toShape())
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                    .background(colorResource(R.color.colorYumeListIcon)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_yumelist_logo),
+                    painter = painterResource(R.drawable.ic_yumelist_mark),
                     contentDescription = null,
-                    modifier = Modifier.size(60.dp),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(48.dp),
+                    tint = Color.White,
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))

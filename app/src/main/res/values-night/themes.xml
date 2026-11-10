@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- White 夢 on an indigo circle, like the app icon -->
-    <style name="Theme.MySplash" parent="Theme.SplashScreen.IconBackground">
+    <!-- The splash icon is the app icon itself as a rounded tile (see ic_launcher_splash), so no
+         separate icon background: some phones draw that background as a hard-cornered square -->
+    <style name="Theme.MySplash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/splash_background_dark</item>
-        <item name="windowSplashScreenIconBackgroundColor">@color/colorYumeListIcon</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_splash</item>
         <item name="postSplashScreenTheme">@style/AppTheme</item>
         <item name="android:windowLightStatusBar">false</item>
