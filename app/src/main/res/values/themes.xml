@@ -7,8 +7,10 @@
 
     <style name="AppTheme" parent="BaseTheme" />
 
-    <style name="Theme.MySplash" parent="Theme.SplashScreen">
+    <!-- White 夢 on an indigo circle, like the app icon -->
+    <style name="Theme.MySplash" parent="Theme.SplashScreen.IconBackground">
         <item name="windowSplashScreenBackground">@color/splash_background_light</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/colorYumeListIcon</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_splash</item>
         <item name="postSplashScreenTheme">@style/AppTheme</item>
         <item name="android:windowLightStatusBar">true</item>

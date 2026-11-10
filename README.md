@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/icon.png" alt="YumeList icon" width="110"/>
+<img src="assets/icon-new.png" alt="YumeList icon" width="110"/>
 
 # YumeList
 

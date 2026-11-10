@@ -2,6 +2,8 @@
 <resources>
     <color name="colorYumeList">#5C6BC0</color>
     <color name="colorYumeListLight">#9EACFF</color>
+    <!-- New app icon (夢): background indigo, also the splash icon circle -->
+    <color name="colorYumeListIcon">#29164F</color>
     <color name="colorPlaceHolder">#DEDEDE</color>
 
     <!-- Splash Screen Colors -->
