@@ -29,7 +29,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -225,8 +224,7 @@ private fun CarouselItemScope.TodayCard(
             }
             Text(
                 text = item.node.userPreferredTitle(),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleSmallEmphasized,
                 color = Color.White,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis

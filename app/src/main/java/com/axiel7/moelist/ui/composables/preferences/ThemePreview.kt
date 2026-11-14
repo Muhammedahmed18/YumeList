@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,6 +27,7 @@ import com.axiel7.moelist.ui.icons.Icons
 import com.axiel7.moelist.ui.icons.rounded.Brightness4
 import com.axiel7.moelist.ui.icons.rounded.DarkMode
 import com.axiel7.moelist.ui.icons.rounded.LightMode
+import com.axiel7.moelist.ui.theme.ShapeMedium
 
 /*
  * Theme-mode preview shared by the Appearance settings and the onboarding theme step,
@@ -62,7 +62,7 @@ fun ThemeMiniPreview(
     pureBlack: Boolean = false,
 ) {
     val darkBackground = if (pureBlack) Color.Black else PreviewDarkBackground
-    val shape = RoundedCornerShape(12.dp)
+    val shape = ShapeMedium
     Row(
         modifier = modifier
             .fillMaxWidth()

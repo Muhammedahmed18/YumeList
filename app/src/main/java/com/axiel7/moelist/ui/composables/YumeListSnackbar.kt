@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -60,6 +59,7 @@ import com.axiel7.moelist.ui.icons.rounded.Info
 import com.axiel7.moelist.ui.icons.rounded.PriorityHigh
 import com.axiel7.moelist.ui.theme.Motion
 import kotlinx.coroutines.delay
+import com.axiel7.moelist.ui.theme.ShapeLargeIncreased
 
 /*
  * The app's one snackbar.
@@ -267,7 +267,7 @@ fun AppSnackbar(
                     true
                 }
             },
-        shape = RoundedCornerShape(20.dp),
+        shape = ShapeLargeIncreased,
         color = container,
         contentColor = content,
         shadowElevation = 6.dp,

@@ -309,8 +309,7 @@ private fun SheetHeader(uiState: EditMediaUiState) {
                 ) {
                     Text(
                         text = format.localized(),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.labelMediumEmphasized,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                     )
                 }
@@ -398,8 +397,7 @@ private fun StatusSection(
             ) { status ->
                 Text(
                     text = status.localized(),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelLargeEmphasized,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
@@ -515,8 +513,7 @@ private fun ProgressSection(
                 )
                 Text(
                     text = "/ ${total.toStringPositiveValueOrUnknown()}",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelLargeEmphasized,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -712,8 +709,7 @@ private fun ActionRow(
                     text = stringResource(
                         if (uiState.isNewEntry) R.string.add else R.string.apply
                     ),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleMediumEmphasized,
                 )
             }
         }

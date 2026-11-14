@@ -133,6 +133,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import java.text.NumberFormat
+import com.axiel7.moelist.ui.theme.ShapeExtraLarge
+import com.axiel7.moelist.ui.theme.ShapeLargeIncreased
 
 /*
  * Onboarding: Login → Your stats → Make it yours → Home.
@@ -855,7 +857,7 @@ private fun ImportCard(
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
+        shape = ShapeExtraLarge,
         color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp)) {
@@ -1030,7 +1032,7 @@ private fun StatTile(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
+        shape = ShapeLargeIncreased,
         color = MaterialTheme.colorScheme.secondaryContainer,
         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
     ) {

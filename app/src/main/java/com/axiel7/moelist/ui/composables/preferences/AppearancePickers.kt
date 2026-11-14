@@ -35,7 +35,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -80,6 +79,7 @@ import com.axiel7.moelist.ui.icons.rounded.Tab
 import com.axiel7.moelist.ui.icons.rounded.KeyboardArrowDown
 import com.axiel7.moelist.ui.theme.Motion
 import com.axiel7.moelist.ui.theme.colorSchemeFor
+import com.axiel7.moelist.ui.theme.ShapeLarge
 
 /*
  * Pickers shared by the onboarding "Make it yours" step and the Appearance settings, so the
@@ -217,10 +217,14 @@ fun PureBlackOption(
                 },
                 shape = CircleShape,
             )
-            if (theme == ThemeStyle.FOLLOW_SYSTEM) {
+            // Says who it's for (AMOLED / OLED) and, with Follow system, when it applies
+            if (theme != ThemeStyle.LIGHT) {
                 Spacer(Modifier.width(12.dp))
                 Text(
-                    text = stringResource(R.string.pure_black_system_hint),
+                    text = stringResource(
+                        if (theme == ThemeStyle.FOLLOW_SYSTEM) R.string.pure_black_system_hint
+                        else R.string.pure_black_amoled_hint
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
@@ -346,7 +350,7 @@ private fun PaletteSwatch(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .clip(RoundedCornerShape(16.dp))
+            .clip(ShapeLarge)
             .selectable(selected = selected, onClick = onClick, role = Role.RadioButton)
             .semantics { contentDescription = name }
             .padding(horizontal = 5.dp, vertical = 4.dp),

@@ -57,6 +57,7 @@ import com.axiel7.moelist.ui.icons.outlined.SearchOff
 import com.axiel7.moelist.utils.DateUtils.parseDateAndLocalize
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrNull
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrUnknown
+import com.axiel7.moelist.ui.theme.MediaGridMinCellWidth
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -228,7 +229,8 @@ fun SearchViewContent(
                         val gridState = rememberLazyGridState()
                         gridState.OnBottomReached(buffer = 4) { event?.loadMore() }
                         LazyVerticalGrid(
-                            columns = GridCells.Fixed(2),
+                            // As many columns as fit: 2 on small tablets, more on large screens
+                            columns = GridCells.Adaptive(minSize = MediaGridMinCellWidth),
                             modifier = Modifier.fillMaxSize(),
                             state = gridState,
                             contentPadding = contentPadding

@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.axiel7.moelist.ui.theme.ShapeChip
@@ -65,8 +64,7 @@ fun RelationTag(
 ) {
     Text(
         text = text,
-        style = MaterialTheme.typography.labelSmall,
-        fontWeight = FontWeight.Bold,
+        style = MaterialTheme.typography.labelSmallEmphasized,
         color = MaterialTheme.colorScheme.onPrimaryContainer,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,

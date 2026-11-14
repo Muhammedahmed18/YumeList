@@ -77,8 +77,7 @@ fun ScoreSlider(
         ) {
             Text(
                 text = scoreTextLabel.ifEmpty { "-" },
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMediumEmphasized,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f)
             )

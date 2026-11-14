@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_SMALL_HEIGHT
 import com.axiel7.moelist.ui.composables.media.MEDIA_POSTER_SMALL_WIDTH
 import com.axiel7.moelist.ui.composables.skeleton
+import com.axiel7.moelist.ui.theme.ShapeLarge
+import com.axiel7.moelist.ui.theme.ShapeExtraSmall
 
 /**
  * Pulsing loading skeleton. Was a `composed {}` shimmer that rebuilt a gradient brush and
@@ -39,7 +40,7 @@ fun MediaListItemShimmer() {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 4.dp),
-        shape = RoundedCornerShape(16.dp),
+        shape = ShapeLarge,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
@@ -57,7 +58,7 @@ fun MediaListItemShimmer() {
                 modifier = Modifier
                     .fillMaxHeight()
                     .width(MEDIA_POSTER_SMALL_WIDTH.dp)
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(ShapeLarge)
                     .shimmerEffect()
             )
 
@@ -74,7 +75,7 @@ fun MediaListItemShimmer() {
                             .padding(top = 4.dp)
                             .fillMaxWidth(0.7f)
                             .height(20.dp)
-                            .clip(RoundedCornerShape(4.dp))
+                            .clip(ShapeExtraSmall)
                             .shimmerEffect()
                     )
                     // Format Shimmer
@@ -83,7 +84,7 @@ fun MediaListItemShimmer() {
                             .padding(top = 8.dp)
                             .fillMaxWidth(0.3f)
                             .height(14.dp)
-                            .clip(RoundedCornerShape(4.dp))
+                            .clip(ShapeExtraSmall)
                             .shimmerEffect()
                     )
                 }
@@ -101,7 +102,7 @@ fun MediaListItemShimmer() {
                             modifier = Modifier
                                 .width(60.dp)
                                 .height(24.dp)
-                                .clip(RoundedCornerShape(4.dp))
+                                .clip(ShapeExtraSmall)
                                 .shimmerEffect()
                         )
 

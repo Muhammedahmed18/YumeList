@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -66,6 +65,8 @@ import com.axiel7.moelist.ui.userlist.composables.UserMediaListControlBar
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.axiel7.moelist.ui.theme.ShapeLargeIncreased
+import com.axiel7.moelist.data.model.media.ListStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,6 +77,8 @@ fun UserMediaListWithTabsView(
     padding: PaddingValues,
     useListTabs: Boolean = true,
     onSortClickTrigger: (() -> Unit) -> Unit = {},
+    // Status to open on (e.g. tapping "Completed" on Profile); null = the first one
+    initialStatus: ListStatus? = null,
 ) {
     val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
@@ -87,7 +90,9 @@ fun UserMediaListWithTabsView(
             }.toTypedArray()
     }
 
-    val pagerState = rememberPagerState { tabRowItems.size }
+    val pagerState = rememberPagerState(
+        initialPage = tabRowItems.indexOfFirst { it.value == initialStatus }.coerceAtLeast(0)
+    ) { tabRowItems.size }
     val editSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val statusSheetState = rememberModalBottomSheetState()
     var showEditSheet by remember { mutableStateOf(false) }
@@ -127,7 +132,8 @@ fun UserMediaListWithTabsView(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        // Same page colour as Home (surface), so switching tabs doesn't flash between two whites
+        containerColor = MaterialTheme.colorScheme.surface,
         contentWindowInsets = with(density) {
             WindowInsets(bottom = padding.calculateBottomPadding().roundToPx())
         },
@@ -153,7 +159,8 @@ fun UserMediaListWithTabsView(
         ) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                // Matches the page colour above
+                color = MaterialTheme.colorScheme.surface,
             ) {
                 Column {
                     if (useListTabs) {
@@ -192,14 +199,12 @@ fun UserMediaListWithTabsView(
                 ModalBottomSheet(
                     onDismissRequest = { showStatusSheet = false },
                     sheetState = statusSheetState,
+                    // Default sheet shape and colour, like every other sheet in the app
                     dragHandle = { BottomSheetDefaults.DragHandle() },
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                    shape = RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp),
                 ) {
                     Text(
                         text = stringResource(R.string.status),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMediumEmphasized,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(horizontal = 28.dp, vertical = 16.dp),
                     )
@@ -216,7 +221,7 @@ fun UserMediaListWithTabsView(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 12.dp, vertical = 4.dp)
-                                .clip(RoundedCornerShape(20.dp))
+                                .clip(ShapeLargeIncreased)
                                 .background(rowBg)
                                 .clickable {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)

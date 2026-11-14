@@ -17,6 +17,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalContext
 import com.axiel7.moelist.ui.base.ColorPalette
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 
 private val LightColors = lightColorScheme(
     primary = md_theme_light_primary,
@@ -53,6 +55,8 @@ private val LightColors = lightColorScheme(
     surfaceContainer = md_theme_light_surfaceContainer,
     surfaceContainerHigh = md_theme_light_surfaceContainerHigh,
     surfaceContainerHighest = md_theme_light_surfaceContainerHighest,
+    surfaceDim = md_theme_light_surfaceDim,
+    surfaceBright = md_theme_light_surfaceBright,
 )
 
 
@@ -91,22 +95,34 @@ private val DarkColors = darkColorScheme(
     surfaceContainer = md_theme_dark_surfaceContainer,
     surfaceContainerHigh = md_theme_dark_surfaceContainerHigh,
     surfaceContainerHighest = md_theme_dark_surfaceContainerHighest,
+    surfaceDim = md_theme_dark_surfaceDim,
+    surfaceBright = md_theme_dark_surfaceBright,
 )
 
 /**
- * AMOLED variant: pure black background/surface. The surfaceContainer* roles are pulled
- * towards black too, so cards, sheets and bars don't look like grey slabs on a black screen.
+ * Pure black (for AMOLED / OLED screens).
+ *
+ * - The big areas are true black: page background, surface (top app bars at rest), dim surface,
+ *   and the navigation bar (see [LocalPureBlack] in MainBottomNavBar). That's where nearly all
+ *   the battery saving is.
+ * - Raised containers (cards, list items, sheets, dialogs, menus, snackbar) stay a near-black
+ *   grey, so they're still visible as separate layers. Fully black containers would merge into
+ *   the page and make OLED black smear worse while scrolling.
  */
 private fun ColorScheme.toBlack() = this.copy(
     background = Color.Black,
     surface = Color.Black,
+    surfaceDim = Color.Black,
     surfaceVariant = surfaceVariant.copy(alpha = 0.4f).compositeOver(Color.Black),
     surfaceContainerLowest = Color.Black,
     surfaceContainerLow = surfaceContainerLow.copy(alpha = 0.5f).compositeOver(Color.Black),
     surfaceContainer = surfaceContainer.copy(alpha = 0.6f).compositeOver(Color.Black),
-    surfaceContainerHigh = surfaceContainerHigh.copy(alpha = 0.7f).compositeOver(Color.Black),
-    surfaceContainerHighest = surfaceContainerHighest.copy(alpha = 0.8f).compositeOver(Color.Black),
+    surfaceContainerHigh = surfaceContainerHigh.copy(alpha = 0.6f).compositeOver(Color.Black),
+    surfaceContainerHighest = surfaceContainerHighest.copy(alpha = 0.7f).compositeOver(Color.Black),
 )
+
+/** True while the pure black (AMOLED) theme is active, for parts that need to go fully black. */
+val LocalPureBlack = staticCompositionLocalOf { false }
 
 /**
  * The colour scheme of [palette] in light or dark, before pure black is applied. Used by the
@@ -152,11 +168,13 @@ fun MoeListTheme(
     //   (and available to our own animations via MaterialTheme.motionScheme)
     // - shapes: our token scale, so built-in components match custom ones
     // - typography: M3 scale + our bolder titles (includes the Emphasized styles)
-    MaterialExpressiveTheme(
-        colorScheme = colorScheme,
-        motionScheme = MotionScheme.expressive(),
-        shapes = AppShapes,
-        typography = SystemTypography,
-        content = content
-    )
+    CompositionLocalProvider(LocalPureBlack provides (darkTheme && useBlackColors)) {
+        MaterialExpressiveTheme(
+            colorScheme = colorScheme,
+            motionScheme = MotionScheme.expressive(),
+            shapes = AppShapes,
+            typography = SystemTypography,
+            content = content
+        )
+    }
 }

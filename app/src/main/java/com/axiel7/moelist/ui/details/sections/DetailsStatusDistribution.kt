@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -28,6 +27,7 @@ import com.axiel7.moelist.R
 import com.axiel7.moelist.ui.composables.defaultPlaceholder
 import com.axiel7.moelist.ui.details.MediaDetailsUiState
 import com.axiel7.moelist.utils.NumExtensions.format
+import com.axiel7.moelist.ui.theme.ShapeExtraSmall
 
 /**
  * Community status distribution (watching / completed / on hold / dropped / planned), as
@@ -78,14 +78,14 @@ private fun StatusDistributionShimmerRow() {
                 modifier = Modifier
                     .weight(1f)
                     .height(14.dp)
-                    .clip(RoundedCornerShape(4.dp))
+                    .clip(ShapeExtraSmall)
                     .defaultPlaceholder(visible = true)
             )
             Spacer(
                 modifier = Modifier
                     .width(52.dp)
                     .height(14.dp)
-                    .clip(RoundedCornerShape(4.dp))
+                    .clip(ShapeExtraSmall)
                     .defaultPlaceholder(visible = true)
             )
         }
@@ -132,8 +132,7 @@ private fun StatusBarRow(
             )
             Text(
                 text = "$percentString%",
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.labelLargeEmphasized,
             )
             Text(
                 text = " (${value.toInt().format() ?: value.toInt().toString()})",

@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -22,6 +21,7 @@ import com.axiel7.moelist.R
 import com.axiel7.moelist.ui.icons.Icons
 import com.axiel7.moelist.ui.icons.rounded.Movie
 import com.axiel7.moelist.ui.theme.MoeListTheme
+import com.axiel7.moelist.ui.theme.ShapeSmall
 
 @Composable
 fun MediaInfoView(
@@ -37,7 +37,7 @@ fun MediaInfoView(
     ) {
         if (iconVector != null) {
             Surface(
-                shape = RoundedCornerShape(8.dp),
+                shape = ShapeSmall,
                 color = MaterialTheme.colorScheme.secondaryContainer
             ) {
                 Icon(

@@ -4,6 +4,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Shapes
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.ui.graphics.Shape
+
+// Large screens (M3 layout guidance)
+/** Widest a column of reading content gets (details, settings): centred beyond this. */
+val ReadingMaxWidth = 840.dp
+/** Widest a two-pane layout gets on very large windows. */
+val TwoPaneMaxWidth = 1040.dp
+/** Smallest width of a media row card in adaptive grids: 2 columns on small tablets, more on large. */
+val MediaGridMinCellWidth = 280.dp
 
 // Spacing — 4dp grid
 val Spacing4 = 4.dp
@@ -38,6 +48,30 @@ val ShapePoster = ShapeLarge        // Media poster images (16dp)
 val ShapeChip = ShapeFull           // Badges, chips, pills
 val ShapeButton = ShapeFull         // Icon buttons, action buttons
 val ShapeProgressBar = ShapeFull    // Progress bar clip
+
+// Connected groups (M3 Expressive connected button group style): segments sit side by side
+// with a small gap, large corners on the group's two ends and small ones between segments.
+/** Gap between the segments of a connected group. */
+val ConnectedGap = 2.dp
+/** Corner on the inside edges of connected segments. */
+val ConnectedInnerCorner = 4.dp
+
+/**
+ * Shape of one segment in a horizontal connected group: [outer] corners where the segment ends
+ * the group, [inner] corners where it touches a neighbour. A segment that is both first and last
+ * gets [outer] all round. Used by the details stat tiles and pills and the list-item badges.
+ */
+fun connectedRowShape(
+    isFirst: Boolean,
+    isLast: Boolean,
+    outer: CornerSize,
+    inner: CornerSize = CornerSize(ConnectedInnerCorner),
+): Shape = RoundedCornerShape(
+    topStart = if (isFirst) outer else inner,
+    topEnd = if (isLast) outer else inner,
+    bottomEnd = if (isLast) outer else inner,
+    bottomStart = if (isFirst) outer else inner,
+)
 
 /**
  * The app's shape scale handed to [MaterialExpressiveTheme], so built-in components

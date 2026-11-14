@@ -13,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.axiel7.moelist.ui.icons.Icons
 import com.axiel7.moelist.ui.icons.rounded.Star
@@ -41,8 +40,7 @@ fun PosterScoreChip(
             )
             Text(
                 text = "%.1f".format(score),
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.labelSmallEmphasized,
                 color = Color.White,
             )
         }

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +25,6 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.axiel7.moelist.R
@@ -40,15 +38,8 @@ import com.axiel7.moelist.ui.icons.rounded.Star
 import com.axiel7.moelist.utils.NumExtensions.format
 import com.axiel7.moelist.utils.StringExtensions.toStringOrNull
 import com.axiel7.moelist.utils.UNKNOWN_CHAR
-
-/** Gap between connected tiles (same as the M3 Expressive connected button group). */
-private val TileGap: Dp = 2.dp
-
-/** Corners on the inside edges of the connected tiles. */
-private val TileInnerCorner: Dp = 4.dp
-
-/** Score shows in a warm amber so it reads at a glance. */
-private val ScoreColor = Color(0xFFFFC107)
+import androidx.compose.foundation.shape.CornerSize
+import com.axiel7.moelist.ui.theme.connectedRowShape
 
 /**
  * Score, rank, popularity and members as four **connected tiles**: they sit 2dp apart, with
@@ -68,7 +59,8 @@ fun DetailsStatTiles(
             value = details?.mean.toStringOrNull() ?: UNKNOWN_CHAR,
             label = stringResource(R.string.score),
             icon = Icons.Rounded.Star,
-            iconTint = ScoreColor,
+            // Same star colour as every other score in the app (PosterScoreChip, SmallScoreIndicator)
+            iconTint = MaterialTheme.colorScheme.tertiary,
         ),
         StatTile(
             value = details?.rankText() ?: UNKNOWN_CHAR,
@@ -93,16 +85,15 @@ fun DetailsStatTiles(
             // Equal tile heights even if one label wraps differently
             .height(IntrinsicSize.Min)
             .padding(horizontal = DetailsHorizontalPadding, vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(TileGap)
+        horizontalArrangement = Arrangement.spacedBy(DetailsTileGap)
     ) {
         tiles.forEachIndexed { index, tile ->
             val isFirst = index == 0
             val isLast = index == tiles.lastIndex
-            val shape = RoundedCornerShape(
-                topStart = if (isFirst) DetailsCardCorner else TileInnerCorner,
-                bottomStart = if (isFirst) DetailsCardCorner else TileInnerCorner,
-                topEnd = if (isLast) DetailsCardCorner else TileInnerCorner,
-                bottomEnd = if (isLast) DetailsCardCorner else TileInnerCorner,
+            val shape = connectedRowShape(
+                isFirst = isFirst,
+                isLast = isLast,
+                outer = CornerSize(DetailsCardCorner),
             )
             StatTileView(
                 tile = tile,

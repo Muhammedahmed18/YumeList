@@ -175,15 +175,20 @@ fun HomeView(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            // Own opaque page colour, the same as the list tabs: tab switches crossfade content
+            // only, and nothing changes colour when the old tab is removed at the end
+            .background(MaterialTheme.colorScheme.surface)
             .padding(padding)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                // End is 4dp tighter (and the gap below 4dp smaller) because the avatar's 48dp
+                // touch area has 4dp of invisible padding: the visible spacing is unchanged
+                .padding(start = 16.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Surface(
                 shape = MaterialTheme.shapes.extraLarge,
@@ -240,20 +245,26 @@ fun HomeView(
                         contentDescription = stringResource(R.string.account),
                         placeholder = painterResource(R.drawable.ic_round_account_circle_24),
                         error = painterResource(R.drawable.ic_round_account_circle_24),
+                        // 40dp avatar inside a 48dp circular touch target
                         modifier = Modifier
+                            .size(48.dp)
                             .clip(CircleShape)
-                            .size(40.dp)
                             .clickable(onClick = onAccountClick)
+                            .padding(4.dp)
+                            .clip(CircleShape)
                     )
                 } else {
                     Icon(
                         painter = painterResource(R.drawable.ic_round_account_circle_24),
                         contentDescription = stringResource(R.string.account),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        // 40dp avatar inside a 48dp circular touch target
                         modifier = Modifier
+                            .size(48.dp)
                             .clip(CircleShape)
-                            .size(40.dp)
                             .clickable(onClick = onAccountClick)
+                            .padding(4.dp)
+                            .clip(CircleShape)
                     )
                 }
             }
@@ -405,7 +416,7 @@ private fun HomeViewContent(
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 12.dp)
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 12.dp)
             )
         }
 
@@ -672,7 +683,7 @@ private fun ForYouSection(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
-                    .padding(start = 20.dp, end = 20.dp, bottom = 8.dp)
+                    .padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
                     .then(
                         if (result.kind == ForYouResult.Kind.POPULAR) {
                             Modifier.clickable { navActionManager.toLogin() }
@@ -827,7 +838,7 @@ private fun HomeNavTile(
     }
 }
 
-/** Shortcut tile corners: M3 Large, tightening to Medium while pressed. */
+/** Shortcut tile corners: 24dp (between M3 Large and Extra large), tightening to Medium (12dp) while pressed. */
 private val TileCorner = 24.dp
 private val TilePressedCorner = 12.dp
 
@@ -840,14 +851,14 @@ private fun SectionHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 20.dp, end = 8.dp),
+            // 16dp: same start as the rows below and the other screens' sections
+            .padding(start = 16.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.titleMediumEmphasized,
             color = MaterialTheme.colorScheme.onSurface
         )
         TextButton(onClick = onSeeAll, shapes = ButtonDefaults.shapes()) {

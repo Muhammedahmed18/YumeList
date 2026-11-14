@@ -24,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.axiel7.moelist.R
 import com.axiel7.moelist.ui.composables.defaultPlaceholder
@@ -109,8 +108,7 @@ private fun CharacterRolePill(
     ) {
         Text(
             text = role,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.labelSmallEmphasized,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
         )
     }

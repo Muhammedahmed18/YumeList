@@ -26,7 +26,6 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -104,6 +103,7 @@ import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.ui.theme.Motion
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import com.axiel7.moelist.ui.theme.ShapeMedium
 
 @Composable
 fun SeasonChartView(
@@ -119,7 +119,7 @@ fun SeasonChartView(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SeasonChartViewContent(
     uiState: SeasonChartUiState,
@@ -260,27 +260,26 @@ private fun SeasonChartViewContent(
         topBar = {
             TopAppBar(
                 title = {
-                    Column(verticalArrangement = Arrangement.Center) {
-                        Text(
-                            text = stringResource(R.string.seasonal_chart),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        // Season + count stay readable while the toolbar is hidden
-                        Text(
-                            text = buildString {
-                                append(uiState.season.seasonYearText())
-                                if (uiState.animes.isNotEmpty()) {
-                                    append(" · ")
-                                    append(stringResource(R.string.anime_count, uiState.animes.size))
-                                }
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
+                    Text(
+                        text = stringResource(R.string.seasonal_chart),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
+                // Season + count stay readable while the toolbar is hidden. The top bar's own
+                // subtitle slot, so it gets the M3 subtitle style and spacing
+                subtitle = {
+                    Text(
+                        text = buildString {
+                            append(uiState.season.seasonYearText())
+                            if (uiState.animes.isNotEmpty()) {
+                                append(" · ")
+                                append(stringResource(R.string.anime_count, uiState.animes.size))
+                            }
+                        },
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 },
                 navigationIcon = {
                     BackIconButton(onClick = { navActionManager?.goBack() })
@@ -463,7 +462,7 @@ private fun QuickAddButton(
         modifier = modifier
             .size(24.dp)
             .semantics { contentDescription = addLabel },
-        shape = RoundedCornerShape(12.dp),
+        shape = ShapeMedium,
         color = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary,
     ) {

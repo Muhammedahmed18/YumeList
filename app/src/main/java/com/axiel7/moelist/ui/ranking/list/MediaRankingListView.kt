@@ -66,6 +66,7 @@ import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrUnknown
 import com.axiel7.moelist.utils.UNKNOWN_CHAR
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.axiel7.moelist.ui.theme.MediaGridMinCellWidth
 
 @Composable
 fun MediaRankingListView(
@@ -163,7 +164,8 @@ private fun MediaRankingListViewContent(
                     event?.loadMore()
                 }
                 LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
+                    // As many columns as fit: 2 on small tablets, more on large screens
+                    columns = GridCells.Adaptive(minSize = MediaGridMinCellWidth),
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(

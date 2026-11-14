@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -34,7 +33,7 @@ fun SmallScoreIndicator(
         Icon(
             imageVector = Icons.Rounded.Star,
             contentDescription = stringResource(R.string.mean_score),
-            tint = MaterialTheme.colorScheme.secondary,
+            tint = MaterialTheme.colorScheme.tertiary,
             modifier = Modifier.size(16.dp)
         )
         Text(
@@ -42,8 +41,7 @@ fun SmallScoreIndicator(
             modifier = Modifier.padding(horizontal = 4.dp),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = fontSize,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold
+            style = MaterialTheme.typography.labelLargeEmphasized,
         )
     }
 }

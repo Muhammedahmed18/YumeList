@@ -27,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -95,8 +94,7 @@ fun UserMediaListControlBar(
                 val formatText = format?.localized() ?: stringResource(R.string.all)
                 Text(
                     text = "$formatText ($count)",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelLargeEmphasized,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -128,8 +126,7 @@ fun UserMediaListControlBar(
             Spacer(modifier = Modifier.width(ButtonDefaults.IconSpacing))
             Text(
                 text = uiState.listSort?.localized().orEmpty(),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.labelLargeEmphasized,
                 maxLines = 1
             )
         }

@@ -7,11 +7,10 @@ import kotlin.math.abs
 
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Box
@@ -46,14 +45,24 @@ val LocalNavAnimatedVisibilityScope = compositionLocalOf<AnimatedVisibilityScope
 /** Which navigation motion is running, set by the NavHost transitions in MainNavigation. */
 enum class NavMotionKind { Push, Pop, Fade }
 
+/**
+ * A plain field, not snapshot state, on purpose: it's written from inside the NavHost transition
+ * lambdas (during composition). As state, that write invalidated every destination that had
+ * already read it and forced an extra recomposition on the first frame of every navigation.
+ * It's always written before the destinations evaluate their transition targets in that same
+ * pass, so they still read the right value.
+ */
 class NavMotionState {
-    var kind by mutableStateOf(NavMotionKind.Push)
+    var kind: NavMotionKind = NavMotionKind.Push
 }
 
 val LocalNavMotion = compositionLocalOf<NavMotionState?> { null }
 
 /** How dark the page underneath gets during the depth slide. */
 private const val DEPTH_SCRIM_ALPHA = 0.32f
+
+/** Edge shadow of a page while it slides. */
+private val PAGE_SHADOW_ELEVATION = 12.dp
 
 /**
  * Wraps a navigation destination:
@@ -80,11 +89,19 @@ fun AnimatedVisibilityScope.ProvideNavAnimatedScope(content: @Composable () -> U
         }
     }
     val moving = transition.currentState != transition.targetState
+    // Edge shadow only for the depth slide (push / pop). Tab switches are crossfades: there the
+    // shadow showed through the half-transparent incoming page as dark bands along the sides
+    // (very visible in light theme) and cost two full-screen shadow layers per frame.
+    val showShadow = moving && motion?.kind != NavMotionKind.Fade
     CompositionLocalProvider(LocalNavAnimatedVisibilityScope provides this) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .then(if (moving) Modifier.shadow(12.dp) else Modifier)
+                // Always the same layer; only its elevation changes. Adding / removing a
+                // shadow() modifier rebuilt the page's layer on the first and last frame.
+                .graphicsLayer {
+                    shadowElevation = if (showShadow) PAGE_SHADOW_ELEVATION.toPx() else 0f
+                }
                 .drawWithContent {
                     drawContent()
                     val alpha = scrim.value

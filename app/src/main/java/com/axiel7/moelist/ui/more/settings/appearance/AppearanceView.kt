@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -28,6 +27,7 @@ import com.axiel7.moelist.ui.composables.preferences.ThemeModePicker
 import com.axiel7.moelist.ui.composables.preferences.TitleLanguagePicker
 import com.axiel7.moelist.ui.theme.MoeListTheme
 import org.koin.androidx.compose.koinViewModel
+import com.axiel7.moelist.ui.theme.ShapeLarge
 
 /*
  * Appearance: everything about how YumeList looks, in grouped M3 sections.
@@ -76,7 +76,7 @@ private fun AppearanceViewContent(
         // ── Colors: Dynamic (wallpaper) first, then the built-in palettes ───
         SettingsSectionHeader(stringResource(R.string.colors_section))
         Surface(
-            shape = RoundedCornerShape(16.dp),
+            shape = ShapeLarge,
             color = MaterialTheme.colorScheme.surfaceContainer,
             modifier = Modifier.fillMaxWidth(),
         ) {

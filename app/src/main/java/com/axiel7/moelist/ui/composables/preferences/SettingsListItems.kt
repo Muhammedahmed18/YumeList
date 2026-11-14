@@ -67,6 +67,14 @@ import com.axiel7.moelist.ui.icons.rounded.Check
 import com.axiel7.moelist.ui.icons.rounded.CheckCircle
 import com.axiel7.moelist.ui.icons.rounded.Close
 import com.axiel7.moelist.ui.theme.Motion
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.material3.ListItem
+import com.axiel7.moelist.ui.icons.automirrored.rounded.OpenInNew
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
+import com.axiel7.moelist.ui.theme.ReadingMaxWidth
+import com.axiel7.moelist.ui.theme.ShapeMedium
+import androidx.compose.material3.TopAppBar
 
 /*
  * Shared M3 Expressive building blocks for the More, Settings and About screens.
@@ -112,23 +120,42 @@ fun SettingsScaffold(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    actions: @Composable RowScope.() -> Unit = {},
+    // false = a small top bar, for pages whose own header already shows a big title (About)
+    largeTopBar: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    val scrollBehavior = if (largeTopBar) {
+        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    } else {
+        TopAppBarDefaults.pinnedScrollBehavior()
+    }
+    val barColors = TopAppBarDefaults.topAppBarColors(
+        containerColor = MaterialTheme.colorScheme.surface,
+        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+    )
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            LargeFlexibleTopAppBar(
-                title = { Text(text = title) },
-                subtitle = subtitle?.let { { Text(text = it) } },
-                navigationIcon = { BackIconButton(onClick = onBack) },
-                scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                ),
-            )
+            if (largeTopBar) {
+                LargeFlexibleTopAppBar(
+                    title = { Text(text = title) },
+                    subtitle = subtitle?.let { { Text(text = it) } },
+                    navigationIcon = { BackIconButton(onClick = onBack) },
+                    actions = actions,
+                    scrollBehavior = scrollBehavior,
+                    colors = barColors,
+                )
+            } else {
+                TopAppBar(
+                    title = { Text(text = title) },
+                    navigationIcon = { BackIconButton(onClick = onBack) },
+                    actions = actions,
+                    scrollBehavior = scrollBehavior,
+                    colors = barColors,
+                )
+            }
         },
         containerColor = MaterialTheme.colorScheme.surface,
         // The column handles the bottom inset itself so content can scroll under the nav bar
@@ -139,6 +166,10 @@ fun SettingsScaffold(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
+                // Large screens: centred, at most ReadingMaxWidth wide (the scroll area stays full width)
+                .wrapContentWidth(Alignment.CenterHorizontally)
+                .widthIn(max = ReadingMaxWidth)
+                .fillMaxWidth()
                 .padding(horizontal = 16.dp)
                 .padding(top = 8.dp, bottom = 24.dp)
                 .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
@@ -258,7 +289,7 @@ fun SettingsIcon(
     }
 }
 
-private val SettingsIconShape = RoundedCornerShape(12.dp)
+private val SettingsIconShape = ShapeMedium
 
 /**
  * A clickable grouped item: optional tonal icon, title, optional subtitle and, by default, a
@@ -277,6 +308,8 @@ fun SettingsNavItem(
     iconContentColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
     titleColor: Color = Color.Unspecified,
     showChevron: Boolean = true,
+    // true when the row leaves the app (browser, store...): shows "open in new" instead of the chevron
+    opensExternally: Boolean = false,
     enabled: Boolean = true,
     colors: ListItemColors = settingsItemColors(),
     trailingContent: (@Composable () -> Unit)? = null,
@@ -285,8 +318,10 @@ fun SettingsNavItem(
         ?: if (showChevron) {
             {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                    imageVector = if (opensExternally) Icons.AutoMirrored.Rounded.OpenInNew
+                    else Icons.AutoMirrored.Rounded.KeyboardArrowRight,
                     contentDescription = null,
+                    modifier = if (opensExternally) Modifier.size(20.dp) else Modifier,
                 )
             }
         } else {
@@ -326,6 +361,7 @@ fun SettingsNavItem(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     showChevron: Boolean = true,
+    opensExternally: Boolean = false,
     trailingContent: (@Composable () -> Unit)? = null,
 ) {
     SettingsNavItem(
@@ -337,9 +373,42 @@ fun SettingsNavItem(
         subtitle = subtitle,
         icon = rememberVectorPainter(icon),
         showChevron = showChevron,
+        opensExternally = opensExternally,
         trailingContent = trailingContent,
     )
 }
+
+/**
+ * A grouped item that only shows information (a credit without a link...). Same colours and
+ * grouped corners as [SettingsNavItem], but not clickable: no ripple, no chevron.
+ */
+@Composable
+fun SettingsInfoItem(
+    title: String,
+    index: Int = LocalSettingsItemPosition.current.index,
+    count: Int = LocalSettingsItemPosition.current.count,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+) {
+    val isFirst = index == 0
+    val isLast = index == count - 1
+    // Matches the segmented items: large outer corners, small inner ones
+    val shape = RoundedCornerShape(
+        topStart = if (isFirst) InfoItemOuterCorner else InfoItemInnerCorner,
+        topEnd = if (isFirst) InfoItemOuterCorner else InfoItemInnerCorner,
+        bottomStart = if (isLast) InfoItemOuterCorner else InfoItemInnerCorner,
+        bottomEnd = if (isLast) InfoItemOuterCorner else InfoItemInnerCorner,
+    )
+    ListItem(
+        headlineContent = { Text(text = title) },
+        supportingContent = subtitle?.let { { Text(text = it) } },
+        colors = settingsItemColors(),
+        modifier = modifier.clip(shape),
+    )
+}
+
+private val InfoItemOuterCorner = 16.dp
+private val InfoItemInnerCorner = 4.dp
 
 /**
  * A grouped item with a switch. The whole row toggles (with switch semantics), and the switch

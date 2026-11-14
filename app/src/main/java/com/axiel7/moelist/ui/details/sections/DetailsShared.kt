@@ -39,6 +39,10 @@ import com.axiel7.moelist.data.model.media.MediaStatus
 import com.axiel7.moelist.ui.icons.Icons
 import com.axiel7.moelist.ui.icons.rounded.KeyboardArrowDown
 import com.axiel7.moelist.ui.theme.Motion
+import androidx.compose.foundation.shape.CornerSize
+import com.axiel7.moelist.ui.theme.ConnectedGap
+import com.axiel7.moelist.ui.theme.ConnectedInnerCorner
+import com.axiel7.moelist.ui.theme.connectedRowShape
 
 /*
  * Small helpers shared by the media details sections.
@@ -54,10 +58,10 @@ internal val DetailsCardCorner: Dp = 16.dp
 internal val DetailsCardPadding: Dp = 16.dp
 
 /** Gap between connected tiles (same as the M3 Expressive connected button group). */
-internal val DetailsTileGap: Dp = 2.dp
+internal val DetailsTileGap: Dp = ConnectedGap
 
 /** Corners on the inside edges of connected tiles. */
-internal val DetailsTileInnerCorner: Dp = 4.dp
+internal val DetailsTileInnerCorner: Dp = ConnectedInnerCorner
 
 /**
  * Shape of one tile in a connected grid: [DetailsCardCorner] on the corners that touch the
@@ -87,8 +91,7 @@ internal fun DetailsSectionTitle(
 ) {
     Text(
         text = text,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
+        style = MaterialTheme.typography.titleMediumEmphasized,
         modifier = modifier
             .padding(
                 start = DetailsHorizontalPadding,
@@ -280,19 +283,18 @@ internal fun DetailsConnectedPills(
     val last = segments.lastIndex
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        horizontalArrangement = Arrangement.spacedBy(ConnectedGap),
         verticalAlignment = Alignment.CenterVertically
     ) {
         segments.forEachIndexed { index, text ->
-            val start = if (index == 0) 50 else 15
-            val end = if (index == last) 50 else 15
             val isAccent = accentFirst && index == 0
             Surface(
-                shape = RoundedCornerShape(
-                    topStartPercent = start,
-                    bottomStartPercent = start,
-                    topEndPercent = end,
-                    bottomEndPercent = end
+                // Pill ends (50%), inner corners at 15% of the height
+                shape = connectedRowShape(
+                    isFirst = index == 0,
+                    isLast = index == last,
+                    outer = CornerSize(50),
+                    inner = CornerSize(15),
                 ),
                 color = if (isAccent) MaterialTheme.colorScheme.primaryContainer
                 else MaterialTheme.colorScheme.surfaceContainerHigh,

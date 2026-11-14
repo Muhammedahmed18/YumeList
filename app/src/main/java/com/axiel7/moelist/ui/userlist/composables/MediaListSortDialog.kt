@@ -111,9 +111,8 @@ fun MediaListSortDialog(
     ModalBottomSheet(
         onDismissRequest = { event?.toggleSortDialog(false) },
         sheetState = sheetState,
+        // Default sheet shape and colour, like every other sheet in the app
         dragHandle = { BottomSheetDefaults.DragHandle() },
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
     ) {
         MediaListSortContent(
             sortOptions = sortOptions,

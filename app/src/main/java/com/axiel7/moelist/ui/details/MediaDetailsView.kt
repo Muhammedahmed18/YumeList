@@ -61,6 +61,8 @@ import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.utils.ContextExtensions.openLink
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import androidx.compose.foundation.layout.BoxWithConstraints
+import com.axiel7.moelist.ui.theme.ReadingMaxWidth
 
 @Composable
 fun MediaDetailsView(
@@ -288,110 +290,117 @@ private fun MediaDetailsContent(
             val hasSynopsis = uiState.isLoading ||
                 !uiState.mediaDetails?.synopsisAndBackground().isNullOrEmpty()
 
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    top = padding.calculateTopPadding(),
-                    bottom = padding.calculateBottomPadding() + 24.dp
-                ),
-            ) {
-                item(key = "hero", contentType = "hero") {
-                    DetailsHero(
-                        uiState = uiState,
-                        initialPosterUrl = initialPosterUrl,
-                        initialPosterKey = initialPosterKey,
-                        onPosterClick = {
-                            if (uiState.picturesUrls.isNotEmpty())
-                                navActionManager.toFullPoster(uiState.picturesUrls)
-                        },
-                        onEditClick = openEditSheet,
-                        onStatusSelected = { status: ListStatus ->
-                            requireLogin { event?.setListStatus(status) }
-                        },
-                    )
-                }
-
-                item(key = "stats", contentType = "stats") {
-                    DetailsStatTiles(uiState = uiState)
-                }
-
-                val genres = uiState.mediaDetails?.genres
-                if (!genres.isNullOrEmpty()) {
-                    item(key = "genres", contentType = "genres") {
-                        DetailsGenres(genres = genres)
-                    }
-                }
-
-                if (hasSynopsis) {
-                    item(key = "synopsis", contentType = "synopsis") {
-                        DetailsSynopsis(uiState = uiState)
-                    }
-                }
-
-                item(key = "info", contentType = "info") {
-                    DetailsInfo(uiState = uiState)
-                }
-
-                // Franchise timeline (sequels / prequels)
-                if (uiState.coreRelatedMedia.isNotEmpty()) {
-                    item(key = "related", contentType = "related") {
-                        DetailsRelated(
+            // Large screens: the content column stops at ReadingMaxWidth and is centred, via side
+            // padding (not a narrower list), so the whole width still scrolls
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                val sidePadding = maxOf((maxWidth - ReadingMaxWidth) / 2, 0.dp)
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = sidePadding,
+                        top = padding.calculateTopPadding(),
+                        end = sidePadding,
+                        bottom = padding.calculateBottomPadding() + 24.dp
+                    ),
+                ) {
+                    item(key = "hero", contentType = "hero") {
+                        DetailsHero(
                             uiState = uiState,
-                            navActionManager = navActionManager,
-                            showOthers = false,
+                            initialPosterUrl = initialPosterUrl,
+                            initialPosterKey = initialPosterKey,
+                            onPosterClick = {
+                                if (uiState.picturesUrls.isNotEmpty())
+                                    navActionManager.toFullPoster(uiState.picturesUrls)
+                            },
+                            onEditClick = openEditSheet,
+                            onStatusSelected = { status: ListStatus ->
+                                requireLogin { event?.setListStatus(status) }
+                            },
                         )
                     }
-                }
 
-                if (uiState.isAnime) {
-                    item(key = "characters", contentType = "characters") {
-                        DetailsCharacters(
-                            uiState = uiState,
-                            onLoadCharacters = { event?.getCharacters() }
-                        )
+                    item(key = "stats", contentType = "stats") {
+                        DetailsStatTiles(uiState = uiState)
                     }
-                }
 
-                // Related anime / manga (side stories, spin-offs, adaptations...)
-                if (uiState.categorizedRelatedMedia.isNotEmpty()) {
-                    item(key = "relatedOthers", contentType = "relatedOthers") {
-                        DetailsRelated(
-                            uiState = uiState,
-                            navActionManager = navActionManager,
-                            showTimeline = false,
-                        )
+                    val genres = uiState.mediaDetails?.genres
+                    if (!genres.isNullOrEmpty()) {
+                        item(key = "genres", contentType = "genres") {
+                            DetailsGenres(genres = genres)
+                        }
                     }
-                }
 
-                if (uiState.visibleRecommendations.isNotEmpty()) {
-                    item(key = "recommendations", contentType = "recommendations") {
-                        DetailsRecommendations(uiState = uiState, navActionManager = navActionManager)
+                    if (hasSynopsis) {
+                        item(key = "synopsis", contentType = "synopsis") {
+                            DetailsSynopsis(uiState = uiState)
+                        }
                     }
-                }
 
-                (uiState.mediaDetails as? AnimeDetails)?.let { anime ->
-                    val openings = anime.openingThemes?.map { it.text }.orEmpty()
-                    val endings = anime.endingThemes?.map { it.text }.orEmpty()
-                    if (openings.isNotEmpty() || endings.isNotEmpty()) {
-                        item(key = "themes", contentType = "themes") {
-                            DetailsThemes(
-                                openings = openings,
-                                endings = endings,
-                                onOpenThemes = { title, songs ->
-                                    themesSheetTitle = title
-                                    themesSheetItems = songs
-                                    showThemesSheet = true
-                                }
+                    item(key = "info", contentType = "info") {
+                        DetailsInfo(uiState = uiState)
+                    }
+
+                    // Franchise timeline (sequels / prequels)
+                    if (uiState.coreRelatedMedia.isNotEmpty()) {
+                        item(key = "related", contentType = "related") {
+                            DetailsRelated(
+                                uiState = uiState,
+                                navActionManager = navActionManager,
+                                showOthers = false,
                             )
                         }
                     }
-                }
 
-                item(key = "distribution", contentType = "distribution") {
-                    DetailsStatusDistribution(uiState = uiState)
+                    if (uiState.isAnime) {
+                        item(key = "characters", contentType = "characters") {
+                            DetailsCharacters(
+                                uiState = uiState,
+                                onLoadCharacters = { event?.getCharacters() }
+                            )
+                        }
+                    }
+
+                    // Related anime / manga (side stories, spin-offs, adaptations...)
+                    if (uiState.categorizedRelatedMedia.isNotEmpty()) {
+                        item(key = "relatedOthers", contentType = "relatedOthers") {
+                            DetailsRelated(
+                                uiState = uiState,
+                                navActionManager = navActionManager,
+                                showTimeline = false,
+                            )
+                        }
+                    }
+
+                    if (uiState.visibleRecommendations.isNotEmpty()) {
+                        item(key = "recommendations", contentType = "recommendations") {
+                            DetailsRecommendations(uiState = uiState, navActionManager = navActionManager)
+                        }
+                    }
+
+                    (uiState.mediaDetails as? AnimeDetails)?.let { anime ->
+                        val openings = anime.openingThemes?.map { it.text }.orEmpty()
+                        val endings = anime.endingThemes?.map { it.text }.orEmpty()
+                        if (openings.isNotEmpty() || endings.isNotEmpty()) {
+                            item(key = "themes", contentType = "themes") {
+                                DetailsThemes(
+                                    openings = openings,
+                                    endings = endings,
+                                    onOpenThemes = { title, songs ->
+                                        themesSheetTitle = title
+                                        themesSheetItems = songs
+                                        showThemesSheet = true
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    item(key = "distribution", contentType = "distribution") {
+                        DetailsStatusDistribution(uiState = uiState)
+                    }
                 }
-            }
+            }//:BoxWithConstraints
         }
     }
 }

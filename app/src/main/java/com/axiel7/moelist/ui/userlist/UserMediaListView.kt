@@ -62,6 +62,7 @@ import com.axiel7.moelist.ui.theme.Motion
 import com.axiel7.moelist.ui.userlist.composables.SetScoreDialog
 import com.axiel7.moelist.ui.userlist.composables.StandardUserMediaListItem
 import com.axiel7.moelist.ui.userlist.composables.StandardUserMediaListItemPlaceholder
+import com.axiel7.moelist.ui.theme.MediaGridMinCellWidth
 
 /** Placeholder rows shown below the list while more items load. */
 private const val LOAD_MORE_PLACEHOLDERS = 5
@@ -244,7 +245,8 @@ fun UserMediaListView(
                         // Two columns can't form one segmented group, so each card stands alone
                         // (fully rounded) with a gap between rows
                         LazyVerticalGrid(
-                            columns = GridCells.Fixed(2),
+                            // As many columns as fit: 2 on small tablets, more on large screens
+                            columns = GridCells.Adaptive(minSize = MediaGridMinCellWidth),
                             state = tabletGridState,
                             modifier = Modifier
                                 .fillMaxWidth(),

@@ -12,6 +12,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 
+/**
+ * Scaffold with a small top app bar.
+ *
+ * Top app bar rule for the app:
+ * - Small bar (this, or a plain `TopAppBar`): screens with tabs, a day/filter selector or other
+ *   controls directly under the bar (Calendar, Ranking, Recommendations, Seasonal chart, Profile).
+ * - Large flexible bar ([com.axiel7.moelist.ui.composables.preferences.SettingsScaffold]):
+ *   settings-like and secondary pages that are one scrolling column (Settings, Credits,
+ *   Notifications). About uses SettingsScaffold with a small bar, because its own header already
+ *   shows the app name large. Details uses its own large flexible bar over the backdrop.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DefaultScaffoldWithTopAppBar(

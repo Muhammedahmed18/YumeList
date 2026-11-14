@@ -17,10 +17,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.dropUnlessResumed
@@ -139,19 +137,6 @@ private fun AppIntegrationSection() {
             )
         }
     }
-}
-
-// Used by CreditsView
-@Composable
-fun SettingsTitle(text: String) {
-    Text(
-        text = text,
-        modifier = Modifier
-            .padding(start = 72.dp, top = 16.dp, end = 16.dp, bottom = 8.dp),
-        color = MaterialTheme.colorScheme.secondary,
-        fontSize = 13.sp,
-        fontWeight = FontWeight.SemiBold,
-    )
 }
 
 @Preview

@@ -25,6 +25,9 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.axiel7.moelist.ui.base.BottomDestination
 import com.axiel7.moelist.ui.theme.Motion
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ShortNavigationBarDefaults
+import com.axiel7.moelist.ui.theme.LocalPureBlack
 
 /** Top corners of the navigation bar. The bottom stays square: it runs under the gesture area. */
 private val NavBarShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
@@ -53,6 +56,9 @@ fun MainBottomNavBar(
     )
 
     ShortNavigationBar(
+        // Pure black theme: the bar is black like the page (AMOLED). Otherwise the M3 default.
+        containerColor = if (LocalPureBlack.current) MaterialTheme.colorScheme.surface
+        else ShortNavigationBarDefaults.containerColor,
         modifier = Modifier
             .graphicsLayer { translationY = size.height * hidden }
             .clip(NavBarShape)

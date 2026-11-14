@@ -1,8 +1,12 @@
 package com.axiel7.moelist.ui.profile
 
+import android.content.Context
+import android.content.Intent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,11 +27,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -42,8 +47,11 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -54,6 +62,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -65,23 +74,29 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.axiel7.moelist.R
-import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
+import com.axiel7.moelist.ui.composables.BackIconButton
 import com.axiel7.moelist.ui.composables.LocalSnackbarHostState
 import com.axiel7.moelist.ui.composables.SnackbarType
+import com.axiel7.moelist.ui.composables.defaultPlaceholder
 import com.axiel7.moelist.ui.composables.showAppSnackbar
 import com.axiel7.moelist.ui.icons.Icons
 import com.axiel7.moelist.ui.icons.automirrored.rounded.MenuBook
+import com.axiel7.moelist.ui.icons.automirrored.rounded.OpenInNew
+import com.axiel7.moelist.ui.icons.rounded.MoreVert
 import com.axiel7.moelist.ui.icons.rounded.Movie
-import com.axiel7.moelist.ui.profile.composables.LibraryRing
-import com.axiel7.moelist.ui.profile.composables.LibraryRingLegend
-import com.axiel7.moelist.ui.profile.composables.RingSegment
-import com.axiel7.moelist.ui.profile.composables.UserStatsView
+import com.axiel7.moelist.ui.icons.rounded.Share
+import com.axiel7.moelist.ui.profile.composables.ProfileActivitySection
+import com.axiel7.moelist.ui.profile.composables.ProfileLibrarySection
+import com.axiel7.moelist.ui.theme.Motion
 import com.axiel7.moelist.ui.theme.MoeListTheme
+import com.axiel7.moelist.ui.theme.TwoPaneMaxWidth
 import com.axiel7.moelist.utils.ContextExtensions.openLink
 import com.axiel7.moelist.utils.DateUtils.parseDateAndLocalize
 import com.axiel7.moelist.utils.MAL_PROFILE_URL
+import com.axiel7.moelist.utils.NumExtensions.toStringOrZero
+import com.axiel7.moelist.utils.UNKNOWN_CHAR
 import org.koin.androidx.compose.koinViewModel
 import java.time.format.DateTimeFormatter
 
@@ -105,17 +120,21 @@ private val GradientHeight = 320.dp
 /** Landscape / wide and short screens: identity on the left, stats on the right. */
 private val TwoPaneMinWidth = 560.dp
 
+/** How far the page scrolls before the name appears in the top bar. */
+private val TitleRevealOffset = 160.dp
+
 /**
- * Profile, laid out to fit on one screen (no scrolling on a normal phone):
+ * Profile:
  *
- * - Identity: avatar in the library ring, name, and one row of chips (location, birthday,
- *   joined date)
- * - Stats: Anime / Manga toggle, the ring's legend (Watching / Completed / Plan to), and two
- *   compact rows of the other stats
+ * - Identity: avatar, name, and one quiet row of chips (location, birthday, joined date)
+ * - Anime / Manga switch, right under the identity
+ * - Library: one stacked bar of all five list statuses and a tappable legend (each status opens
+ *   that list)
+ * - Activity: days, episodes / chapters, mean score and rewatches as connected tiles
  *
- * Wide and short screens (a phone in landscape) put the two side by side. If the content still
- * doesn't fit (very small screen, large font or display size), it scrolls rather than being cut
- * off. Pull to refresh works either way.
+ * Content starts at the top, so switching Anime / Manga never shifts the page. Wide and short
+ * screens (a phone in landscape) put identity and stats side by side. Pull to refresh works
+ * everywhere; the name appears in the top bar once the page has scrolled.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -127,9 +146,12 @@ private fun ProfileViewContent(
     val context = LocalContext.current
     val snackbarHostState = LocalSnackbarHostState.current
     val scrollState = rememberScrollState()
-    // Only matters in the scroll fallback: the bar gets a background once content is under it
     val topAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     var selectedStatsTab by rememberSaveable { mutableIntStateOf(0) }
+    var showOverflowMenu by remember { mutableStateOf(false) }
+
+    val revealPx = with(LocalDensity.current) { TitleRevealOffset.toPx() }
+    val showTitle by remember { derivedStateOf { scrollState.value > revealPx } }
 
     LaunchedEffect(uiState.message) {
         if (uiState.message != null) {
@@ -138,48 +160,101 @@ private fun ProfileViewContent(
         }
     }
 
-    val openMalProfile: () -> Unit = {
-        val name = uiState.user?.name
-        if (name != null) {
-            context.openLink(MAL_PROFILE_URL + name)
-        }
-    }
+    val userName = uiState.user?.name
+    val profileUrl = userName?.let { MAL_PROFILE_URL + it }
 
     val mediaType = if (selectedStatsTab == 0) MediaType.ANIME else MediaType.MANGA
-    val ringSegments = ringSegmentsFor(uiState = uiState, mediaType = mediaType)
-    val ringLoading = uiState.isRefreshing ||
-        if (mediaType == MediaType.ANIME) uiState.isLoading else uiState.isLoadingManga
-    val ringError = if (mediaType == MediaType.ANIME) uiState.isProfileError
-    else uiState.isMangaError
+    val isAnime = mediaType == MediaType.ANIME
+    val statsLoading = if (isAnime) uiState.isLoading else uiState.isLoadingManga
+    val statsError = if (isAnime) uiState.isProfileError else uiState.isMangaError
+    val counts = (if (isAnime) uiState.animeStats else uiState.mangaStats)
+        .associate { it.type to it.value.toInt() }
+
+    // Activity values (same sources as before). Manga "days read" only comes from Jikan, so it's
+    // unknown ("─") rather than a fake 0 when missing.
+    val animeStatistics = uiState.user?.animeStatistics
+    val mangaStatistics = uiState.userMangaStats
+    val days = when {
+        statsError -> UNKNOWN_CHAR
+        isAnime -> animeStatistics?.numDays.toStringOrZero()
+        mangaStatistics?.days == null -> UNKNOWN_CHAR
+        else -> mangaStatistics?.days.toStringOrZero()
+    }
+    val progress = when {
+        statsError -> UNKNOWN_CHAR
+        isAnime -> animeStatistics?.numEpisodes?.toString() ?: "0"
+        else -> mangaStatistics?.chaptersRead?.toString() ?: "0"
+    }
+    val meanScore = when {
+        statsError -> UNKNOWN_CHAR
+        isAnime -> animeStatistics?.meanScore.toStringOrZero()
+        else -> mangaStatistics?.meanScore.toStringOrZero()
+    }
+    val repeats = when {
+        statsError -> UNKNOWN_CHAR
+        isAnime -> animeStatistics?.numTimesRewatched.toStringOrZero()
+        else -> mangaStatistics?.repeat.toStringOrZero()
+    }
 
     Scaffold(
         modifier = Modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                // The name is always on screen below, so the bar has no title
-                title = {},
-                navigationIcon = {
-                    IconButton(
-                        onClick = navActionManager::goBack,
-                        shapes = IconButtonDefaults.shapes(),
+                // The name is on screen below; it only moves up here once that has scrolled away
+                title = {
+                    AnimatedVisibility(
+                        visible = showTitle && userName != null,
+                        enter = fadeIn(Motion.fastEffects()),
+                        exit = fadeOut(Motion.fastEffects()),
                     ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_arrow_back),
-                            contentDescription = stringResource(R.string.title_home),
+                        Text(
+                            text = userName.orEmpty(),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                 },
+                navigationIcon = { BackIconButton(onClick = navActionManager::goBack) },
                 // Settings and Log out are in the Account sheet (avatar on Home)
                 actions = {
-                    IconButton(
-                        onClick = openMalProfile,
-                        enabled = uiState.user?.name != null,
-                        shapes = IconButtonDefaults.shapes(),
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_round_language_24),
-                            contentDescription = stringResource(R.string.view_profile_mal),
-                        )
+                    Box {
+                        IconButton(
+                            onClick = { showOverflowMenu = true },
+                            enabled = profileUrl != null,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.MoreVert,
+                                contentDescription = stringResource(R.string.more_options)
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showOverflowMenu,
+                            onDismissRequest = { showOverflowMenu = false },
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(text = stringResource(R.string.view_profile_mal)) },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
+                                        contentDescription = null
+                                    )
+                                },
+                                onClick = {
+                                    showOverflowMenu = false
+                                    profileUrl?.let { context.openLink(it) }
+                                },
+                            )
+                            DropdownMenuItem(
+                                text = { Text(text = stringResource(R.string.share)) },
+                                leadingIcon = {
+                                    Icon(imageVector = Icons.Rounded.Share, contentDescription = null)
+                                },
+                                onClick = {
+                                    showOverflowMenu = false
+                                    profileUrl?.let { context.shareText(it) }
+                                },
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -208,7 +283,6 @@ private fun ProfileViewContent(
 
             val pullToRefreshState = rememberPullToRefreshState()
 
-            // Pull down to fetch the profile again; the ring replays its loading wave meanwhile
             PullToRefreshBox(
                 isRefreshing = uiState.isRefreshing,
                 onRefresh = { event?.refresh() },
@@ -230,29 +304,25 @@ private fun ProfileViewContent(
                     val avatarSize = when {
                         twoPane -> 88.dp
                         maxWidth >= 600.dp && maxHeight >= 800.dp -> 120.dp
-                        else -> 92.dp
+                        else -> 104.dp
                     }
-                    val horizontalPadding = if (maxWidth >= 600.dp) 32.dp else 20.dp
+                    val horizontalPadding = if (maxWidth >= 600.dp) 32.dp else 16.dp
 
-                    // Fills exactly one screen when the content fits (nothing to scroll), and
-                    // scrolls only when it doesn't. The scroll container also lets pull to refresh
-                    // work on a screen that doesn't move.
+                    // Top-aligned. The minimum height keeps the whole screen draggable, so pull
+                    // to refresh works even when nothing needs to scroll.
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .verticalScroll(scrollState)
                             .heightIn(min = viewportHeight)
                             .padding(horizontal = horizontalPadding)
-                            .padding(top = 4.dp, bottom = padding.calculateBottomPadding() + 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
+                            .padding(top = 8.dp, bottom = padding.calculateBottomPadding() + 24.dp),
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         val identity: @Composable (Modifier) -> Unit = { modifier ->
                             ProfileIdentity(
                                 uiState = uiState,
-                                ringSegments = ringSegments,
-                                ringLoading = ringLoading,
-                                ringError = ringError,
                                 avatarSize = avatarSize,
                                 onAvatarClick = {
                                     uiState.profilePictureUrl?.let {
@@ -263,26 +333,48 @@ private fun ProfileViewContent(
                             )
                         }
                         val stats: @Composable (Modifier) -> Unit = { modifier ->
-                            ProfileStats(
-                                uiState = uiState,
-                                mediaType = mediaType,
-                                selectedStatsTab = selectedStatsTab,
-                                onStatsTabSelected = { selectedStatsTab = it },
-                                ringSegments = ringSegments,
-                                ringError = ringError && !ringLoading,
-                                onRefreshManga = { event?.refreshMangaStats() },
+                            Column(
                                 modifier = modifier,
-                            )
+                                verticalArrangement = Arrangement.spacedBy(20.dp),
+                            ) {
+                                StatsTypeButtonGroup(
+                                    selectedIndex = selectedStatsTab,
+                                    onSelected = { selectedStatsTab = it }
+                                )
+                                ProfileLibrarySection(
+                                    mediaType = mediaType,
+                                    counts = counts,
+                                    isLoading = statsLoading,
+                                    isError = statsError,
+                                    onRetry = {
+                                        if (isAnime) event?.refresh() else event?.refreshMangaStats()
+                                    },
+                                    onStatusClick = { status ->
+                                        navActionManager.toUserList(mediaType, status)
+                                    },
+                                )
+                                ProfileActivitySection(
+                                    mediaType = mediaType,
+                                    days = days,
+                                    progress = progress,
+                                    meanScore = meanScore,
+                                    repeats = repeats,
+                                    isLoading = statsLoading,
+                                )
+                            }
                         }
 
                         if (twoPane) {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                // Capped on very large windows so the two panes don't drift apart
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .widthIn(max = TwoPaneMaxWidth),
                                 horizontalArrangement = Arrangement.spacedBy(24.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.Top
                             ) {
-                                identity(Modifier.weight(0.42f))
-                                stats(Modifier.weight(0.58f))
+                                identity(Modifier.weight(0.4f))
+                                stats(Modifier.weight(0.6f))
                             }
                         } else {
                             identity(Modifier.fillMaxWidth())
@@ -299,13 +391,10 @@ private fun ProfileViewContent(
     }
 }
 
-/** Avatar in the library ring, name, and the chips row. */
+/** Avatar, name, and the chips row. */
 @Composable
 private fun ProfileIdentity(
     uiState: ProfileUiState,
-    ringSegments: List<RingSegment>,
-    ringLoading: Boolean,
-    ringError: Boolean,
     avatarSize: Dp,
     onAvatarClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -314,30 +403,33 @@ private fun ProfileIdentity(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        LibraryRing(
-            segments = ringSegments,
-            isLoading = ringLoading,
-            isError = ringError,
-            avatarSize = avatarSize,
-        ) {
-            ProfileAvatar(
-                url = uiState.profilePictureUrl,
-                size = avatarSize,
-                onAvatarClick = onAvatarClick,
+        ProfileAvatar(
+            url = uiState.profilePictureUrl,
+            size = avatarSize,
+            onAvatarClick = onAvatarClick,
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        val name = uiState.user?.name
+        if (name == null && uiState.isLoading) {
+            // Placeholder shape while loading, like the rest of the app
+            Box(
+                modifier = Modifier
+                    .size(width = 160.dp, height = 28.dp)
+                    .defaultPlaceholder(visible = true)
+            )
+        } else {
+            Text(
+                text = name ?: UNKNOWN_CHAR,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.onSurface,
+                letterSpacing = (-0.5).sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        Text(
-            text = uiState.user?.name ?: stringResource(R.string.loading),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Black,
-            color = MaterialTheme.colorScheme.onSurface,
-            letterSpacing = (-0.5).sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -346,8 +438,8 @@ private fun ProfileIdentity(
 }
 
 /**
- * Location, birthday and joined date as small chips in one row (they wrap if needed).
- * Empty ones are skipped.
+ * Location, birthday and joined date as small, quiet chips in one row (they wrap if needed).
+ * One neutral tint for all three, so they don't compete with the stats. Empty ones are skipped.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -362,27 +454,9 @@ private fun ProfileChips(uiState: ProfileUiState) {
         horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        location?.let {
-            ProfileChip(
-                text = it,
-                icon = R.drawable.ic_round_location_on_24,
-                iconTint = MaterialTheme.colorScheme.primary,
-            )
-        }
-        birthday?.let {
-            ProfileChip(
-                text = it,
-                icon = R.drawable.ic_round_cake_24,
-                iconTint = MaterialTheme.colorScheme.secondary,
-            )
-        }
-        joined?.let {
-            ProfileChip(
-                text = it,
-                icon = R.drawable.ic_round_access_time_24,
-                iconTint = MaterialTheme.colorScheme.tertiary,
-            )
-        }
+        location?.let { ProfileChip(text = it, icon = R.drawable.ic_round_location_on_24) }
+        birthday?.let { ProfileChip(text = it, icon = R.drawable.ic_round_cake_24) }
+        joined?.let { ProfileChip(text = it, icon = R.drawable.ic_round_access_time_24) }
     }
 }
 
@@ -390,10 +464,10 @@ private fun ProfileChips(uiState: ProfileUiState) {
 private fun ProfileChip(
     text: String,
     icon: Int,
-    iconTint: Color,
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         shape = CircleShape,
     ) {
         Row(
@@ -405,86 +479,18 @@ private fun ProfileChip(
                 painter = painterResource(icon),
                 contentDescription = null,
                 modifier = Modifier.size(14.dp),
-                tint = iconTint
             )
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
                 maxLines = 1,
             )
         }
     }
 }
 
-/** Anime / Manga toggle, the ring's legend, and the two rows of stats. */
-@Composable
-private fun ProfileStats(
-    uiState: ProfileUiState,
-    mediaType: MediaType,
-    selectedStatsTab: Int,
-    onStatsTabSelected: (Int) -> Unit,
-    ringSegments: List<RingSegment>,
-    ringError: Boolean,
-    onRefreshManga: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        StatsTypeButtonGroup(
-            selectedIndex = selectedStatsTab,
-            onSelected = onStatsTabSelected
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        // What the ring's colours mean, with the counts
-        LibraryRingLegend(
-            segments = ringSegments,
-            isError = ringError,
-        )
-
-        UserStatsView(
-            uiState = uiState,
-            mediaType = mediaType,
-            showSectionTitle = false,
-            compactStats = true,
-            onRefreshManga = onRefreshManga
-        )
-    }
-}
-
 /**
- * The ring's three parts for [mediaType]: Watching / Completed / Plan to Watch for anime,
- * Reading / Completed / Plan to Read for manga. On Hold and Dropped are in the stats below.
- */
-@Composable
-private fun ringSegmentsFor(
-    uiState: ProfileUiState,
-    mediaType: MediaType,
-): List<RingSegment> {
-    val stats = if (mediaType == MediaType.ANIME) uiState.animeStats else uiState.mangaStats
-    val statuses = if (mediaType == MediaType.ANIME) {
-        listOf(ListStatus.WATCHING, ListStatus.COMPLETED, ListStatus.PLAN_TO_WATCH)
-    } else {
-        listOf(ListStatus.READING, ListStatus.COMPLETED, ListStatus.PLAN_TO_READ)
-    }
-    return statuses.map { status ->
-        RingSegment(
-            label = status.localized(),
-            value = stats.find { it.type == status }?.value?.toInt() ?: 0,
-            color = status.primaryColor(),
-        )
-    }
-}
-
-/**
- * Avatar in an M3 Expressive scalloped shape (12-sided cookie) with a surface-colored ring.
- * Tap opens the full picture.
+ * Avatar in an M3 Expressive scalloped shape (12-sided cookie). Tap opens the full picture.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -499,7 +505,6 @@ private fun ProfileAvatar(
             .size(size)
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-            .border(4.dp, MaterialTheme.colorScheme.surface, shape)
             .clickable(enabled = !url.isNullOrEmpty(), onClick = onAvatarClick),
         contentAlignment = Alignment.Center
     ) {
@@ -550,6 +555,15 @@ private fun StatsTypeButtonGroup(
             }
         }
     }
+}
+
+/** Fires a system share sheet for the given text. */
+private fun Context.shareText(text: String) {
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, text)
+    }
+    startActivity(Intent.createChooser(intent, null))
 }
 
 @Preview

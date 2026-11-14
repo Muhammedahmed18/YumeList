@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -70,6 +69,7 @@ import com.axiel7.moelist.utils.MAL_ANNOUNCEMENTS_URL
 import com.axiel7.moelist.utils.MAL_NEWS_URL
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import com.axiel7.moelist.ui.theme.ShapeExtraLarge
 
 /**
  * The Account sheet, opened from the avatar on Home. It replaces the old "More" tab:
@@ -260,7 +260,7 @@ private fun ProfileCard(
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(28.dp),
+        shape = ShapeExtraLarge,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -300,7 +300,7 @@ private fun GuestCard(
     onSignIn: () -> Unit,
 ) {
     Surface(
-        shape = RoundedCornerShape(28.dp),
+        shape = ShapeExtraLarge,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -313,8 +313,7 @@ private fun GuestCard(
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = stringResource(R.string.guest_profile_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMediumEmphasized,
                 )
             }
             Text(

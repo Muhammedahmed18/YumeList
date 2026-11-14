@@ -324,7 +324,8 @@ fun MainNavigation(
                 composable<Route.About> {
                     ProvideNavAnimatedScope {
                         AboutView(
-                            navActionManager = navActionManager
+                            navActionManager = navActionManager,
+                            isLoggedIn = isLoggedIn,
                         )
                     }
                 }
@@ -368,7 +369,8 @@ fun MainNavigation(
                                 WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
                             ),
                             useListTabs = useListTabs,
-                            onSortClickTrigger = onSortClickTrigger
+                            onSortClickTrigger = onSortClickTrigger,
+                            initialStatus = args.status,
                         )
                     }
                 }

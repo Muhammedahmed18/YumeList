@@ -32,6 +32,10 @@
         <item quantity="other">%d episodes</item>
     </plurals>
     <string name="chapters">Chapters</string>
+    <plurals name="num_volumes">
+        <item quantity="one">%d volume</item>
+        <item quantity="other">%d volumes</item>
+    </plurals>
     <plurals name="num_chapters">
         <item quantity="one">%d chapter</item>
         <item quantity="other">%d chapters</item>
@@ -263,6 +267,25 @@
     <string name="app_integration_not_set_up">Not set up</string>
     <string name="notifications">Notifications</string>
     <string name="delete_all">Delete all</string>
+    <string name="delete_all_notifications_title">Delete all notifications?</string>
+    <string name="delete_all_notifications_desc">You won\'t get airing reminders for these anime anymore.</string>
+    <string name="empty_notifications_title">No notifications set</string>
+    <string name="empty_notifications_desc">Tap the bell on an airing anime to get reminded when new episodes air.</string>
+    <string name="more_options">More options</string>
+    <string name="about_tap_to_copy">Tap to copy version info for bug reports</string>
+    <string name="about_support">Support &amp; feedback</string>
+    <string name="about_explore">Explore YumeList</string>
+    <string name="about_credits_legal">Credits &amp; legal</string>
+    <string name="about_share_app">Share YumeList</string>
+    <string name="about_share_app_summary">Send it to a friend</string>
+    <string name="about_people">People &amp; contributors</string>
+    <string name="about_people_summary">Designers, helpers and contributors</string>
+    <string name="profile_library">Library</string>
+    <string name="profile_activity">Activity</string>
+    <plurals name="profile_entries">
+        <item quantity="one">%d entry</item>
+        <item quantity="other">%d entries</item>
+    </plurals>
     <string name="manga_stats">Manga Stats</string>
     <string name="last_used">Last used</string>
     <string name="romaji">Romaji</string>
@@ -571,7 +594,8 @@
     <string name="follow_system">Follow system</string>
     <string name="colors_section">Colors</string>
     <string name="pure_black_chip">Pure black</string>
-    <string name="pure_black_system_hint">Used when your phone is in dark mode</string>
+    <string name="pure_black_system_hint">Best for AMOLED / OLED screens. Used when your phone is in dark mode</string>
+    <string name="pure_black_amoled_hint">Best for AMOLED / OLED screens</string>
     <string name="title_shown_as">Shown as: %1$s</string>
     <string name="list_switch_title">Switch list status with</string>
     <string name="list_style_fab">Floating button</string>

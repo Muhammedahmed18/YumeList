@@ -11,7 +11,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -34,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.core.content.ContextCompat
 import com.axiel7.moelist.App
 import com.axiel7.moelist.R
@@ -58,6 +59,12 @@ import com.axiel7.moelist.utils.ContextExtensions.copyToClipBoard
 import com.axiel7.moelist.utils.DateUtils.parseDate
 import kotlinx.coroutines.launch
 import java.time.LocalTime
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.Box
+import com.axiel7.moelist.ui.icons.rounded.MoreVert
 
 /** Font size above which the title lambda is rendering the expanded (large) row. */
 private val ExpandedTitleMinFontSize = 28.sp
@@ -164,6 +171,7 @@ fun MediaDetailsTopAppBar(
     else details?.alternativeTitles?.en
     // Only true once the bar has (almost) collapsed; derivedStateOf so scrolling doesn't
     // recompose the bar on every frame
+    var showOverflowMenu by remember { mutableStateOf(false) }
     val isCollapsed by remember(scrollBehavior) {
         derivedStateOf { scrollBehavior.state.collapsedFraction > 0.85f }
     }
@@ -181,11 +189,13 @@ fun MediaDetailsTopAppBar(
                 // Fixed size for every title so short and long titles look the same
                 style = if (isExpandedRow) MaterialTheme.typography.headlineSmall
                 else LocalTextStyle.current,
-                modifier = Modifier.combinedClickable(
-                    // Long-press copies the title (was on the hero title before)
-                    onLongClick = { if (title.isNotEmpty()) context.copyToClipBoard(title) },
-                    onClick = {}
-                )
+                // Long-press copies the title (was on the hero title before). A plain tap does
+                // nothing, so no ripple: pointerInput instead of combinedClickable
+                modifier = Modifier.pointerInput(title) {
+                    detectTapGestures(
+                        onLongPress = { if (title.isNotEmpty()) context.copyToClipBoard(title) }
+                    )
+                }
             )
         },
         subtitle = if (!altTitle.isNullOrBlank()) {
@@ -222,18 +232,6 @@ fun MediaDetailsTopAppBar(
                     )
                 }
             }
-            IconButton(onClick = onOpenClick) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
-                    contentDescription = stringResource(R.string.view_on_mal)
-                )
-            }
-            IconButton(onClick = onShareClick) {
-                Icon(
-                    imageVector = Icons.Rounded.Share,
-                    contentDescription = stringResource(R.string.share)
-                )
-            }
             if (details?.status == MediaStatus.AIRING
                 || details?.status == MediaStatus.NOT_AIRED
             ) {
@@ -257,6 +255,46 @@ fun MediaDetailsTopAppBar(
                         else Icons.Rounded.NotificationsOff,
                         contentDescription = if (savedForNotification != null) disableNotificationLabel
                         else enableNotificationLabel
+                    )
+                }
+            }
+            // At most 3 icons in the bar (M3): View on MAL and Share live in the overflow menu
+            Box {
+                IconButton(onClick = { showOverflowMenu = true }) {
+                    Icon(
+                        imageVector = Icons.Rounded.MoreVert,
+                        contentDescription = stringResource(R.string.more_options)
+                    )
+                }
+                DropdownMenu(
+                    expanded = showOverflowMenu,
+                    onDismissRequest = { showOverflowMenu = false },
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(text = stringResource(R.string.view_on_mal)) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
+                                contentDescription = null
+                            )
+                        },
+                        onClick = {
+                            showOverflowMenu = false
+                            onOpenClick()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(text = stringResource(R.string.share)) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Share,
+                                contentDescription = null
+                            )
+                        },
+                        onClick = {
+                            showOverflowMenu = false
+                            onShareClick()
+                        },
                     )
                 }
             }
