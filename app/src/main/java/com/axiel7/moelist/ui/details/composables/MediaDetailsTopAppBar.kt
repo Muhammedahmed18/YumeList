@@ -213,7 +213,7 @@ fun MediaDetailsTopAppBar(
             IconButton(onClick = navigateBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = null
+                    contentDescription = stringResource(R.string.back)
                 )
             }
         },

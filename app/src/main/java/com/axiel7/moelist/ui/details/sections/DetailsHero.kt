@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.dropUnlessResumed
 import com.axiel7.moelist.R
@@ -78,13 +79,19 @@ fun DetailsHero(
                 .clip(ShapePoster)
                 // No skeleton over the poster when we already have it from the previous screen
                 .defaultPlaceholder(visible = uiState.isLoading && initialPosterUrl == null)
-                .clickable(onClick = dropUnlessResumed { onPosterClick() })
+                .clickable(
+                    onClickLabel = stringResource(R.string.view_poster),
+                    role = Role.Image,
+                    onClick = dropUnlessResumed { onPosterClick() }
+                )
         )
 
         Column(
             modifier = Modifier
                 .weight(1f)
-                .height(MEDIA_POSTER_BIG_HEIGHT.dp),
+                // At least the poster's height, but free to grow: with a large font or a long
+                // airing schedule the status button must not be pushed out and clipped
+                .heightIn(min = MEDIA_POSTER_BIG_HEIGHT.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // Quick facts: [ TV | 2026 ] on top, [ Episodes (12) ] below

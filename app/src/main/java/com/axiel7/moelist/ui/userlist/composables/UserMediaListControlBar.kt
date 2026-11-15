@@ -67,7 +67,7 @@ fun UserMediaListControlBar(
         // Leading: format filter, e.g. "TV (24)"
         FilledTonalButton(
             onClick = {
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                 event?.toggleFormatSheet(true)
             },
             shapes = ButtonShapes(
@@ -109,7 +109,7 @@ fun UserMediaListControlBar(
         // Trailing: current sort, e.g. "Last updated"
         FilledTonalButton(
             onClick = {
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                 event?.toggleSortDialog(true)
             },
             shapes = ButtonShapes(

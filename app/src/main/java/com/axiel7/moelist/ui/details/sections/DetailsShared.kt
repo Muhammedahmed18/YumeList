@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -191,7 +190,8 @@ internal fun DetailsFilterPill(
     ) {
         Row(
             modifier = Modifier
-                .height(32.dp)
+                // Minimum, not fixed, so the label doesn't clip at large font sizes
+                .heightIn(min = 32.dp)
                 .padding(start = if (selected && selectedIcon != null) 10.dp else 14.dp, end = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -307,7 +307,7 @@ internal fun DetailsConnectedPills(
                     modifier = Modifier.padding(
                         start = if (index == 0) 12.dp else 10.dp,
                         end = if (index == last) 12.dp else 10.dp
-                    ).height(30.dp),
+                    ).heightIn(min = 30.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(

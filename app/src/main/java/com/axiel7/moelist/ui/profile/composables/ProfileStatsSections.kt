@@ -1,409 +1,327 @@
 package com.axiel7.moelist.ui.profile.composables
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.axiel7.moelist.R
 import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.composables.RollingNumberText
 import com.axiel7.moelist.ui.composables.defaultPlaceholder
-import com.axiel7.moelist.ui.details.sections.DetailsTileGap
-import com.axiel7.moelist.ui.details.sections.connectedGridShape
 import com.axiel7.moelist.ui.icons.Icons
-import com.axiel7.moelist.ui.icons.automirrored.rounded.MenuBook
-import com.axiel7.moelist.ui.icons.rounded.Event
-import com.axiel7.moelist.ui.icons.rounded.PlayCircleOutline
-import com.axiel7.moelist.ui.icons.rounded.Repeat
-import com.axiel7.moelist.ui.icons.rounded.Star
-import com.axiel7.moelist.ui.theme.ConnectedGap
+import com.axiel7.moelist.ui.icons.outlined.CloudOff
 import com.axiel7.moelist.ui.theme.Motion
-import com.axiel7.moelist.ui.theme.ShapeFull
-import com.axiel7.moelist.ui.theme.ShapeLarge
-import com.axiel7.moelist.ui.theme.ShapeMedium
-import com.axiel7.moelist.ui.theme.connectedRowShape
-import com.axiel7.moelist.utils.UNKNOWN_CHAR
-import kotlin.math.max
 
 /*
- * Profile stats, replacing the old library ring:
- * - [ProfileLibrarySection]: one stacked bar of all five list statuses + a tappable legend
- *   (each status opens that list).
- * - [ProfileActivitySection]: days, episodes / chapters, mean score and rewatches as connected
- *   tiles, in the same style as the details stat tiles.
+ * Profile list statuses as cards (replaces the old stacked bar + legend and the Activity tiles):
+ *
+ *   ┌──────────────┐┌──────────────┐
+ *   │ Watching     ││ Plan to watch│   two large cards: what you're on now and what's next
+ *   └──────────────┘└──────────────┘
+ *   ┌────────┐┌────────┐┌──────────┐
+ *   │Completed││On hold││ Dropped  │   three smaller, neutral cards
+ *   └────────┘└────────┘└──────────┘
+ *
+ * The card heights come from the screen (see ProfileView), so the page fills a tall phone and
+ * still fits a small one without scrolling. Every card opens its list.
  */
 
-/** Height of the stacked status bar. */
-private val StatusBarHeight = 12.dp
+/** Gap between cards. */
+val ProfileCardGap = 8.dp
 
-/** Smallest share a non-empty status gets in the bar, so 2 out of 300 is still visible. */
-private const val MinSegmentShare = 0.02f
+/** Card corners at rest, and tightened while pressed (M3 Expressive pressed shape). */
+private val CardCorner = 28.dp
+private val CardPressedCorner = 16.dp
 
-/**
- * The statuses in display order. Watching and On hold (primary / secondary, which can look alike
- * in some palettes) are kept apart, with Completed between them.
- */
+/** The statuses in display order: the two main ones first, then the other three. */
 fun profileStatuses(mediaType: MediaType): List<ListStatus> =
     if (mediaType == MediaType.ANIME) {
         listOf(
-            ListStatus.WATCHING, ListStatus.COMPLETED, ListStatus.ON_HOLD,
-            ListStatus.DROPPED, ListStatus.PLAN_TO_WATCH
+            ListStatus.WATCHING, ListStatus.PLAN_TO_WATCH,
+            ListStatus.COMPLETED, ListStatus.ON_HOLD, ListStatus.DROPPED
         )
     } else {
         listOf(
-            ListStatus.READING, ListStatus.COMPLETED, ListStatus.ON_HOLD,
-            ListStatus.DROPPED, ListStatus.PLAN_TO_READ
+            ListStatus.READING, ListStatus.PLAN_TO_READ,
+            ListStatus.COMPLETED, ListStatus.ON_HOLD, ListStatus.DROPPED
         )
     }
-
-/** Section title with an optional trailing element (entry count, retry...). */
-@Composable
-private fun ProfileSectionTitle(
-    text: String,
-    modifier: Modifier = Modifier,
-    trailing: @Composable () -> Unit = {},
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 40.dp)
-            .padding(start = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.titleMediumEmphasized,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f),
-        )
-        trailing()
-    }
-}
 
 /**
- * "Library": the whole list split by status.
+ * The five status cards for one media type.
  *
- * - Loading: a wavy progress indicator where the bar goes.
- * - Error: an empty track, "─" counts and a Retry button.
- * - Loaded: the stacked bar (each status sized by its share) and the legend. Tapping a legend
- *   row opens that status in the list.
+ * - Loading: the same cards, with placeholder bars where the counts go (nothing jumps on load).
+ * - Error: one card of the same total height with a Retry button.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun ProfileLibrarySection(
+fun ProfileStatusCards(
     mediaType: MediaType,
     counts: Map<ListStatus, Int>,
     isLoading: Boolean,
     isError: Boolean,
+    largeCardHeight: Dp,
+    smallCardHeight: Dp,
     onRetry: () -> Unit,
     onStatusClick: (ListStatus) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    if (isError && !isLoading) {
+        StatusCardsError(
+            height = largeCardHeight + ProfileCardGap + smallCardHeight,
+            onRetry = onRetry,
+            modifier = modifier,
+        )
+        return
+    }
+
     val statuses = profileStatuses(mediaType)
-    val total = statuses.sumOf { counts[it] ?: 0 }
+    val main = statuses.take(2)
+    val others = statuses.drop(2)
+    val mainColors = listOf(
+        MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer,
+        MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer,
+    )
 
-    Column(modifier = modifier.fillMaxWidth()) {
-        ProfileSectionTitle(text = stringResource(R.string.profile_library)) {
-            when {
-                isError && !isLoading -> TextButton(onClick = onRetry) {
-                    Text(text = stringResource(R.string.retry))
-                }
-                !isLoading -> Text(
-                    text = pluralStringResource(R.plurals.profile_entries, total, total),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Surface(
-            shape = ShapeLarge,
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                // Fixed height, so the card doesn't jump between loading / bar / error
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    when {
-                        isLoading -> LinearWavyProgressIndicator(
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        isError || total == 0 -> EmptyStatusTrack()
-                        else -> StatusBar(statuses = statuses, counts = counts, total = total)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Two columns: Watching / Completed, On hold / Dropped, Plan to...
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    statuses.chunked(2).forEach { pair ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            pair.forEach { status ->
-                                StatusLegendItem(
-                                    status = status,
-                                    count = counts[status] ?: 0,
-                                    isLoading = isLoading,
-                                    isError = isError,
-                                    onClick = { onStatusClick(status) },
-                                    modifier = Modifier.weight(1f),
-                                )
-                            }
-                            if (pair.size == 1) Spacer(modifier = Modifier.weight(1f))
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/** One bar split into the statuses, in the app's connected style (2dp gaps, pill ends). */
-@Composable
-private fun StatusBar(
-    statuses: List<ListStatus>,
-    counts: Map<ListStatus, Int>,
-    total: Int,
-) {
-    val shown = statuses.filter { (counts[it] ?: 0) > 0 }
-    val shareSpec = Motion.effects<Float>()
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(StatusBarHeight),
-        horizontalArrangement = Arrangement.spacedBy(ConnectedGap)
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(ProfileCardGap)
     ) {
-        shown.forEachIndexed { index, status ->
-            key(status) {
-                // Effects spec (no overshoot): a weight must never dip to 0 or below
-                val share by animateFloatAsState(
-                    targetValue = max((counts[status] ?: 0).toFloat() / total, MinSegmentShare),
-                    animationSpec = shareSpec,
-                    label = "statusShare",
-                )
-                Box(
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(ProfileCardGap)
+        ) {
+            main.forEachIndexed { index, status ->
+                val (container, content) = mainColors[index]
+                LargeStatusCard(
+                    status = status,
+                    count = counts[status] ?: 0,
+                    isLoading = isLoading,
+                    containerColor = container,
+                    contentColor = content,
+                    onClick = { onStatusClick(status) },
                     modifier = Modifier
-                        .weight(share)
-                        .fillMaxHeight()
-                        .clip(
-                            connectedRowShape(
-                                isFirst = index == 0,
-                                isLast = index == shown.lastIndex,
-                                outer = CornerSize(50),
-                            )
-                        )
-                        .background(status.primaryColor())
+                        .weight(1f)
+                        // Minimum, not fixed: a large font makes the card grow instead of clip
+                        .heightIn(min = largeCardHeight),
+                )
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(ProfileCardGap)
+        ) {
+            others.forEach { status ->
+                SmallStatusCard(
+                    status = status,
+                    count = counts[status] ?: 0,
+                    isLoading = isLoading,
+                    onClick = { onStatusClick(status) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = smallCardHeight),
                 )
             }
         }
     }
 }
 
-/** The bar's empty track (error, or nothing in the list yet). */
+/** Card surface whose corners tighten while pressed, like the Home shortcut tiles. */
 @Composable
-private fun EmptyStatusTrack() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(StatusBarHeight)
-            .clip(ShapeFull)
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+private fun PressableStatusCard(
+    onClick: () -> Unit,
+    enabled: Boolean,
+    containerColor: Color,
+    contentColor: Color,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val corner by animateDpAsState(
+        targetValue = if (isPressed) CardPressedCorner else CardCorner,
+        animationSpec = Motion.fastSpatial(),
+        label = "statusCardCorner"
+    )
+    Surface(
+        onClick = onClick,
+        enabled = enabled,
+        shape = RoundedCornerShape(corner),
+        color = containerColor,
+        contentColor = contentColor,
+        interactionSource = interactionSource,
+        modifier = modifier,
+        content = content,
     )
 }
 
-/**
- * Status icon (in its colour), name and count. The whole row is a 48dp touch target that opens
- * the list on this status.
- */
+/** Watching / Plan to watch: big count on a coloured container. */
 @Composable
-private fun StatusLegendItem(
+private fun LargeStatusCard(
     status: ListStatus,
     count: Int,
     isLoading: Boolean,
-    isError: Boolean,
+    containerColor: Color,
+    contentColor: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier
-            .clip(ShapeMedium)
-            .clickable(enabled = !isLoading, onClick = onClick)
-            .heightIn(min = 48.dp)
-            .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    PressableStatusCard(
+        onClick = onClick,
+        enabled = !isLoading,
+        containerColor = containerColor,
+        contentColor = contentColor,
+        modifier = modifier,
     ) {
-        Icon(
-            imageVector = status.icon,
-            contentDescription = null,
-            tint = status.primaryColor(),
-            modifier = Modifier.size(18.dp)
-        )
-        Text(
-            text = status.localized(),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f)
-        )
-        when {
-            isLoading -> Box(
-                modifier = Modifier
-                    .size(width = 24.dp, height = 16.dp)
-                    .defaultPlaceholder(visible = true)
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Icon(
+                imageVector = status.icon,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp)
             )
-            isError -> Text(
-                text = UNKNOWN_CHAR,
-                style = MaterialTheme.typography.titleSmallEmphasized,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            else -> RollingNumberText(
-                targetValue = count,
-                style = MaterialTheme.typography.titleSmallEmphasized,
-                color = MaterialTheme.colorScheme.onSurface,
+            // Pushes the count and label to the bottom of the card, whatever its height
+            Spacer(modifier = Modifier.weight(1f))
+            StatusCount(count = count, isLoading = isLoading, large = true)
+            Text(
+                text = status.localized(),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
 }
 
-/** One value of the Activity grid. */
-private data class ActivityTile(
-    val value: String,
-    val label: String,
-    val icon: ImageVector,
-)
-
-/**
- * "Activity": days, episodes / chapters, mean score and rewatches / rereads as a 2×2 grid of
- * connected tiles (same corners and gaps as the details stat tiles).
- */
+/** Completed / On hold / Dropped: smaller, neutral, icon in the status colour. */
 @Composable
-fun ProfileActivitySection(
-    mediaType: MediaType,
-    days: String,
-    progress: String,
-    meanScore: String,
-    repeats: String,
+private fun SmallStatusCard(
+    status: ListStatus,
+    count: Int,
     isLoading: Boolean,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val tiles = listOf(
-        ActivityTile(days, stringResource(R.string.days), Icons.Rounded.Event),
-        if (mediaType == MediaType.ANIME) {
-            ActivityTile(progress, stringResource(R.string.episodes), Icons.Rounded.PlayCircleOutline)
-        } else {
-            ActivityTile(progress, stringResource(R.string.chapters), Icons.AutoMirrored.Rounded.MenuBook)
-        },
-        ActivityTile(meanScore, stringResource(R.string.mean_score), Icons.Rounded.Star),
-        ActivityTile(
-            repeats,
-            if (mediaType == MediaType.ANIME) stringResource(R.string.rewatched)
-            else stringResource(R.string.rereads),
-            Icons.Rounded.Repeat
-        ),
-    )
+    PressableStatusCard(
+        onClick = onClick,
+        enabled = !isLoading,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        modifier = modifier,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Icon(
+                imageVector = status.icon,
+                contentDescription = null,
+                tint = status.primaryColor(),
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            StatusCount(count = count, isLoading = isLoading, large = false)
+            Text(
+                text = status.localized(),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
 
-    Column(modifier = modifier.fillMaxWidth()) {
-        ProfileSectionTitle(text = stringResource(R.string.profile_activity))
-        Spacer(modifier = Modifier.height(8.dp))
+/** The count (rolls when switching Anime / Manga), a placeholder while loading, dimmed at 0. */
+@Composable
+private fun StatusCount(
+    count: Int,
+    isLoading: Boolean,
+    large: Boolean,
+) {
+    if (isLoading) {
+        Box(
+            modifier = Modifier
+                .padding(vertical = 4.dp)
+                .size(width = if (large) 56.dp else 32.dp, height = if (large) 36.dp else 22.dp)
+                .defaultPlaceholder(visible = true)
+        )
+    } else {
+        val contentColor = LocalContentColor.current
+        RollingNumberText(
+            targetValue = count,
+            style = if (large) MaterialTheme.typography.displaySmall
+            else MaterialTheme.typography.titleLarge,
+            fontWeight = if (large) FontWeight.Black else FontWeight.Bold,
+            color = if (count == 0) contentColor.copy(alpha = 0.5f) else contentColor,
+        )
+    }
+}
 
-        Column(verticalArrangement = Arrangement.spacedBy(DetailsTileGap)) {
-            tiles.chunked(2).forEachIndexed { row, pair ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(IntrinsicSize.Min),
-                    horizontalArrangement = Arrangement.spacedBy(DetailsTileGap)
-                ) {
-                    pair.forEachIndexed { column, tile ->
-                        ActivityTileView(
-                            tile = tile,
-                            isLoading = isLoading,
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight()
-                                .clip(connectedGridShape(row = row, column = column, rows = 2, columns = 2))
-                        )
-                    }
-                }
+/** Replaces all five cards when the stats can't be loaded. */
+@Composable
+private fun StatusCardsError(
+    height: Dp,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        shape = RoundedCornerShape(CardCorner),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = height),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.CloudOff,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(32.dp)
+            )
+            Text(
+                text = stringResource(R.string.something_went_wrong),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+            TextButton(onClick = onRetry) {
+                Text(text = stringResource(R.string.retry))
             }
         }
-    }
-}
-
-@Composable
-private fun ActivityTileView(
-    tile: ActivityTile,
-    isLoading: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Icon(
-            imageVector = tile.icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(20.dp)
-        )
-        Text(
-            text = tile.value,
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.defaultPlaceholder(visible = isLoading)
-        )
-        Text(
-            text = tile.label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
     }
 }

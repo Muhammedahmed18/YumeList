@@ -6,6 +6,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -43,6 +46,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
+import androidx.compose.material3.ripple
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -58,10 +62,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -383,12 +389,11 @@ private fun SeasonChartViewContent(
                                             QuickAddButton(
                                                 state = quickAddState,
                                                 onClick = {
-                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                    haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                                                     event?.onQuickAddPlanToWatch(item.node.id)
                                                 },
-                                                modifier = Modifier
-                                                    .padding(8.dp)
-                                                    .align(Alignment.TopEnd)
+                                                // The button keeps its own 8dp inset inside its 48dp tap area
+                                                modifier = Modifier.align(Alignment.TopEnd)
                                             )
                                         }
                                     },
@@ -456,45 +461,69 @@ private fun QuickAddButton(
     val pop = Motion.fastSpatial<Float>()
     val fade = Motion.fastEffects<Float>()
 
-    Surface(
-        onClick = onClick,
-        enabled = state == null,
+    val interactionSource = remember { MutableInteractionSource() }
+
+    // The button looks 24dp, but the tap area is the full 48dp corner square around it, so a
+    // near miss adds the entry instead of opening the poster underneath
+    Box(
         modifier = modifier
-            .size(24.dp)
+            .size(QuickAddTouchSize)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                enabled = state == null,
+                role = Role.Button,
+                onClick = onClick,
+            )
             .semantics { contentDescription = addLabel },
-        shape = ShapeMedium,
-        color = MaterialTheme.colorScheme.primary,
-        contentColor = MaterialTheme.colorScheme.onPrimary,
     ) {
-        AnimatedContent(
-            targetState = state,
-            transitionSpec = {
-                (scaleIn(pop, initialScale = 0.4f) + fadeIn(fade)) togetherWith fadeOut(fade)
-            },
-            contentAlignment = Alignment.Center,
-            label = "quickAdd"
-        ) { current ->
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                when (current) {
-                    null -> Icon(
-                        imageVector = Icons.Rounded.Add,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    QuickAddState.ADDING -> LoadingIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                    QuickAddState.ADDED -> Icon(
-                        imageVector = Icons.Rounded.Check,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
+        Surface(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(QuickAddInset)
+                .size(24.dp)
+                .clip(ShapeMedium)
+                .indication(interactionSource, ripple()),
+            shape = ShapeMedium,
+            color = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+        ) {
+            AnimatedContent(
+                targetState = state,
+                transitionSpec = {
+                    (scaleIn(pop, initialScale = 0.4f) + fadeIn(fade)) togetherWith fadeOut(fade)
+                },
+                contentAlignment = Alignment.Center,
+                label = "quickAdd"
+            ) { current ->
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                    when (current) {
+                        null -> Icon(
+                            imageVector = Icons.Rounded.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        QuickAddState.ADDING -> LoadingIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                        QuickAddState.ADDED -> Icon(
+                            imageVector = Icons.Rounded.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
             }
         }
     }
 }
+
+/** Tap area of the quick-add button (the 48dp accessibility minimum), anchored in the corner. */
+private val QuickAddTouchSize = 48.dp
+
+/** Gap between the poster corner and the visible 24dp button inside the tap area. */
+private val QuickAddInset = 8.dp
 
 /** Space under the grid so the last row can scroll above the floating toolbar. */
 private val ToolbarClearance = 96.dp

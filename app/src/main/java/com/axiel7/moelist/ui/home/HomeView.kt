@@ -17,12 +17,15 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -388,7 +391,7 @@ private fun HomeViewContent(
         ErrorState(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(height),
+                .heightIn(min = height),
             icon = if (sessionExpired) Icons.Outlined.LockReset else Icons.Outlined.CloudOff,
             message = loadError.value,
             actionLabel = if (sessionExpired) stringResource(R.string.sign_in_again)
@@ -426,7 +429,10 @@ private fun HomeViewContent(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    // Tiles in a row share the taller one's height when a large font wraps text
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     HomeNavTile(
@@ -455,7 +461,10 @@ private fun HomeViewContent(
                     )
                 }
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    // Tiles in a row share the taller one's height when a large font wraps text
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     HomeNavTile(
@@ -519,7 +528,7 @@ private fun HomeViewContent(
                         onClick = dropUnlessResumed { navActionManager.toLogin() },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(120.dp)
+                            .heightIn(min = 120.dp)
                             .padding(horizontal = 16.dp, vertical = 4.dp)
                     )
 
@@ -528,7 +537,7 @@ private fun HomeViewContent(
                     TodaySectionState.EMPTY -> EmptyState(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(140.dp),
+                            .heightIn(min = 140.dp),
                         icon = Icons.Outlined.EventBusy,
                         title = stringResource(R.string.nothing_airing_today),
                         description = stringResource(R.string.nothing_airing_today_desc),
@@ -791,7 +800,10 @@ private fun HomeNavTile(
 
     Surface(
         onClick = onClick,
-        modifier = modifier.height(72.dp),
+        // Minimum, not fixed: two lines of text must not clip at large font sizes
+        modifier = modifier
+            .heightIn(min = 72.dp)
+            .fillMaxHeight(),
         shape = RoundedCornerShape(corner),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         interactionSource = interactionSource,

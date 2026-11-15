@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,8 +21,10 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.DropdownMenu
@@ -33,6 +33,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -49,31 +50,33 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.axiel7.moelist.R
+import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.MediaType
 import com.axiel7.moelist.ui.base.navigation.NavActionManager
 import com.axiel7.moelist.ui.composables.BackIconButton
@@ -84,19 +87,18 @@ import com.axiel7.moelist.ui.composables.showAppSnackbar
 import com.axiel7.moelist.ui.icons.Icons
 import com.axiel7.moelist.ui.icons.automirrored.rounded.MenuBook
 import com.axiel7.moelist.ui.icons.automirrored.rounded.OpenInNew
+import com.axiel7.moelist.ui.icons.rounded.CalendarToday
 import com.axiel7.moelist.ui.icons.rounded.MoreVert
 import com.axiel7.moelist.ui.icons.rounded.Movie
 import com.axiel7.moelist.ui.icons.rounded.Share
-import com.axiel7.moelist.ui.profile.composables.ProfileActivitySection
-import com.axiel7.moelist.ui.profile.composables.ProfileLibrarySection
+import com.axiel7.moelist.ui.profile.composables.ProfileStatusCards
 import com.axiel7.moelist.ui.theme.Motion
 import com.axiel7.moelist.ui.theme.MoeListTheme
 import com.axiel7.moelist.ui.theme.TwoPaneMaxWidth
 import com.axiel7.moelist.utils.ContextExtensions.openLink
 import com.axiel7.moelist.utils.DateUtils.parseDateAndLocalize
 import com.axiel7.moelist.utils.MAL_PROFILE_URL
-import com.axiel7.moelist.utils.NumExtensions.toStringOrZero
-import com.axiel7.moelist.utils.UNKNOWN_CHAR
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import java.time.format.DateTimeFormatter
 
@@ -114,27 +116,54 @@ fun ProfileView(
     )
 }
 
-/** Height of the soft gradient behind the top of the screen. */
-private val GradientHeight = 320.dp
-
-/** Landscape / wide and short screens: identity on the left, stats on the right. */
+/** Landscape / wide and short screens: identity on the left, tabs and cards on the right. */
 private val TwoPaneMinWidth = 560.dp
 
-/** How far the page scrolls before the name appears in the top bar. */
-private val TitleRevealOffset = 160.dp
+/** Widest the single-column content gets (tablets in portrait). */
+private val ContentMaxWidth = 600.dp
+
+/** How far the page has to scroll before the name moves into the top bar (large fonts only). */
+private val TitleRevealOffset = 120.dp
+
+/** Above this font scale the layout uses its smallest sizes and is allowed to scroll. */
+private const val LargeFontScale = 1.3f
 
 /**
- * Profile:
+ * Sizes of the screen's blocks, worked out from the space the screen actually has. Small phones
+ * get the minimums (everything fits without scrolling); tall phones get bigger cards and a
+ * bigger avatar, and whatever is left over becomes even spacing between the blocks.
+ */
+private data class ProfileSizes(
+    val avatar: Dp,
+    val largeCard: Dp,
+    val smallCard: Dp,
+)
+
+private fun profileSizes(height: Dp, twoPane: Boolean, largeFont: Boolean): ProfileSizes = when {
+    largeFont -> ProfileSizes(avatar = 64.dp, largeCard = 112.dp, smallCard = 76.dp)
+    twoPane -> ProfileSizes(
+        avatar = (height * 0.28f).coerceIn(64.dp, 112.dp),
+        largeCard = (height * 0.32f).coerceIn(104.dp, 180.dp),
+        smallCard = (height * 0.2f).coerceIn(72.dp, 112.dp),
+    )
+    else -> ProfileSizes(
+        avatar = (height * 0.15f).coerceIn(64.dp, 120.dp),
+        largeCard = (height * 0.22f).coerceIn(112.dp, 200.dp),
+        smallCard = (height * 0.13f).coerceIn(76.dp, 116.dp),
+    )
+}
+
+/**
+ * Profile, on one screen:
  *
- * - Identity: avatar, name, and one quiet row of chips (location, birthday, joined date)
- * - Anime / Manga switch, right under the identity
- * - Library: one stacked bar of all five list statuses and a tappable legend (each status opens
- *   that list)
- * - Activity: days, episodes / chapters, mean score and rewatches as connected tiles
+ * - Identity: avatar, name, and a row with location, birthday and joined date
+ * - Anime / Manga tabs (tap or swipe the cards), each showing its total
+ * - Status cards: Watching and Plan to watch large, Completed / On hold / Dropped smaller.
+ *   Each card opens that list.
  *
- * Content starts at the top, so switching Anime / Manga never shifts the page. Wide and short
- * screens (a phone in landscape) put identity and stats side by side. Pull to refresh works
- * everywhere; the name appears in the top bar once the page has scrolled.
+ * The block sizes follow the screen height (see [profileSizes]), so it fills a tall phone and
+ * still fits a small one without scrolling. With a very large system font it scrolls instead of
+ * cutting text off. Pull to refresh works everywhere.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -147,11 +176,11 @@ private fun ProfileViewContent(
     val snackbarHostState = LocalSnackbarHostState.current
     val scrollState = rememberScrollState()
     val topAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    var selectedStatsTab by rememberSaveable { mutableIntStateOf(0) }
+    val pagerState = rememberPagerState(pageCount = { 2 })
     var showOverflowMenu by remember { mutableStateOf(false) }
-
     val revealPx = with(LocalDensity.current) { TitleRevealOffset.toPx() }
     val showTitle by remember { derivedStateOf { scrollState.value > revealPx } }
+    val fontScale = LocalDensity.current.fontScale
 
     LaunchedEffect(uiState.message) {
         if (uiState.message != null) {
@@ -162,45 +191,19 @@ private fun ProfileViewContent(
 
     val userName = uiState.user?.name
     val profileUrl = userName?.let { MAL_PROFILE_URL + it }
-
-    val mediaType = if (selectedStatsTab == 0) MediaType.ANIME else MediaType.MANGA
-    val isAnime = mediaType == MediaType.ANIME
-    val statsLoading = if (isAnime) uiState.isLoading else uiState.isLoadingManga
-    val statsError = if (isAnime) uiState.isProfileError else uiState.isMangaError
-    val counts = (if (isAnime) uiState.animeStats else uiState.mangaStats)
-        .associate { it.type to it.value.toInt() }
-
-    // Activity values (same sources as before). Manga "days read" only comes from Jikan, so it's
-    // unknown ("─") rather than a fake 0 when missing.
-    val animeStatistics = uiState.user?.animeStatistics
-    val mangaStatistics = uiState.userMangaStats
-    val days = when {
-        statsError -> UNKNOWN_CHAR
-        isAnime -> animeStatistics?.numDays.toStringOrZero()
-        mangaStatistics?.days == null -> UNKNOWN_CHAR
-        else -> mangaStatistics?.days.toStringOrZero()
+    val animeCounts = remember(uiState.animeStats) {
+        uiState.animeStats.associate { it.type to it.value.toInt() }
     }
-    val progress = when {
-        statsError -> UNKNOWN_CHAR
-        isAnime -> animeStatistics?.numEpisodes?.toString() ?: "0"
-        else -> mangaStatistics?.chaptersRead?.toString() ?: "0"
-    }
-    val meanScore = when {
-        statsError -> UNKNOWN_CHAR
-        isAnime -> animeStatistics?.meanScore.toStringOrZero()
-        else -> mangaStatistics?.meanScore.toStringOrZero()
-    }
-    val repeats = when {
-        statsError -> UNKNOWN_CHAR
-        isAnime -> animeStatistics?.numTimesRewatched.toStringOrZero()
-        else -> mangaStatistics?.repeat.toStringOrZero()
+    val mangaCounts = remember(uiState.mangaStats) {
+        uiState.mangaStats.associate { it.type to it.value.toInt() }
     }
 
     Scaffold(
         modifier = Modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                // The name is on screen below; it only moves up here once that has scrolled away
+                // The name is on screen below; it only moves up here if the page has scrolled
+                // (which only happens with a very large font)
                 title = {
                     AnimatedVisibility(
                         visible = showTitle && userName != null,
@@ -258,132 +261,112 @@ private fun ProfileViewContent(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
                 scrollBehavior = topAppBarScrollBehavior,
             )
         }
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            // Soft accent wash behind the top bar and the avatar
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(GradientHeight)
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-                                MaterialTheme.colorScheme.background
-                            )
-                        )
-                    )
-            )
+        val pullToRefreshState = rememberPullToRefreshState()
+        PullToRefreshBox(
+            isRefreshing = uiState.isRefreshing,
+            onRefresh = { event?.refresh() },
+            state = pullToRefreshState,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = padding.calculateTopPadding()),
+            indicator = {
+                PullToRefreshDefaults.LoadingIndicator(
+                    state = pullToRefreshState,
+                    isRefreshing = uiState.isRefreshing,
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
+            }
+        ) {
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                val bottomPadding = padding.calculateBottomPadding()
+                val viewportHeight = maxHeight
+                val twoPane = maxWidth > maxHeight && maxWidth >= TwoPaneMinWidth
+                val sizes = profileSizes(
+                    // The cards share the height left after the vertical padding
+                    height = viewportHeight - bottomPadding,
+                    twoPane = twoPane,
+                    largeFont = fontScale > LargeFontScale,
+                )
+                val horizontalPadding = if (maxWidth >= 600.dp) 32.dp else 16.dp
 
-            val pullToRefreshState = rememberPullToRefreshState()
-
-            PullToRefreshBox(
-                isRefreshing = uiState.isRefreshing,
-                onRefresh = { event?.refresh() },
-                state = pullToRefreshState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = padding.calculateTopPadding()),
-                indicator = {
-                    PullToRefreshDefaults.LoadingIndicator(
-                        state = pullToRefreshState,
-                        isRefreshing = uiState.isRefreshing,
-                        modifier = Modifier.align(Alignment.TopCenter)
+                val identity: @Composable (Modifier) -> Unit = { modifier ->
+                    ProfileIdentity(
+                        uiState = uiState,
+                        avatarSize = sizes.avatar,
+                        onAvatarClick = {
+                            uiState.profilePictureUrl?.let {
+                                navActionManager.toFullPoster(listOf(it))
+                            }
+                        },
+                        modifier = modifier,
                     )
                 }
-            ) {
-                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                    val viewportHeight = maxHeight
-                    val twoPane = maxWidth > maxHeight && maxWidth >= TwoPaneMinWidth
-                    val avatarSize = when {
-                        twoPane -> 88.dp
-                        maxWidth >= 600.dp && maxHeight >= 800.dp -> 120.dp
-                        else -> 104.dp
-                    }
-                    val horizontalPadding = if (maxWidth >= 600.dp) 32.dp else 16.dp
+                val stats: @Composable (Modifier) -> Unit = { modifier ->
+                    ProfileStatsPager(
+                        pagerState = pagerState,
+                        animeCounts = animeCounts,
+                        mangaCounts = mangaCounts,
+                        uiState = uiState,
+                        largeCardHeight = sizes.largeCard,
+                        smallCardHeight = sizes.smallCard,
+                        onRetry = { mediaType ->
+                            if (mediaType == MediaType.ANIME) event?.refresh()
+                            else event?.refreshMangaStats()
+                        },
+                        onStatusClick = { mediaType, status ->
+                            navActionManager.toUserList(mediaType, status)
+                        },
+                        modifier = modifier,
+                    )
+                }
 
-                    // Top-aligned. The minimum height keeps the whole screen draggable, so pull
-                    // to refresh works even when nothing needs to scroll.
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .verticalScroll(scrollState)
-                            .heightIn(min = viewportHeight)
-                            .padding(horizontal = horizontalPadding)
-                            .padding(top = 8.dp, bottom = padding.calculateBottomPadding() + 24.dp),
-                        verticalArrangement = Arrangement.spacedBy(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        val identity: @Composable (Modifier) -> Unit = { modifier ->
-                            ProfileIdentity(
-                                uiState = uiState,
-                                avatarSize = avatarSize,
-                                onAvatarClick = {
-                                    uiState.profilePictureUrl?.let {
-                                        navActionManager.toFullPoster(listOf(it))
-                                    }
-                                },
-                                modifier = modifier,
-                            )
+                // At least the screen's height: the spacers share whatever is left over, and the
+                // whole area stays draggable for pull to refresh. Only scrolls if it can't fit.
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(scrollState)
+                        .heightIn(min = viewportHeight)
+                        .padding(horizontal = horizontalPadding)
+                        .padding(top = 8.dp, bottom = bottomPadding + 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (twoPane) {
+                        Spacer(modifier = Modifier.weight(1f))
+                        Row(
+                            // Capped on very large windows so the two panes don't drift apart
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .widthIn(max = TwoPaneMaxWidth),
+                            horizontalArrangement = Arrangement.spacedBy(24.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            identity(Modifier.weight(0.4f))
+                            stats(Modifier.weight(0.6f))
                         }
-                        val stats: @Composable (Modifier) -> Unit = { modifier ->
-                            Column(
-                                modifier = modifier,
-                                verticalArrangement = Arrangement.spacedBy(20.dp),
-                            ) {
-                                StatsTypeButtonGroup(
-                                    selectedIndex = selectedStatsTab,
-                                    onSelected = { selectedStatsTab = it }
-                                )
-                                ProfileLibrarySection(
-                                    mediaType = mediaType,
-                                    counts = counts,
-                                    isLoading = statsLoading,
-                                    isError = statsError,
-                                    onRetry = {
-                                        if (isAnime) event?.refresh() else event?.refreshMangaStats()
-                                    },
-                                    onStatusClick = { status ->
-                                        navActionManager.toUserList(mediaType, status)
-                                    },
-                                )
-                                ProfileActivitySection(
-                                    mediaType = mediaType,
-                                    days = days,
-                                    progress = progress,
-                                    meanScore = meanScore,
-                                    repeats = repeats,
-                                    isLoading = statsLoading,
-                                )
-                            }
-                        }
-
-                        if (twoPane) {
-                            Row(
-                                // Capped on very large windows so the two panes don't drift apart
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .widthIn(max = TwoPaneMaxWidth),
-                                horizontalArrangement = Arrangement.spacedBy(24.dp),
-                                verticalAlignment = Alignment.Top
-                            ) {
-                                identity(Modifier.weight(0.4f))
-                                stats(Modifier.weight(0.6f))
-                            }
-                        } else {
-                            identity(Modifier.fillMaxWidth())
-                            stats(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .widthIn(max = 600.dp)
-                            )
-                        }
+                        Spacer(modifier = Modifier.weight(1f))
+                    } else {
+                        Spacer(modifier = Modifier.weight(0.5f))
+                        identity(
+                            Modifier
+                                .fillMaxWidth()
+                                .widthIn(max = ContentMaxWidth)
+                        )
+                        // 24dp minimum between identity and the tabs, more on tall screens
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.weight(1f))
+                        stats(
+                            Modifier
+                                .fillMaxWidth()
+                                .widthIn(max = ContentMaxWidth)
+                        )
+                        Spacer(modifier = Modifier.weight(0.5f))
                     }
                 }
             }
@@ -391,7 +374,7 @@ private fun ProfileViewContent(
     }
 }
 
-/** Avatar, name, and the chips row. */
+/** Avatar, name, and the location / birthday / joined row. */
 @Composable
 private fun ProfileIdentity(
     uiState: ProfileUiState,
@@ -408,12 +391,11 @@ private fun ProfileIdentity(
             size = avatarSize,
             onAvatarClick = onAvatarClick,
         )
-
         Spacer(modifier = Modifier.height(12.dp))
 
         val name = uiState.user?.name
-        if (name == null && uiState.isLoading) {
-            // Placeholder shape while loading, like the rest of the app
+        val isLoadingUser = uiState.user == null && uiState.isLoading
+        if (isLoadingUser) {
             Box(
                 modifier = Modifier
                     .size(width = 160.dp, height = 28.dp)
@@ -421,71 +403,138 @@ private fun ProfileIdentity(
             )
         } else {
             Text(
-                text = name ?: UNKNOWN_CHAR,
-                style = MaterialTheme.typography.headlineSmall,
+                text = name ?: "",
+                style = MaterialTheme.typography.headlineSmallEmphasized,
                 fontWeight = FontWeight.Black,
                 color = MaterialTheme.colorScheme.onSurface,
-                letterSpacing = (-0.5).sp,
+                textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        ProfileChips(uiState = uiState)
+        Spacer(modifier = Modifier.height(16.dp))
+        ProfileInfoRow(uiState = uiState, isLoading = isLoadingUser)
     }
 }
+
+/** One value of the info row. */
+private data class ProfileInfo(
+    val icon: Painter,
+    val value: String,
+    val label: String,
+)
 
 /**
- * Location, birthday and joined date as small, quiet chips in one row (they wrap if needed).
- * One neutral tint for all three, so they don't compete with the stats. Empty ones are skipped.
+ * Location, birthday and joined date as three equal columns (icon, value, label). Empty ones are
+ * left out and the rest re-centre.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ProfileChips(uiState: ProfileUiState) {
-    val location = uiState.user?.location?.takeIf { it.isNotBlank() }
-    val birthday = uiState.user?.birthday?.parseDateAndLocalize()?.takeIf { it.isNotBlank() }
-    val joined = uiState.user?.joinedAt?.parseDateAndLocalize(
-        inputFormat = DateTimeFormatter.ISO_DATE_TIME
-    )?.takeIf { it.isNotBlank() }
+private fun ProfileInfoRow(
+    uiState: ProfileUiState,
+    isLoading: Boolean,
+) {
+    val items = buildList {
+        uiState.user?.location?.takeIf { it.isNotBlank() }?.let {
+            add(
+                ProfileInfo(
+                    icon = painterResource(R.drawable.ic_round_location_on_24),
+                    value = it,
+                    label = stringResource(R.string.profile_location),
+                )
+            )
+        }
+        uiState.user?.birthday?.parseDateAndLocalize()?.takeIf { it.isNotBlank() }?.let {
+            add(
+                ProfileInfo(
+                    icon = painterResource(R.drawable.ic_round_cake_24),
+                    value = it,
+                    label = stringResource(R.string.profile_birthday),
+                )
+            )
+        }
+        uiState.user?.joinedAt?.parseDateAndLocalize(
+            inputFormat = DateTimeFormatter.ISO_DATE_TIME
+        )?.takeIf { it.isNotBlank() }?.let {
+            add(
+                ProfileInfo(
+                    icon = rememberVectorPainter(Icons.Rounded.CalendarToday),
+                    value = it,
+                    label = stringResource(R.string.profile_joined),
+                )
+            )
+        }
+    }
 
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .widthIn(max = 480.dp),
+        horizontalArrangement = Arrangement.Center,
     ) {
-        location?.let { ProfileChip(text = it, icon = R.drawable.ic_round_location_on_24) }
-        birthday?.let { ProfileChip(text = it, icon = R.drawable.ic_round_cake_24) }
-        joined?.let { ProfileChip(text = it, icon = R.drawable.ic_round_access_time_24) }
+        if (isLoading) {
+            repeat(3) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .defaultPlaceholder(visible = true)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(width = 72.dp, height = 16.dp)
+                            .defaultPlaceholder(visible = true)
+                    )
+                }
+            }
+        } else {
+            items.forEach { info ->
+                ProfileInfoItem(info = info, modifier = Modifier.weight(1f))
+            }
+        }
     }
 }
 
 @Composable
-private fun ProfileChip(
-    text: String,
-    icon: Int,
+private fun ProfileInfoItem(
+    info: ProfileInfo,
+    modifier: Modifier = Modifier,
 ) {
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        shape = CircleShape,
+    Column(
+        // One TalkBack stop per item: "Lahore, Location"
+        modifier = modifier
+            .semantics(mergeDescendants = true) {}
+            .padding(horizontal = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = null,
-                modifier = Modifier.size(14.dp),
-            )
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelMedium,
-                maxLines = 1,
-            )
-        }
+        Icon(
+            painter = info.icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .padding(bottom = 2.dp)
+                .size(20.dp),
+        )
+        Text(
+            text = info.value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = info.label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+        )
     }
 }
 
@@ -505,7 +554,12 @@ private fun ProfileAvatar(
             .size(size)
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-            .clickable(enabled = !url.isNullOrEmpty(), onClick = onAvatarClick),
+            .clickable(
+                enabled = !url.isNullOrEmpty(),
+                onClickLabel = stringResource(R.string.view_profile_picture),
+                role = Role.Image,
+                onClick = onAvatarClick
+            ),
         contentAlignment = Alignment.Center
     ) {
         if (url.isNullOrEmpty()) {
@@ -526,10 +580,62 @@ private fun ProfileAvatar(
     }
 }
 
-/** Anime / Manga as two connected toggle buttons (round outside, small inner corners). */
+/**
+ * Anime / Manga tabs over the status cards. The cards are a pager: tap a tab or swipe the cards
+ * to switch.
+ */
+@Composable
+private fun ProfileStatsPager(
+    pagerState: PagerState,
+    animeCounts: Map<ListStatus, Int>,
+    mangaCounts: Map<ListStatus, Int>,
+    uiState: ProfileUiState,
+    largeCardHeight: Dp,
+    smallCardHeight: Dp,
+    onRetry: (MediaType) -> Unit,
+    onStatusClick: (MediaType, ListStatus) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val scope = rememberCoroutineScope()
+    val animeTotal = if (uiState.isLoading || uiState.isProfileError) null
+    else animeCounts.values.sum()
+    val mangaTotal = if (uiState.isLoadingManga || uiState.isMangaError) null
+    else mangaCounts.values.sum()
+
+    Column(modifier = modifier) {
+        StatsTypeButtonGroup(
+            selectedIndex = pagerState.targetPage,
+            totals = listOf(animeTotal, mangaTotal),
+            onSelected = { index -> scope.launch { pagerState.animateScrollToPage(index) } }
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalPager(
+            state = pagerState,
+            pageSpacing = 16.dp,
+            verticalAlignment = Alignment.Top,
+            modifier = Modifier.fillMaxWidth()
+        ) { page ->
+            val isAnime = page == 0
+            val mediaType = if (isAnime) MediaType.ANIME else MediaType.MANGA
+            ProfileStatusCards(
+                mediaType = mediaType,
+                counts = if (isAnime) animeCounts else mangaCounts,
+                isLoading = if (isAnime) uiState.isLoading else uiState.isLoadingManga,
+                isError = if (isAnime) uiState.isProfileError else uiState.isMangaError,
+                largeCardHeight = largeCardHeight,
+                smallCardHeight = smallCardHeight,
+                onRetry = { onRetry(mediaType) },
+                onStatusClick = { status -> onStatusClick(mediaType, status) },
+            )
+        }
+    }
+}
+
+/** Anime / Manga as two connected toggle buttons, each with its total once loaded. */
 @Composable
 private fun StatsTypeButtonGroup(
     selectedIndex: Int,
+    totals: List<Int?>,
     onSelected: (Int) -> Unit,
 ) {
     val options = listOf(
@@ -546,12 +652,26 @@ private fun StatsTypeButtonGroup(
                 onCheckedChange = { onSelected(index) },
                 shapes = if (index == 0) ButtonGroupDefaults.connectedLeadingButtonShapes()
                 else ButtonGroupDefaults.connectedTrailingButtonShapes(),
-                icon = { Icon(imageVector = icon, contentDescription = null) },
                 modifier = Modifier
                     .weight(1f)
                     .heightIn(min = 48.dp)
             ) {
-                Text(text = label, fontWeight = FontWeight.Bold)
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(text = label, fontWeight = FontWeight.Bold, maxLines = 1)
+                totals[index]?.let { total ->
+                    Spacer(modifier = Modifier.size(6.dp))
+                    Text(
+                        text = total.toString(),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = LocalContentColor.current.copy(alpha = 0.7f),
+                        maxLines = 1,
+                    )
+                }
             }
         }
     }

@@ -23,6 +23,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,6 +33,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.dropUnlessResumed
@@ -54,6 +56,7 @@ import com.axiel7.moelist.ui.composables.rememberLoadErrorState
 import com.axiel7.moelist.ui.icons.Icons
 import com.axiel7.moelist.ui.icons.outlined.CloudOff
 import com.axiel7.moelist.ui.icons.outlined.SearchOff
+import com.axiel7.moelist.ui.icons.rounded.Close
 import com.axiel7.moelist.utils.DateUtils.parseDateAndLocalize
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrNull
 import com.axiel7.moelist.utils.NumExtensions.toStringPositiveValueOrUnknown
@@ -67,19 +70,22 @@ private fun SearchHistoryList(
     onHistoryItemRemove: (SearchHistory) -> Unit
 ) {
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
-        items(history) { item ->
+        // Keyed, so removing an entry animates instead of making the rows below jump
+        items(history, key = { it.keyword }) { item ->
             val haptic = LocalHapticFeedback.current
             Row(
                 modifier = Modifier
+                    .animateItem()
                     .fillMaxWidth()
                     .combinedClickable(
                         onClick = { onHistoryItemClick(item.keyword) },
+                        // Long-press still works as a shortcut; the ✕ button makes removal visible
                         onLongClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onHistoryItemRemove(item)
                         }
                     )
-                    .padding(16.dp),
+                    .padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
@@ -91,8 +97,18 @@ private fun SearchHistoryList(
                 Text(
                     text = item.keyword,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
                 )
+                IconButton(onClick = { onHistoryItemRemove(item) }) {
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = stringResource(R.string.remove_from_history),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }

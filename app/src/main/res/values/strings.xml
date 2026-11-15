@@ -66,6 +66,14 @@
     <string name="view_profile_mal">View profile on MAL</string>
     <string name="airing_in">Airing in %s</string>
     <string name="plus_one">+1</string>
+    <string name="minus_one">-1</string>
+    <string name="view_poster">View poster</string>
+    <string name="view_profile_picture">View profile picture</string>
+    <string name="edit_progress_count">Set number</string>
+    <string name="remove_from_history">Remove from history</string>
+    <string name="profile_location">Location</string>
+    <string name="profile_birthday">Birthday</string>
+    <string name="profile_joined">Joined</string>
     <string name="add">Add</string>
     <string name="unknown">Unknown</string>
     <string name="unspecified">Unspecified</string>

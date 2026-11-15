@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -26,8 +27,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -43,9 +47,11 @@ import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetProperties
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonShapes
 import androidx.compose.material3.rememberDatePickerState
@@ -54,16 +60,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -459,6 +474,21 @@ private fun ProgressSection(
         else event?.onChangeProgress(value)
     }
 
+    // Long series (hundreds of episodes / chapters): tap the number to type it instead of
+    // pressing +1 over and over
+    var showProgressInput by remember { mutableStateOf(false) }
+    if (showProgressInput) {
+        ProgressInputDialog(
+            initialValue = current,
+            total = total,
+            onConfirm = { value ->
+                showProgressInput = false
+                if (value != current) change(value)
+            },
+            onDismiss = { showProgressInput = false },
+        )
+    }
+
     SectionCard(
         title = stringResource(
             when {
@@ -501,10 +531,20 @@ private fun ProgressSection(
                 ),
                 modifier = Modifier.size(ActionHeight)
             ) {
-                Icon(Icons.Rounded.Remove, contentDescription = "-1")
+                Icon(Icons.Rounded.Remove, contentDescription = stringResource(R.string.minus_one))
             }
 
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.large)
+                    .clickable(
+                        onClickLabel = stringResource(R.string.edit_progress_count),
+                        role = Role.Button,
+                        onClick = { showProgressInput = true }
+                    )
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+            ) {
                 RollingNumberText(
                     targetValue = current,
                     style = MaterialTheme.typography.displayMedium,
@@ -735,4 +775,67 @@ fun EditMediaSheetPreview() {
             )
         }
     }
+}
+
+/**
+ * Number entry for the progress stepper. Digits only; the value is kept between 0 and the
+ * total (when the total is known). The field opens focused with the current value selected,
+ * so typing replaces it straight away.
+ */
+@Composable
+private fun ProgressInputDialog(
+    initialValue: Int,
+    total: Int?,
+    onConfirm: (Int) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val initialText = initialValue.toString()
+    var text by remember {
+        mutableStateOf(TextFieldValue(initialText, selection = TextRange(0, initialText.length)))
+    }
+    val max = total?.takeIf { it > 0 }
+    val parsed = text.text.toIntOrNull()
+    val isValid = parsed != null && parsed >= 0 && (max == null || parsed <= max)
+    val focusRequester = remember { FocusRequester() }
+
+    fun confirm() {
+        if (isValid) onConfirm(parsed!!)
+    }
+
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = stringResource(R.string.edit_progress_count)) },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { new ->
+                    // Digits only, at most 5 (no series runs past 99,999)
+                    if (new.text.length <= 5 && new.text.all { it.isDigit() }) text = new
+                },
+                singleLine = true,
+                isError = text.text.isNotEmpty() && !isValid,
+                suffix = max?.let { { Text(text = "/ $it") } },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(onDone = { confirm() }),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester)
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { confirm() }, enabled = isValid) {
+                Text(text = stringResource(R.string.apply))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(R.string.cancel))
+            }
+        },
+    )
 }

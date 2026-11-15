@@ -2,7 +2,6 @@ package com.axiel7.moelist.ui.profile
 
 import androidx.compose.runtime.Immutable
 import com.axiel7.moelist.data.model.User
-import com.axiel7.moelist.data.model.UserStats
 import com.axiel7.moelist.data.model.media.ListStatus
 import com.axiel7.moelist.data.model.media.Stat
 import com.axiel7.moelist.ui.base.state.UiState
@@ -13,10 +12,9 @@ data class ProfileUiState(
     val profilePictureUrl: String? = null,
     val animeStats: List<Stat<ListStatus>> = emptyList(),
     val mangaStats: List<Stat<ListStatus>> = emptyList(),
-    val userMangaStats: UserStats.MangaStats? = null,
     val isLoadingManga: Boolean = true,
     val isMangaError: Boolean = false,
-    /** The profile request failed and there is nothing to show (the ring turns grey). */
+    /** The profile request failed and there is nothing to show (the anime cards show Retry). */
     val isProfileError: Boolean = false,
     /** Pull to refresh in progress: the current data stays on screen. */
     val isRefreshing: Boolean = false,
